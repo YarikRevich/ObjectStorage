@@ -104,6 +104,13 @@
         <version>0.2.6</version>
       </dependency>
 
+      <!-- MINIO -->
+      <dependency>
+        <groupId>io.minio</groupId>
+        <artifactId>minio</artifactId>
+        <version>8.5.12</version>
+      </dependency>
+
       <!-- NETTY MACOS -->
       <dependency>
         <groupId>io.netty</groupId>

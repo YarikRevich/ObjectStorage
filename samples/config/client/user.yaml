@@ -1,69 +1,28 @@
-# Represents section used to declare desired content.
-content:
-  # Represents locations of VCS provider repositories, which are intended to be used for requested operations.
-  locations:
-    - name: "[YarikRevich]test:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]scripts:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]odb:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]tetris:main" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]tmpm:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]portfolio:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]ai-commit-generator:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]website:main" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]vim-config:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-    - name: "[YarikRevich]critical_db_framework:master" # Represents location definition name.
-
-      # Enables additional content download of repositories of VCS provider repositories.
-      additional: true
-
-# Represents section used for VCS provider configuration.
+# Represents section used for storage provider configuration.
 service:
-  # Represents the selected VCS provider for ObjectStorage. The first part divided by the hyphen represents
-  # selected VCS core type and the second part defines external provider.
-  #
-  # Supported providers are "exporter" and "git-github".
-  provider: "git-github"
+  # Represents selected provider for ObjectStorage. Supported providers are "s3" and "gcs".
+  provider: "s3"
 
-  # Represents section used for ObjectStorage Exporter configuration.
-  exporter:
-    # Represents address for the host of ObjectStorage Exporter.
-    host: "http://localhost:10000"
+  # Represents section used for ObjectStorage resource configuration.
+  backup:
+    # Represents format used for content to be saved.
+    format: "zip"
 
-  # Represents credentials used for the selected VCS provider. Can be left null, if the provider does not
-  # require it.
+    # Represents frequency of backup operation for selected provider.
+    frequency: "0 */5 * * * ?"
+
+  # Represents credentials used for the selected provider.
   credentials:
     # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
     id: "1"
 
-    # Represents authentication token intended to be used for VCS provider API access permission.
-    token: ""
+    # Represents a path to the credentials CSV file, which contains both access
+    # and secret keys.
+    file: "~/.aws/credentials"
+
+    # Represents a select region where the deployment of infrastructure will be performed.
+    # Remember that it may influence the availability of the ResourceTracker deployed infrastructure.
+    region: "us-west-2"
 
 # Represents section used for ObjectStorage API Server configuration.
 api-server:

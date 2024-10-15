@@ -91,6 +91,12 @@
             <artifactId>spring-core</artifactId>
         </dependency>
 
+        <!-- MINIO -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+        </dependency>
+
         <!-- THIRD PARTY -->
         <dependency>
             <groupId>io.pebbletemplates</groupId>

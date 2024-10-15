@@ -16,7 +16,7 @@ Features:
 * Opportunity to work with different vendors using the same **ObjectStorage** instance
 * Data processing optimizations
 * Excessive monitoring opportunities
-* Configurable data backups per vendor
+* Configurable data backups per vendor in the same workspace
 
 ![](./docs/high-level-design.png)
 
