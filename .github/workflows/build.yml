@@ -23,10 +23,6 @@ jobs:
         run: |
           make lint
 
-      - name: "Build Cluster"
-        run: |
-          make build-cluster
-
       - name: "Build API Server"
         run: |
           make build-api-server
@@ -34,7 +30,3 @@ jobs:
       - name: "Build CLI"
         run: |
           make build-cli
-
-      - name: "Build GUI"
-        run: |
-          make build-gui

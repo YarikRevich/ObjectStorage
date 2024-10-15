@@ -13,6 +13,7 @@ actor "Diagnostics"
 component "Control plane" {
 node "API Server"
 node "Backup manager"
+node "Temporary storage"
 node "Metrics registry"
 }
 
@@ -22,8 +23,9 @@ entity "Google Cloud Service"
 }
 
 [Client] <--> [API Server]: " Send requests"
-[API Server] <--> [ Storage vendors]: " Perform storage related operations"
+[API Server] --> [Temporary storage]: " Schedule storage modification operation"
+[Temporary storage] <--> [ Storage vendors]: " Execute scheduled storage modification operation"
 [Backup manager] <--> [ Storage vendors]: " Perform backup operations"
-[API Server] <-- [Metrics registry]: " Retrieve metrics"
-[Diagnostics] --> [Metrics registry]: " Scrap metrics"
+[API Server] <--> [Metrics registry]: " Retrieve metrics"
+[Diagnostics] <--> [Metrics registry]: " Scrap metrics"
 ```

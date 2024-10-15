@@ -27,12 +27,6 @@ test: clean ## Run both unit and integration tests
 lint: ## Run Apache Spotless linter
 	@mvn spotless:apply
 
-.PHONY: create-local-client
-create-local-client: ## Create ObjectStorage local directory for client
-.PHONY: create-local-client
-create-local-client: ## Create ObjectStorage local directory for client
-	@mkdir -p $(HOME)/.objectstorage/config/swap
-
 .PHONY: create-local-api-server
 create-local-api-server: ## Create ObjectStorage local directory for API Server
 	@mkdir -p $(HOME)/.objectstorage/config
@@ -84,7 +78,7 @@ endif
 	$(MAKE) clone-api-server
 
 .PHONY: build-cli
-build-cli: clean create-local-client clone-client-config ## Build CLI application
+build-cli: clean clone-client-config ## Build CLI application
 ifneq (,$(wildcard ./bin/cli))
 	@rm -r ./bin/cli
 endif
