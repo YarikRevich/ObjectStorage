@@ -1,0 +1,40 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Set up JDK 23"
+        uses: oracle-actions/setup-java@v1
+        with:
+          website: oracle.com
+          java-version: '23'
+
+      - name: "Install prerequisites"
+        run: |
+          make prepare
+
+      - name: "Linter"
+        run: |
+          make lint
+
+      - name: "Build Cluster"
+        run: |
+          make build-cluster
+
+      - name: "Build API Server"
+        run: |
+          make build-api-server
+
+      - name: "Build CLI"
+        run: |
+          make build-cli
+
+      - name: "Build GUI"
+        run: |
+          make build-gui

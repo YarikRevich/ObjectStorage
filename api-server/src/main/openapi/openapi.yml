@@ -1,0 +1,461 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI document of ObjectStorage API Server
+  description: ObjectStorage API Server Open API documentation
+  version: "1.0"
+
+tags:
+  - name: ContentResource
+    description: Contains all endpoints related to operations on processed content.
+  - name: StateResource
+    description: Contains all endpoints related to state processing.
+  - name: InfoResource
+    description: Contains all endpoints related to general info of API Server.
+  - name: HealthResource
+    description: Contains all endpoints related to general API Server health information.
+
+paths:
+  /v1/content:
+    post:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Content retrieval application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentRetrievalApplication"
+      responses:
+        204:
+          description: A list of all available content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentRetrievalResult"
+        400:
+          description: Content was not retrieved
+  /v1/content/apply:
+    post:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Content configuration application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentApplication"
+      responses:
+        204:
+          description: Given content configuration was successfully applied
+        400:
+          description: Given content configuration was not applied
+  /v1/content/withdraw:
+    delete:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Content withdraw application. Does not remove persisted content.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentWithdrawal"
+      responses:
+        204:
+          description: Given content configuration was successfully withdrawn
+        400:
+          description: Given content configuration was not withdrawn
+  /v1/content/download:
+    post:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Content download application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentDownload"
+      responses:
+        200:
+          description: A content was successfully retrieved
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Content was not retrieved
+  /v1/content/clean:
+    delete:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Content cleanup application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentCleanup"
+      responses:
+        201:
+          description: Content with the given configuration was successfully deleted
+        400:
+          description: Content with the given configuration was not deleted
+  /v1/content/clean/all:
+    delete:
+      tags:
+        - ContentResource
+      requestBody:
+        required: true
+        description: Full content cleanup application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentCleanupAll"
+      responses:
+        201:
+          description: Content with the given configuration was successfully deleted
+        400:
+          description: Content with the given configuration was not deleted
+  /v1/state/content:
+    post:
+      tags:
+        - StateResource
+      requestBody:
+        required: true
+        description: Given content state key
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentStateApplication"
+      responses:
+        201:
+          description: Content state hash is retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentStateApplicationResult"
+  /v1/info/version:
+    get:
+      tags:
+        - InfoResource
+      responses:
+        200:
+          description: General information about running API Server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfoResult"
+  /v1/info/topology:
+    post:
+      tags:
+        - InfoResource
+      requestBody:
+        required: true
+        description: Content configuration application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopologyInfoApplication"
+      responses:
+        200:
+          description: General information about deployed topology
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopologyInfoResult"
+        400:
+          description: Given topology information retrieval was not successful
+  /v1/health:
+    get:
+      tags:
+        - HealthResource
+      responses:
+        200:
+          description: General health information about running API Server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResult"
+  /v1/readiness:
+    post:
+      tags:
+        - HealthResource
+      requestBody:
+        required: true
+        description: Check if API Server is ready to serve for the given user
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadinessCheckApplication"
+      responses:
+        200:
+          description: General health information about running API Server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessCheckResult"
+components:
+  schemas:
+    Provider:
+      type: string
+      enum:
+        - exporter
+        - git-github
+    CredentialsFieldsFull:
+      required:
+        - internal
+      properties:
+        internal:
+          $ref: "#/components/schemas/CredentialsFieldsInternal"
+        external:
+          $ref: "#/components/schemas/CredentialsFieldsExternal"
+    CredentialsFieldsInternal:
+      properties:
+        id:
+          type: integer
+    CredentialsFieldsExternal:
+      anyOf:
+        - $ref: "#/components/schemas/GitGitHubCredentials"
+    GitGitHubCredentials:
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    ContentRetrievalApplication:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentRetrievalResult:
+      required:
+        - locations
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalUnit"
+    ContentRetrievalUnit:
+      required:
+        - name
+        - active
+        - raw
+        - additional
+      properties:
+        name:
+          type: string
+        active:
+          type: boolean
+        raw:
+          $ref: "#/components/schemas/ContentRetrievalUnitRaw"
+        additional:
+          $ref: "#/components/schemas/ContentRetrievalUnitAdditional"
+    ContentRetrievalUnitRaw:
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            type: string
+    ContentRetrievalUnitAdditional:
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            type: string
+    Exporter:
+      required:
+        - host
+      properties:
+        host:
+          type: string
+    ContentApplication:
+      required:
+        - content
+        - provider
+        - credentials
+      properties:
+        content:
+          $ref: "#/components/schemas/ContentUnit"
+        provider:
+          $ref: "#/components/schemas/Provider"
+        exporter:
+          $ref: "#/components/schemas/Exporter"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentUnit:
+      required:
+        - locations
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationsUnit"
+    LocationsUnit:
+      required:
+        - name
+        - additional
+      properties:
+        name:
+          type: string
+        additional:
+          type: boolean
+          default: false
+    ContentWithdrawal:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentDownload:
+      required:
+        - location
+        - provider
+        - credentials
+      properties:
+        location:
+          type: string
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentCleanup:
+      required:
+        - location
+        - provider
+        - credentials
+      properties:
+        location:
+          type: string
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentCleanupAll:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentStateApplication:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ContentStateApplicationResult:
+      required:
+        - hash
+      properties:
+        hash:
+          type: string
+    VersionInfoResult:
+      properties:
+        externalApi:
+          $ref: "#/components/schemas/VersionExternalApiInfoResult"
+    VersionExternalApiInfoResult:
+      required:
+        - version
+        - hash
+      properties:
+        version:
+          type: string
+        hash:
+          type: string
+    TopologyInfoApplication:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    TopologyInfoResult:
+      type: array
+      items:
+        $ref: "#/components/schemas/TopologyInfoUnit"
+    TopologyInfoUnit:
+      required:
+        - name
+        - locations
+      properties:
+        name:
+          type: string
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationsUnit"
+    HealthCheckResult:
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthCheckStatus"
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheckUnit"
+    HealthCheckUnit:
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/HealthCheckStatus"
+    HealthCheckStatus:
+      type: string
+      enum:
+        - UP
+        - DOWN
+    ReadinessCheckApplication:
+      type: object
+    ReadinessCheckResult:
+      required:
+        - name
+        - status
+        - data
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/ReadinessCheckStatus"
+        data:
+          type: object
+    ReadinessCheckUnit:
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/ReadinessCheckStatus"
+    ReadinessCheckStatus:
+      type: string
+      enum:
+        - UP
+        - DOWN
