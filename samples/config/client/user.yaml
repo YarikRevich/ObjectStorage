@@ -5,10 +5,10 @@ content:
 
 # Represents section used for storage provider configuration.
 service:
-  # Represents selected provider for ObjectStorage. Supported providers are "s3" and "gcs".
+  # Represents selected provider for ObjectStorage. Supported provider is "s3" only.
   provider: "s3"
 
-  # Represents section used for ObjectStorage resource configuration.
+  # Represents section used for ObjectStorage backup configuration.
   backup:
     # Enables backup functionality.
     enabled: true

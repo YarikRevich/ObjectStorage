@@ -15,27 +15,13 @@ import lombok.Getter;
 @Getter
 public class ConfigEntity {
     /**
-     * Represents ObjectStorage Cluster configuration used for content management.
+     * Represents ObjectStorage CLI configuration used for content management.
      */
     @Getter
     public static class Content {
-        /**
-         * Represents ObjectStorage Cluster configuration used for locations management.
-         */
-        @Getter
-        public static class Location {
-            @NotNull
-            @JsonProperty("name")
-            public String name;
-
-            @NotNull
-            @JsonProperty("additional")
-            public Boolean additional;
-        }
-
         @NotNull
-        @JsonProperty("locations")
-        public List<Location> locations;
+        @JsonProperty("root")
+        public Stirng root;
     }
 
     @Valid
@@ -44,19 +30,16 @@ public class ConfigEntity {
     public Content content;
 
     /**
-     * Represents external service configurations for ObjectStorage Cluster allocation used to retrieve content.
+     * Represents service configurations for ObjectStorage API Server used for operations processing.
      */
     @Getter
     public static class Service {
         /**
-         * Represents all supported service providers, which can be used by ObjectStorage Cluster allocation.
+         * Represents all supported service providers, which can be used by ObjectStorage API Server.
          */
         public enum Provider {
-            @JsonProperty("exporter")
-            EXPORTER("exporter"),
-
-            @JsonProperty("git-github")
-            GIT_GITHUB("git-github");
+            @JsonProperty("s3")
+            S3("s3");
 
             private final String value;
 
@@ -73,31 +56,65 @@ public class ConfigEntity {
         public Provider provider;
 
         /**
-         * Represents configuration used for communication with ObjectStorage Exporter.
+         * Represents section used for ObjectStorage API Server backup configuration.
          */
         @Getter
-        public static class Exporter {
-            @JsonProperty("host")
-            public String host;
+        @NoArgsConstructor
+        public static class Backup {
+            @NotNull
+            @JsonProperty("enabled")
+            public Boolean enabled;
+
+            /**
+             * Represents all supported content formats, which can be used by ObjectStorage backup service.
+             */
+            @Getter
+            public enum Format {
+                @JsonProperty("zip")
+                ZIP("zip"),
+
+                @JsonProperty("tar")
+                TAR("tar");
+
+                private final String value;
+
+                Format(String value) {
+                    this.value = value;
+                }
+
+                public String toString() {
+                    return value;
+                }
+            }
+
+            @Valid
+            @NotNull
+            @JsonProperty("format")
+            public Format format;
+
+            @NotNull
+            @JsonProperty("frequency")
+            public String frequency;
         }
 
-        @JsonProperty("exporter")
-        public Exporter exporter;
+        @JsonProperty("backup")
+        public Backup backup;
 
         /**
-         * Represents credentials used for external service communication by ObjectStorage Cluster allocation.
+         * Represents credentials used for service provider authentication.
          */
         @Getter
-        public static class Credentials {
-            @JsonProperty("id")
-            public Integer id;
+        @NoArgsConstructor
+        public static class AWSCredentials {
+            @Pattern(regexp = "^(((./)?)|((~/.)?)|((/?))?)([a-zA-Z/]*)((\\.([a-z]+))?)$")
+            public String file;
 
-            @JsonProperty("token")
-            public String token;
+            @NotBlank
+            public String region;
         }
 
-        @JsonProperty("credentials")
-        public Credentials credentials;
+        @NotNull
+        public Object credentials;
     }
 
     @Valid

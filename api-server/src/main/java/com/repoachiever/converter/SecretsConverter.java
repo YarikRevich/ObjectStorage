@@ -7,11 +7,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 
-/** Represents cloud provider secrets converter */
+/** Represents provider secrets converter */
 public class SecretsConverter {
   /**
-   * Converts given credentials CSV file to a certain object. Exposed as a static method to be used
-   * with Terraform command definitions.
+   * Converts given credentials CSV file to a certain object. 
    *
    * @param content given file content to be processed.
    * @return converted credentials.

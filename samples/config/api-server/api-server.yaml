@@ -11,7 +11,7 @@ temporate-storage:
   # Represents frequency of scheduled operations processing.
   frequency: "*/5 * * * * ?"
 
-# Represents section used for vendor middleware configurations.
+# Represents section used for ObjectStorage API Server vendor middleware configurations.
 service:
   # Represents section used for ObjectStorage vendor MinIO instance.
   minio:

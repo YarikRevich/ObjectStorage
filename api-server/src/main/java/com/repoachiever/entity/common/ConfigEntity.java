@@ -14,7 +14,8 @@ import lombok.Getter;
 @ApplicationScoped
 public class ConfigEntity {
     /**
-     * Represents ObjectStorage API Server configuration used for ObjectStorage API Server instance setup.
+     * Represents ObjectStorage API Server configuration used for ObjectStorage API
+     * Server instance setup.
      */
     @Getter
     public static class Connection {
@@ -29,27 +30,14 @@ public class ConfigEntity {
     public Connection connection;
 
     /**
-     * Represents ObjectStorage API Server configuration used for internal communication infrastructure setup.
+     * Represents section used for ObjectStorage API Server temporate storage
+     * configuration.
      */
     @Getter
-    public static class Communication {
-        @NotNull
-        @JsonProperty("port")
-        public Integer port;
-    }
-
-    @Valid
-    @NotNull
-    @JsonProperty("communication")
-    public Communication communication;
-
-    /**
-     * Represents ObjectStorage API Server configuration used for content management.
-     */
-    @Getter
-    public static class Content {
+    public static class TemporateStorage {
         /**
-         * Represents all supported content formats, which can be used by ObjectStorage Cluster allocation.
+         * Represents all supported content formats, which can be used by ObjectStorage
+         * Temporate Storage.
          */
         @Getter
         public enum Format {
@@ -74,12 +62,43 @@ public class ConfigEntity {
         @NotNull
         @JsonProperty("format")
         public Format format;
+
+        @NotNull
+        @JsonProperty("frequency")
+        public String frequency;
     }
 
     @Valid
     @NotNull
-    @JsonProperty("content")
-    public Content content;
+    @JsonProperty("temporate-storage")
+    public Connection temporateStorage;
+
+    /**
+     * Represents ObjectStorage API Service configuration used for vendor middleware
+     * configuration.
+     */
+    @Getter
+    public static class Service {
+        /**
+         * Represents ObjectStorage API Server configuration used for Minio instance setup.
+         */
+        @Getter
+        public static class Minio {
+            @NotNull
+            @JsonProperty("port")
+            public Integer port;
+        }
+
+        @Valid
+        @NotNull
+        @JsonProperty("minio")
+        public Minio minio;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("service")
+    public Service service;
 
     /**
      * Represents ObjectStorage API Server configuration used for diagnostics.
@@ -106,7 +125,8 @@ public class ConfigEntity {
         public Metrics metrics;
 
         /**
-         * Represents ObjectStorage API Server configuration used for Grafana instance setup.
+         * Represents ObjectStorage API Server configuration used for Grafana instance
+         * setup.
          */
         @Getter
         public static class Grafana {
@@ -121,7 +141,8 @@ public class ConfigEntity {
         public Grafana grafana;
 
         /**
-         * Represents ObjectStorage API Server configuration used for Prometheus instance setup.
+         * Represents ObjectStorage API Server configuration used for Prometheus
+         * instance setup.
          */
         @Getter
         public static class Prometheus {
@@ -136,7 +157,8 @@ public class ConfigEntity {
         public Prometheus prometheus;
 
         /**
-         * Represents ObjectStorage API Server configuration used for Prometheus Node Exporter instance setup.
+         * Represents ObjectStorage API Server configuration used for Prometheus Node
+         * Exporter instance setup.
          */
         @Getter
         public static class NodeExporter {
@@ -155,51 +177,4 @@ public class ConfigEntity {
     @NotNull
     @JsonProperty("diagnostics")
     public Diagnostics diagnostics;
-
-    /**
-     * Represents ObjectStorage API Server resources configuration section.
-     */
-    @Getter
-    public static class Resource {
-        /**
-         * Represents ObjectStorage API Server configuration used for ObjectStorage Cluster.
-         */
-        @Getter
-        public static class Cluster {
-            @NotNull
-            @Min(1)
-            @JsonProperty("max-workers")
-            public Integer maxWorkers;
-
-            @NotNull
-            @Min(1)
-            @JsonProperty("max-versions")
-            public Integer maxVersions;
-        }
-
-        @Valid
-        @NotNull
-        @JsonProperty("cluster")
-        public Cluster cluster;
-
-        /**
-         * Represents ObjectStorage API Server configuration used for ObjectStorage Worker.
-         */
-        @Getter
-        public static class Worker {
-            @NotNull
-            @JsonProperty("frequency")
-            public String frequency;
-        }
-
-        @Valid
-        @NotNull
-        @JsonProperty("worker")
-        public Worker worker;
-    }
-
-    @Valid
-    @NotNull
-    @JsonProperty("resource")
-    public Resource resource;
 }

@@ -19,6 +19,8 @@ Features:
 * Configurable data backups per vendor in the same workspace
 * Makes user interaction similar to filesystem
 
+! A mapping of file system to external vendor providers.
+
 ![](./docs/high-level-design.png)
 
 ## Setup
