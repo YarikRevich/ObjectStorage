@@ -8,6 +8,16 @@ temporate-storage:
   # Represents format used for content to be saved.
   format: "zip"
 
+  # Represents frequency of scheduled operations processing.
+  frequency: "*/5 * * * * ?"
+
+# Represents section used for vendor middleware configurations.
+service:
+  # Represents section used for ObjectStorage vendor MinIO instance.
+  minio:
+    # Represents port used for MinIO endpoints.
+    port: 9010
+
 # Represents section used for ObjectStorage API Server diagnostics configuration.
 diagnostics:
   # Enables diagnostics functionality.

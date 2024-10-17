@@ -1,3 +1,8 @@
+# Represents section used to declare file configurations.
+content:
+  # Represents file system root location.
+  root: "/"
+
 # Represents section used for storage provider configuration.
 service:
   # Represents selected provider for ObjectStorage. Supported providers are "s3" and "gcs".
@@ -5,6 +10,9 @@ service:
 
   # Represents section used for ObjectStorage resource configuration.
   backup:
+    # Enables backup functionality.
+    enabled: true
+
     # Represents format used for content to be saved.
     format: "zip"
 
