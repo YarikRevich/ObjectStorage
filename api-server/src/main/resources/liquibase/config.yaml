@@ -61,22 +61,6 @@ databaseChangeLog:
                     unique: true
                     nullable: false
         - createTable:
-            tableName: exporter
-            columns:
-              - column:
-                  name: id
-                  type: INT
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: host
-                  type: VARCHAR
-                  constraints:
-                    unique: true
-                    nullable: false
-        - createTable:
             tableName: content
             columns:
               - column:
@@ -87,13 +71,8 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: location
+                  name: root
                   type: VARCHAR
-                  constraints:
-                    nullable: false
-              - column:
-                  name: additional
-                  type: BOOLEAN
                   constraints:
                     nullable: false
               - column:
@@ -103,14 +82,6 @@ databaseChangeLog:
                     foreignKeyName: provider_fk
                     references: provider(id)
                     nullable: false
-                    deleteCascade: true
-              - column:
-                  name: exporter
-                  type: INT
-                  constraints:
-                    foreignKeyName: exporter_fk
-                    references: exporter(id)
-                    nullable: true
                     deleteCascade: true
               - column:
                   name: secret

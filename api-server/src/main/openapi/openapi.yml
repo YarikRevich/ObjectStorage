@@ -180,24 +180,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthCheckResult"
-  /v1/readiness:
-    post:
-      tags:
-        - HealthResource
-      requestBody:
-        required: true
-        description: Check if API Server is ready to serve for the given user
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReadinessCheckApplication"
-      responses:
-        200:
-          description: General health information about running API Server
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ReadinessCheckResult"
 components:
   schemas:
     Provider:

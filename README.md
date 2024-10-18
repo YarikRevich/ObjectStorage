@@ -23,6 +23,8 @@ Features:
 
 ![](./docs/high-level-design.png)
 
+![](./docs/detailed-design.png)
+
 ## Setup
 
 All setup related operations are processed via **Makefile** placed in the root directory.

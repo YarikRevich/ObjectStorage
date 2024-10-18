@@ -2,7 +2,6 @@ package com.objectstorage.resource;
 
 import com.objectstorage.api.HealthResourceApi;
 import com.objectstorage.model.HealthCheckResult;
-import com.objectstorage.model.ReadinessCheckResult;
 import com.objectstorage.service.client.smallrye.ISmallRyeHealthCheckClientService;
 import com.objectstorage.service.config.ConfigService;
 import jakarta.annotation.PostConstruct;
@@ -46,16 +45,5 @@ public class HealthResource implements HealthResourceApi {
         } catch (WebApplicationException e) {
             return e.getResponse().readEntity(HealthCheckResult.class);
         }
-    }
-
-    /**
-     * Implementation for declared in OpenAPI configuration v1ReadinessPost method.
-     *
-     * @param body application used to perform application readiness check.
-     * @return readiness check result.
-     */
-    @Override
-    public ReadinessCheckResult v1ReadinessPost(Object body) {
-        throw new InternalServerErrorException();
     }
 }

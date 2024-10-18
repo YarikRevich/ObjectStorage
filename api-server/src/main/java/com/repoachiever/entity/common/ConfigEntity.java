@@ -74,33 +74,6 @@ public class ConfigEntity {
     public Connection temporateStorage;
 
     /**
-     * Represents ObjectStorage API Service configuration used for vendor middleware
-     * configuration.
-     */
-    @Getter
-    public static class Service {
-        /**
-         * Represents ObjectStorage API Server configuration used for Minio instance setup.
-         */
-        @Getter
-        public static class Minio {
-            @NotNull
-            @JsonProperty("port")
-            public Integer port;
-        }
-
-        @Valid
-        @NotNull
-        @JsonProperty("minio")
-        public Minio minio;
-    }
-
-    @Valid
-    @NotNull
-    @JsonProperty("service")
-    public Service service;
-
-    /**
      * Represents ObjectStorage API Server configuration used for diagnostics.
      */
     @Getter
