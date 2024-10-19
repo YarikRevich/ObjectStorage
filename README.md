@@ -11,12 +11,11 @@
 An object storage with support of **S3** and without vendor limitations.
 
 Features:
-* Easy-to-use well-designed API
+* Has easy-to-use well-designed API
 * Ignores **S3** limitations(**file size** and **performance**) making interaction with storage vendors seamless
-* Opportunity to work with different vendors using the same **ObjectStorage** instance
-* Data processing optimizations
-* Excessive monitoring opportunities
-* Configurable data backups per vendor in the same workspace
+* Provides opportunity to work with different vendors using the same **ObjectStorage** instance
+* Has integrated data processing optimizations and excessive monitoring opportunities
+* Provides configurable data backups per vendor in the same workspace
 * Makes user interaction similar to filesystem
 
 ! A mapping of file system to external vendor providers.

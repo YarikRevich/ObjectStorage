@@ -7,8 +7,8 @@ info:
 tags:
   - name: ContentResource
     description: Contains all endpoints related to operations on processed content.
-  - name: StateResource
-    description: Contains all endpoints related to state processing.
+  - name: ValidationResource
+    description: Contains all endpoints related to secrets validation.
   - name: InfoResource
     description: Contains all endpoints related to general info of API Server.
   - name: HealthResource
@@ -67,6 +67,30 @@ paths:
           description: Given content configuration was successfully withdrawn
         400:
           description: Given content configuration was not withdrawn
+
+  /v1/content/upload:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content download application
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+      responses:
+        201:
+          description: A content was successfully uploaded
+        400:
+          description: Content was not uploaded
+
   /v1/content/download:
     post:
       tags:
@@ -79,7 +103,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ContentDownload"
       responses:
-        200:
+        201:
           description: A content was successfully retrieved
           content:
             application/zip:
@@ -120,24 +144,28 @@ paths:
           description: Content with the given configuration was successfully deleted
         400:
           description: Content with the given configuration was not deleted
-  /v1/state/content:
+
+  /v1/secrets/acquire:
     post:
       tags:
-        - StateResource
+        - ValidationResource
       requestBody:
         required: true
-        description: Given content state key
+        description: Checks if the given secrets file contains correct data
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ContentStateApplication"
+              $ref: "#/components/schemas/ValidationSecretsApplication"
       responses:
         201:
-          description: Content state hash is retrieved successfully
+          description: Given secrets file is confirmed to be correct and JWT is generated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ContentStateApplicationResult"
+                $ref: "#/components/schemas/ValidationSecretsApplicationResult"
+        400:
+          description: Given secrets application contains incorrect data
+          
   /v1/info/version:
     get:
       tags:
@@ -149,26 +177,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VersionInfoResult"
-  /v1/info/topology:
-    post:
-      tags:
-        - InfoResource
-      requestBody:
-        required: true
-        description: Content configuration application
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TopologyInfoApplication"
-      responses:
-        200:
-          description: General information about deployed topology
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TopologyInfoResult"
-        400:
-          description: Given topology information retrieval was not successful
   /v1/health:
     get:
       tags:
@@ -185,29 +193,7 @@ components:
     Provider:
       type: string
       enum:
-        - exporter
-        - git-github
-    CredentialsFieldsFull:
-      required:
-        - internal
-      properties:
-        internal:
-          $ref: "#/components/schemas/CredentialsFieldsInternal"
-        external:
-          $ref: "#/components/schemas/CredentialsFieldsExternal"
-    CredentialsFieldsInternal:
-      properties:
-        id:
-          type: integer
-    CredentialsFieldsExternal:
-      anyOf:
-        - $ref: "#/components/schemas/GitGitHubCredentials"
-    GitGitHubCredentials:
-      required:
-        - token
-      properties:
-        token:
-          type: string
+        - s3
     ContentRetrievalApplication:
       required:
         - provider
@@ -215,8 +201,6 @@ components:
       properties:
         provider:
           $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
     ContentRetrievalResult:
       required:
         - locations
@@ -256,12 +240,6 @@ components:
           type: array
           items:
             type: string
-    Exporter:
-      required:
-        - host
-      properties:
-        host:
-          type: string
     ContentApplication:
       required:
         - content
@@ -272,10 +250,6 @@ components:
           $ref: "#/components/schemas/ContentUnit"
         provider:
           $ref: "#/components/schemas/Provider"
-        exporter:
-          $ref: "#/components/schemas/Exporter"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
     ContentUnit:
       required:
         - locations
@@ -301,8 +275,6 @@ components:
       properties:
         provider:
           $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
     ContentDownload:
       required:
         - location
@@ -313,8 +285,6 @@ components:
           type: string
         provider:
           $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
     ContentCleanup:
       required:
         - location
@@ -325,8 +295,6 @@ components:
           type: string
         provider:
           $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
     ContentCleanupAll:
       required:
         - provider
@@ -336,20 +304,14 @@ components:
           $ref: "#/components/schemas/Provider"
         credentials:
           $ref: "#/components/schemas/CredentialsFieldsFull"
-    ContentStateApplication:
+    ValidationSecretsApplication:
       required:
         - provider
-        - credentials
+        - file
       properties:
         provider:
           $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
-    ContentStateApplicationResult:
-      required:
-        - hash
-      properties:
-        hash:
+        file:
           type: string
     VersionInfoResult:
       properties:
@@ -364,30 +326,6 @@ components:
           type: string
         hash:
           type: string
-    TopologyInfoApplication:
-      required:
-        - provider
-        - credentials
-      properties:
-        provider:
-          $ref: "#/components/schemas/Provider"
-        credentials:
-          $ref: "#/components/schemas/CredentialsFieldsFull"
-    TopologyInfoResult:
-      type: array
-      items:
-        $ref: "#/components/schemas/TopologyInfoUnit"
-    TopologyInfoUnit:
-      required:
-        - name
-        - locations
-      properties:
-        name:
-          type: string
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationsUnit"
     HealthCheckResult:
       required:
         - status
@@ -413,8 +351,6 @@ components:
       enum:
         - UP
         - DOWN
-    ReadinessCheckApplication:
-      type: object
     ReadinessCheckResult:
       required:
         - name
