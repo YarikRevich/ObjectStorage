@@ -19,13 +19,11 @@ paths:
     post:
       tags:
         - ContentResource
-      requestBody:
-        required: true
-        description: Content retrieval application
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ContentRetrievalApplication"
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       responses:
         204:
           description: A list of all available content
@@ -39,6 +37,11 @@ paths:
     post:
       tags:
         - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       requestBody:
         required: true
         description: Content configuration application
@@ -55,13 +58,11 @@ paths:
     delete:
       tags:
         - ContentResource
-      requestBody:
-        required: true
-        description: Content withdraw application. Does not remove persisted content.
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ContentWithdrawal"
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       responses:
         204:
           description: Given content configuration was successfully withdrawn
@@ -90,11 +91,15 @@ paths:
           description: A content was successfully uploaded
         400:
           description: Content was not uploaded
-
   /v1/content/download:
     post:
       tags:
         - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       requestBody:
         required: true
         description: Content download application
@@ -116,6 +121,11 @@ paths:
     delete:
       tags:
         - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       requestBody:
         required: true
         description: Content cleanup application
@@ -132,40 +142,36 @@ paths:
     delete:
       tags:
         - ContentResource
-      requestBody:
-        required: true
-        description: Full content cleanup application
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ContentCleanupAll"
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
       responses:
         201:
           description: Content with the given configuration was successfully deleted
         400:
           description: Content with the given configuration was not deleted
-
   /v1/secrets/acquire:
     post:
       tags:
         - ValidationResource
       requestBody:
         required: true
-        description: Checks if the given secrets file contains correct data
+        description: Checks if the given secrets are correct
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ValidationSecretsApplication"
       responses:
         201:
-          description: Given secrets file is confirmed to be correct and JWT is generated
+          description: Given secrets are correct and JWT is generated
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationSecretsApplicationResult"
         400:
           description: Given secrets application contains incorrect data
-          
   /v1/info/version:
     get:
       tags:
@@ -190,112 +196,78 @@ paths:
                 $ref: "#/components/schemas/HealthCheckResult"
 components:
   schemas:
-    Provider:
-      type: string
-      enum:
-        - s3
-    ContentRetrievalApplication:
-      required:
-        - provider
-        - credentials
-      properties:
-        provider:
-          $ref: "#/components/schemas/Provider"
     ContentRetrievalResult:
       required:
-        - locations
+        - objects
       properties:
-        locations:
+        objects:
           type: array
           items:
             $ref: "#/components/schemas/ContentRetrievalUnit"
     ContentRetrievalUnit:
       required:
         - name
-        - active
-        - raw
-        - additional
+        - size
       properties:
         name:
           type: string
-        active:
-          type: boolean
-        raw:
-          $ref: "#/components/schemas/ContentRetrievalUnitRaw"
-        additional:
-          $ref: "#/components/schemas/ContentRetrievalUnitAdditional"
-    ContentRetrievalUnitRaw:
-      required:
-        - versions
-      properties:
-        versions:
-          type: array
-          items:
-            type: string
-    ContentRetrievalUnitAdditional:
-      required:
-        - versions
-      properties:
-        versions:
-          type: array
-          items:
-            type: string
+        size:
+          type: integer
     ContentApplication:
       required:
-        - content
-        - provider
-        - credentials
+        - root
       properties:
-        content:
-          $ref: "#/components/schemas/ContentUnit"
-        provider:
-          $ref: "#/components/schemas/Provider"
-    ContentUnit:
-      required:
-        - locations
-      properties:
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationsUnit"
-    LocationsUnit:
-      required:
-        - name
-        - additional
-      properties:
-        name:
+        root:
           type: string
-        additional:
-          type: boolean
-          default: false
-    ContentWithdrawal:
-      required:
-        - provider
-        - credentials
-      properties:
-        provider:
-          $ref: "#/components/schemas/Provider"
     ContentDownload:
       required:
         - location
-        - provider
-        - credentials
       properties:
         location:
           type: string
-        provider:
-          $ref: "#/components/schemas/Provider"
     ContentCleanup:
       required:
         - location
-        - provider
-        - credentials
       properties:
         location:
           type: string
-        provider:
-          $ref: "#/components/schemas/Provider"
-    ContentCleanupAll:
+    Provider:
+      type: string
+      enum:
+        - s3
+    CredentialsFieldsFull:
+      required:
+        - internal
+      properties:
+        internal:
+          $ref: "#/components/schemas/CredentialsFieldsInternal"
+        external:
+          $ref: "#/components/schemas/CredentialsFieldsExternal"
+    CredentialsFieldsInternal:
+      properties:
+        id:
+          type: integer
+    CredentialsFieldsExternal:
+      anyOf:
+        - $ref: "#/components/schemas/S3Credentials"
+    S3Credentials:
+      required:
+        - file
+        - region
+      properties:
+        file:
+          type: string
+        region:
+          type: string
+    ValidationSecretsApplication:
+      required:
+        - secrets
+      properties:
+        secrets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationSecretsUnit"
+    ValidationSecretsUnit:
       required:
         - provider
         - credentials
@@ -304,14 +276,9 @@ components:
           $ref: "#/components/schemas/Provider"
         credentials:
           $ref: "#/components/schemas/CredentialsFieldsFull"
-    ValidationSecretsApplication:
-      required:
-        - provider
-        - file
+    ValidationSecretsApplicationResult:
       properties:
-        provider:
-          $ref: "#/components/schemas/Provider"
-        file:
+        token:
           type: string
     VersionInfoResult:
       properties:

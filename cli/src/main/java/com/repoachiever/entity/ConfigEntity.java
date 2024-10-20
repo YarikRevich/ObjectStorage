@@ -120,7 +120,7 @@ public class ConfigEntity {
     @Valid
     @NotNull
     @JsonProperty("service")
-    public Service service;
+    public List<Service> service;
 
     /**
      * Represents ObjectStorage API Server configuration used for further connection establishment.

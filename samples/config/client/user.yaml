@@ -21,6 +21,9 @@ service:
 
     # Represents credentials used for the selected provider.
     credentials:
+      # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
+      id: "1"
+
       # Represents a path to the credentials CSV file, which contains both access
       # and secret keys.
       file: "~/.aws/credentials"

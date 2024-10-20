@@ -18,9 +18,7 @@
   </parent>
 
   <modules>
-    <module>cluster</module>
     <module>cli</module>
-    <module>gui</module>
     <module>api-server</module>
   </modules>
 

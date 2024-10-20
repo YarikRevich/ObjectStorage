@@ -55,18 +55,18 @@ public class PropertiesEntity {
 
   @Value(value = "${progress.visualization.content-response}")
   private String progressVisualizationContentResponseLabel;
+  
+  @Value(value = "${progress.visualization.upload-request}")
+  private String progressVisualizationUploadRequestLabel;
+
+  @Value(value = "${progress.visualization.upload-response}")
+  private String progressVisualizationUploadResponseLabel;
 
   @Value(value = "${progress.visualization.download-request}")
   private String progressVisualizationDownloadRequestLabel;
 
   @Value(value = "${progress.visualization.download-response}")
   private String progressVisualizationDownloadResponseLabel;
-
-  @Value(value = "${progress.visualization.topology-request}")
-  private String progressVisualizationTopologyRequestLabel;
-
-  @Value(value = "${progress.visualization.topology-response}")
-  private String progressVisualizationTopologyResponseLabel;
 
   @Value(value = "${progress.visualization.version-request}")
   private String progressVisualizationVersionRequestLabel;
