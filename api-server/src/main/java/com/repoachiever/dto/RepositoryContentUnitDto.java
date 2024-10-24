@@ -1,9 +1,7 @@
 package com.objectstorage.dto;
 
-import com.objectstorage.entity.common.ClusterContextEntity;
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.Provider;
-import com.objectstorage.model.Exporter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -20,8 +18,6 @@ public class RepositoryContentUnitDto {
     private Boolean additional;
 
     private Provider provider;
-
-    private Optional<Exporter> exporter;
 
     private CredentialsFieldsFull credentials;
 }

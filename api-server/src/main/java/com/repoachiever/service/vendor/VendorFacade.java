@@ -3,8 +3,9 @@ package com.objectstorage.service.vendor;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
+import com.objectstorage.model.ValidationSecretsApplicationResult;
 import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
-import com.objectstorage.service.vendor.git.github.GitGitHubVendorService;
+import com.objectstorage.service.vendor.s3.S3VendorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -22,7 +23,7 @@ public class VendorFacade {
     VendorConfigurationHelper vendorConfigurationHelper;
 
     @Inject
-    GitGitHubVendorService gitGitHubVendorService;
+    S3VendorService gitGitHubVendorService;
 
     /**
      * Checks if provided vendor provider is available.
@@ -30,10 +31,11 @@ public class VendorFacade {
      * @return result of the check.
      */
     public Boolean isVendorAvailable(Provider provider) {
-        return switch (provider) {
-            case EXPORTER -> null;
-            case GIT_GITHUB -> vendorConfigurationHelper.isVendorAvailable(properties.getRestClientGitHubUrl());
-        };
+//        return switch (provider) {
+//            case S3 -> vendorConfigurationHelper.isVendorAvailable(properties.getRestClientGitHubUrl());
+//        };
+
+        return false;
     }
 
     /**
@@ -43,32 +45,19 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @return result of the check.
      */
-    public Boolean isExternalCredentialsValid(Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
+    public Boolean areExternalCredentialsValid(Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
         return switch (provider) {
-            case EXPORTER -> true;
-            case GIT_GITHUB -> gitGitHubVendorService.isTokenValid(
-                    vendorConfigurationHelper.getWrappedToken(credentialsFieldExternal.getToken()));
-        };
-    }
-
-    /**
-     * Checks if the given location are valid.
-     *
-     * @param provider                 given external provider name.
-     * @param credentialsFieldExternal given external credentials.
-     * @param locations                given location names.
-     * @return result of the check.
-     */
-    public Boolean areLocationsValid(
-            Provider provider, CredentialsFieldsExternal credentialsFieldExternal, List<String> locations) {
-        return switch (provider) {
-            case EXPORTER -> true;
-            case GIT_GITHUB -> gitGitHubVendorService.areLocationsValid(
-                    vendorConfigurationHelper.getWrappedToken(credentialsFieldExternal.getToken()),
-                    locations
-                            .stream()
-                            .map(element -> vendorConfigurationHelper.parseLocationGitHubNotation(element))
-                            .toList());
+            case S3 -> {
+//                AWSSecretsDto secrets =
+//                        SecretsConverter.convert(AWSSecretsDto.class, validationSecretsApplication.getFile());
+//
+//                AWSCredentialsProvider awsCredentialsProvider =
+//                        AWSVendorService.getAWSCredentialsProvider(secrets);
+//
+//                awsVendorService.isCallerValid(
+//                                awsCredentialsProvider, properties.getAwsDefaultRegion())
+                yield false;
+            }
         };
     }
 }

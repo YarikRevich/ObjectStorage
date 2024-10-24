@@ -51,12 +51,6 @@ public class TemplateConfigService {
     private void process() throws
             ApplicationStartGuardFailureException,
             DiagnosticsTemplateProcessingFailureException {
-        try {
-            StateService.getStartGuard().await();
-        } catch (InterruptedException e) {
-            throw new ApplicationStartGuardFailureException(e.getMessage());
-        }
-
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             Configuration cfg = new Configuration(VERSION_2_3_32);
             try {

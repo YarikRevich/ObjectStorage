@@ -20,26 +20,20 @@ public class PropertiesEntity {
     @ConfigProperty(name = "quarkus.http.port")
     Integer applicationPort;
 
-    @ConfigProperty(name = "quarkus.rest-client.github.url")
-    String restClientGitHubUrl;
+    @ConfigProperty(name = "secrets.jwt.upn")
+    String secretsJwtUpn;
 
-    @ConfigProperty(name = "rest-client.github.page-size")
-    Integer restClientGitHubPageSize;
+    @ConfigProperty(name = "secrets.jwt.ttl")
+    Integer secretsJwtTtl;
 
-    @ConfigProperty(name = "rest-client.github.max-page")
-    Integer restClientGitHubMaxPage;
+    @ConfigProperty(name = "secrets.jwt.claims.name")
+    String secretsJwtClaimsName;
 
-    @ConfigProperty(name = "rest-client.github.repo-visibility")
-    String restClientGitHubRepoVisibility;
-
-    @ConfigProperty(name = "github.location.notation")
-    String gitHubLocationNotation;
+    @ConfigProperty(name = "secrets.jwt.header.notation")
+    String secretsJwtHeaderNotation;
 
     @ConfigProperty(name = "state.location")
     String stateLocation;
-
-    @ConfigProperty(name = "state.running.name")
-    String stateRunningName;
 
     @ConfigProperty(name = "database.tables.config.name")
     String databaseConfigTableName;
@@ -49,9 +43,6 @@ public class PropertiesEntity {
 
     @ConfigProperty(name = "database.tables.provider.name")
     String databaseProviderTableName;
-
-    @ConfigProperty(name = "database.tables.exporter.name")
-    String databaseExporterTableName;
 
     @ConfigProperty(name = "database.tables.secret.name")
     String databaseSecretTableName;
@@ -73,15 +64,6 @@ public class PropertiesEntity {
 
     @ConfigProperty(name = "workspace.content.additional.directory")
     String workspaceAdditionalContentDirectory;
-
-    @ConfigProperty(name = "repoachiever-cluster.context.alias")
-    String clusterContextAlias;
-
-    @ConfigProperty(name = "communication.api-server.name")
-    String communicationApiServerName;
-
-    @ConfigProperty(name = "communication.cluster.base")
-    String communicationClusterBase;
 
     @ConfigProperty(name = "communication.cluster.startup-await-frequency")
     Integer communicationClusterStartupAwaitFrequency;

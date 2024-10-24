@@ -65,12 +65,6 @@ public class DiagnosticsConfigService {
             NodeExporterDeploymentFailureException,
             PrometheusDeploymentFailureException,
             GrafanaDeploymentFailureException {
-        try {
-            StateService.getStartGuard().await();
-        } catch (InterruptedException e) {
-            throw new ApplicationStartGuardFailureException(e.getMessage());
-        }
-
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             CommandExecutorOutputDto dockerAvailabilityCommandOutput;
 

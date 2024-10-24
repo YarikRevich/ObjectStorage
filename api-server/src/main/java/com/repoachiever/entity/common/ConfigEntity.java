@@ -71,7 +71,7 @@ public class ConfigEntity {
     @Valid
     @NotNull
     @JsonProperty("temporate-storage")
-    public Connection temporateStorage;
+    public TemporateStorage temporateStorage;
 
     /**
      * Represents ObjectStorage API Server configuration used for diagnostics.

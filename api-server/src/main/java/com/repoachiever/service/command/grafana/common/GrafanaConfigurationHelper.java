@@ -34,8 +34,8 @@ public class GrafanaConfigurationHelper {
         return CommandConfigurationHelper.getDockerEnvironmentVariables(
                 new HashMap<>() {
                     {
-                        put("GF_SECURITY_ADMIN_USER", "repoachiever");
-                        put("GF_SECURITY_ADMIN_PASSWORD", "repoachiever");
+                        put("GF_SECURITY_ADMIN_USER", "objectstorage");
+                        put("GF_SECURITY_ADMIN_PASSWORD", "objectstorage");
                         put("GF_USERS_ALLOW_SIGN_UP", "false");
                     }
                 });

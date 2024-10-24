@@ -35,23 +35,22 @@ public class ContentResource implements ContentResourceApi {
     /**
      * Implementation for declared in OpenAPI configuration v1ContentPost method.
      *
-     * @param contentRetrievalApplication content retrieval application.
      * @return retrieved content result.
      */
     @Override
     @SneakyThrows
-    public ContentRetrievalResult v1ContentPost(ContentRetrievalApplication contentRetrievalApplication) {
-        if (Objects.isNull(contentRetrievalApplication)) {
-            throw new BadRequestException();
-        }
+    public ContentRetrievalResult v1ContentPost(String authorization) {
+        resourceConfigurationHelper.getJwtDetails(authorization);
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentRetrievalApplication.getProvider(),
+//                contentRetrievalApplication.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        return clusterFacade.retrieveContent(contentRetrievalApplication);
 
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentRetrievalApplication.getProvider(),
-                contentRetrievalApplication.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
-
-        return clusterFacade.retrieveContent(contentRetrievalApplication);
+        return null;
     }
 
     /**
@@ -61,82 +60,86 @@ public class ContentResource implements ContentResourceApi {
      */
     @Override
     @SneakyThrows
-    public void v1ContentApplyPost(ContentApplication contentApplication) {
-        if (Objects.isNull(contentApplication)) {
-            throw new BadRequestException();
-        }
+    public void v1ContentApplyPost(String authorization, ContentApplication contentApplication) {
 
-        if (!resourceConfigurationHelper.isExporterFieldValid(
-                contentApplication.getProvider(), contentApplication.getExporter())) {
-            throw new ExporterFieldIsNotValidException();
-        }
+//
+//        if (!resourceConfigurationHelper.isExporterFieldValid(
+//                contentApplication.getProvider(), contentApplication.getExporter())) {
+//            throw new ExporterFieldIsNotValidException();
+//        }
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentApplication.getProvider(), contentApplication.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        if (!resourceConfigurationHelper.isLocationsDuplicate(
+//                contentApplication.getContent().getLocations()
+//                        .stream()
+//                        .map(LocationsUnit::getName)
+//                        .toList())) {
+//            throw new LocationsFieldIsNotValidException();
+//        }
+//
+//        if (!resourceConfigurationHelper.areLocationDefinitionsValid(
+//                contentApplication.getProvider(),
+//                contentApplication.getContent().getLocations()
+//                        .stream()
+//                        .map(LocationsUnit::getName)
+//                        .toList())) {
+//            throw new LocationDefinitionsAreNotValidException();
+//        }
+//
+//        if (!vendorFacade.isVendorAvailable(contentApplication.getProvider())) {
+//            throw new ProviderIsNotAvailableException();
+//        }
+//
+//        if (!vendorFacade.areExternalCredentialsValid(
+//                contentApplication.getProvider(), contentApplication.getCredentials().getExternal())) {
+//            throw new CredentialsAreNotValidException();
+//        }
+//
+//        if (!vendorFacade.areLocationsValid(
+//                contentApplication.getProvider(),
+//                contentApplication.getCredentials().getExternal(),
+//                contentApplication.getContent().getLocations()
+//                        .stream()
+//                        .map(LocationsUnit::getName)
+//                        .toList())) {
+//            throw new LocationsAreNotValidException();
+//        }
+//
+//        clusterFacade.apply(contentApplication);
 
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentApplication.getProvider(), contentApplication.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
+//        repositoryFacade.apply(contentApplication);
 
-        if (!resourceConfigurationHelper.isLocationsDuplicate(
-                contentApplication.getContent().getLocations()
-                        .stream()
-                        .map(LocationsUnit::getName)
-                        .toList())) {
-            throw new LocationsFieldIsNotValidException();
-        }
-
-        if (!resourceConfigurationHelper.areLocationDefinitionsValid(
-                contentApplication.getProvider(),
-                contentApplication.getContent().getLocations()
-                        .stream()
-                        .map(LocationsUnit::getName)
-                        .toList())) {
-            throw new LocationDefinitionsAreNotValidException();
-        }
-
-        if (!vendorFacade.isVendorAvailable(contentApplication.getProvider())) {
-            throw new ProviderIsNotAvailableException();
-        }
-
-        if (!vendorFacade.isExternalCredentialsValid(
-                contentApplication.getProvider(), contentApplication.getCredentials().getExternal())) {
-            throw new CredentialsAreNotValidException();
-        }
-
-        if (!vendorFacade.areLocationsValid(
-                contentApplication.getProvider(),
-                contentApplication.getCredentials().getExternal(),
-                contentApplication.getContent().getLocations()
-                        .stream()
-                        .map(LocationsUnit::getName)
-                        .toList())) {
-            throw new LocationsAreNotValidException();
-        }
-
-        clusterFacade.apply(contentApplication);
-
-        repositoryFacade.apply(contentApplication);
     }
 
     /**
      * Implementation for declared in OpenAPI configuration v1ContentWithdrawDelete method.
-     *
-     * @param contentWithdrawal content withdrawal application.
      */
     @Override
     @SneakyThrows
-    public void v1ContentWithdrawDelete(ContentWithdrawal contentWithdrawal) {
-        if (Objects.isNull(contentWithdrawal)) {
-            throw new BadRequestException();
-        }
+    public void v1ContentWithdrawDelete(String authorization) {
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentWithdrawal.getProvider(), contentWithdrawal.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        clusterFacade.destroy(contentWithdrawal);
+//
+//        repositoryFacade.destroy(contentWithdrawal);
+    }
 
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentWithdrawal.getProvider(), contentWithdrawal.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
+    /**
+     * Implementation for declared in OpenAPI configuration v1ContentUploadPost method.
+     *
+     * @param authorization
+     */
+    @Override
+    public void v1ContentUploadPost(String authorization) {
 
-        clusterFacade.destroy(contentWithdrawal);
-
-        repositoryFacade.destroy(contentWithdrawal);
     }
 
     /**
@@ -147,17 +150,16 @@ public class ContentResource implements ContentResourceApi {
      */
     @Override
     @SneakyThrows
-    public byte[] v1ContentDownloadPost(ContentDownload contentDownload) {
-        if (Objects.isNull(contentDownload)) {
-            throw new BadRequestException();
-        }
+    public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentDownload.getProvider(), contentDownload.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        return clusterFacade.retrieveContentReference(contentDownload);
 
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentDownload.getProvider(), contentDownload.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
-
-        return clusterFacade.retrieveContentReference(contentDownload);
+        return null;
     }
 
     /**
@@ -167,54 +169,53 @@ public class ContentResource implements ContentResourceApi {
      */
     @Override
     @SneakyThrows
-    public void v1ContentCleanDelete(ContentCleanup contentCleanup) {
-        if (Objects.isNull(contentCleanup)) {
-            throw new BadRequestException();
-        }
-
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentCleanup.getProvider(), contentCleanup.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
-
-        if (!vendorFacade.isVendorAvailable(contentCleanup.getProvider())) {
-            throw new ProviderIsNotAvailableException();
-        }
-
-        if (!vendorFacade.isExternalCredentialsValid(
-                contentCleanup.getProvider(), contentCleanup.getCredentials().getExternal())) {
-            throw new CredentialsAreNotValidException();
-        }
-
-        clusterFacade.removeContent(contentCleanup);
+    public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
+//        if (Objects.isNull(contentCleanup)) {
+//            throw new BadRequestException();
+//        }
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentCleanup.getProvider(), contentCleanup.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        if (!vendorFacade.isVendorAvailable(contentCleanup.getProvider())) {
+//            throw new ProviderIsNotAvailableException();
+//        }
+//
+//        if (!vendorFacade.areExternalCredentialsValid(
+//                contentCleanup.getProvider(), contentCleanup.getCredentials().getExternal())) {
+//            throw new CredentialsAreNotValidException();
+//        }
+//
+//        clusterFacade.removeContent(contentCleanup);
     }
 
     /**
      * Implementation for declared in OpenAPI configuration v1ContentCleanAllDelete method.
      *
-     * @param contentCleanupAll full content cleanup application.
      */
     @Override
     @SneakyThrows
-    public void v1ContentCleanAllDelete(ContentCleanupAll contentCleanupAll) {
-        if (Objects.isNull(contentCleanupAll)) {
-            throw new BadRequestException();
-        }
-
-        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
-                contentCleanupAll.getProvider(), contentCleanupAll.getCredentials().getExternal())) {
-            throw new CredentialsFieldIsNotValidException();
-        }
-
-        if (!vendorFacade.isVendorAvailable(contentCleanupAll.getProvider())) {
-            throw new ProviderIsNotAvailableException();
-        }
-
-        if (!vendorFacade.isExternalCredentialsValid(
-                contentCleanupAll.getProvider(), contentCleanupAll.getCredentials().getExternal())) {
-            throw new CredentialsAreNotValidException();
-        }
-
-        clusterFacade.removeAll(contentCleanupAll);
+    public void v1ContentCleanAllDelete(String authorization) {
+//        if (Objects.isNull(contentCleanupAll)) {
+//            throw new BadRequestException();
+//        }
+//
+//        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
+//                contentCleanupAll.getProvider(), contentCleanupAll.getCredentials().getExternal())) {
+//            throw new CredentialsFieldIsNotValidException();
+//        }
+//
+//        if (!vendorFacade.isVendorAvailable(contentCleanupAll.getProvider())) {
+//            throw new ProviderIsNotAvailableException();
+//        }
+//
+//        if (!vendorFacade.areExternalCredentialsValid(
+//                contentCleanupAll.getProvider(), contentCleanupAll.getCredentials().getExternal())) {
+//            throw new CredentialsAreNotValidException();
+//        }
+//
+//        clusterFacade.removeAll(contentCleanupAll);
     }
 }

@@ -62,12 +62,6 @@ public class TelemetryConfigService {
             ApplicationStartGuardFailureException,
             TelemetryOperationFailureException {
         try {
-            StateService.getStartGuard().await();
-        } catch (InterruptedException e) {
-            throw new ApplicationStartGuardFailureException(e.getMessage());
-        }
-
-        try {
             connector = new ServerSocket(
                     configService.getConfig().getDiagnostics().getMetrics().getPort());
         } catch (IOException e) {

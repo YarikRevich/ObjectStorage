@@ -22,6 +22,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       responses:
@@ -40,6 +41,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       requestBody:
@@ -61,6 +63,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       responses:
@@ -68,7 +71,6 @@ paths:
           description: Given content configuration was successfully withdrawn
         400:
           description: Given content configuration was not withdrawn
-
   /v1/content/upload:
     post:
       tags:
@@ -76,6 +78,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       requestBody:
@@ -98,6 +101,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       requestBody:
@@ -124,6 +128,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       requestBody:
@@ -145,6 +150,7 @@ paths:
       parameters:
         - in: header
           name: Authorization
+          required: true
           schema:
             type: string
       responses:
@@ -238,12 +244,15 @@ components:
     CredentialsFieldsFull:
       required:
         - internal
+        - external
       properties:
         internal:
           $ref: "#/components/schemas/CredentialsFieldsInternal"
         external:
           $ref: "#/components/schemas/CredentialsFieldsExternal"
     CredentialsFieldsInternal:
+      required:
+        - id
       properties:
         id:
           type: integer
@@ -282,7 +291,7 @@ components:
           type: string
     VersionInfoResult:
       properties:
-        externalApi:
+        external_api:
           $ref: "#/components/schemas/VersionExternalApiInfoResult"
     VersionExternalApiInfoResult:
       required:
@@ -314,32 +323,6 @@ components:
         status:
           $ref: "#/components/schemas/HealthCheckStatus"
     HealthCheckStatus:
-      type: string
-      enum:
-        - UP
-        - DOWN
-    ReadinessCheckResult:
-      required:
-        - name
-        - status
-        - data
-      properties:
-        name:
-          type: string
-        status:
-          $ref: "#/components/schemas/ReadinessCheckStatus"
-        data:
-          type: object
-    ReadinessCheckUnit:
-      required:
-        - name
-        - status
-      properties:
-        name:
-          type: string
-        status:
-          $ref: "#/components/schemas/ReadinessCheckStatus"
-    ReadinessCheckStatus:
       type: string
       enum:
         - UP

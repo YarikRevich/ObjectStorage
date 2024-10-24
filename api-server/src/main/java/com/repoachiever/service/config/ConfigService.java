@@ -106,7 +106,7 @@ public class ConfigService {
             }
 
             if (!CronExpression.isValidExpression(
-                    config.getResource().getWorker().getFrequency())) {
+                    config.getTemporateStorage().getFrequency())) {
                 throw new ConfigValidationException(
                         new ConfigCronExpressionValidationException().getMessage());
             }

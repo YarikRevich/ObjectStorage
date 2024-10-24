@@ -47,9 +47,6 @@ public class ApplyExternalCommandService implements ICommand<ConfigEntity> {
                     config.getContent().getLocations()),
             ConfigProviderToContentProviderConverter.convert(
                     config.getService().getProvider()),
-            ConfigExporterToContentExporterConverter.convert(
-                    config.getService().getProvider(),
-                    config.getService().getExporter()),
             ConfigCredentialsToContentCredentialsConverter.convert(
                     config.getService().getProvider(),
                     config.getService().getCredentials()));

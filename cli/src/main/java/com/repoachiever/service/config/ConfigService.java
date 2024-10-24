@@ -89,6 +89,9 @@ public class ConfigService {
                                     .collect(Collectors.joining(", ")));
                 }
             }
+
+            // AWSSecretsDto secrets =
+            // SecretsConverter.convert(AWSSecretsDto.class, validationSecretsApplication.getFile());
         } finally {
             try {
                 file.close();

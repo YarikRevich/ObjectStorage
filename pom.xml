@@ -188,6 +188,16 @@
         <artifactId>quarkus-jdbc-sqlite</artifactId>
         <version>3.0.7</version>
       </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-smallrye-jwt</artifactId>
+        <version>3.4.3</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-smallrye-jwt-build</artifactId>
+        <version>3.4.3</version>
+      </dependency>
 
       <!-- PICOCLI -->
       <dependency>

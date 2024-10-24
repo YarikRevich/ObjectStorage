@@ -3,7 +3,6 @@ package com.objectstorage.repository.executor;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.QueryEmptyResultException;
 import com.objectstorage.exception.QueryExecutionFailureException;
-import com.objectstorage.service.cluster.resource.ClusterCommunicationResource;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 @ApplicationScoped
 public class RepositoryExecutor {
-    private static final Logger logger = LogManager.getLogger(ClusterCommunicationResource.class);
+    private static final Logger logger = LogManager.getLogger(RepositoryExecutor.class);
 
     @Inject
     PropertiesEntity properties;
