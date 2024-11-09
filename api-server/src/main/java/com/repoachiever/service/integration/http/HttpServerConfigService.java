@@ -31,9 +31,7 @@ public class HttpServerConfigService implements HttpServerOptionsCustomizer {
     @SneakyThrows
     @Override
     public void customizeHttpServer(HttpServerOptions options) {
-        ConfigEntity.Connection connection = configService.getConfig().getConnection();
-
-        options.setPort(connection.getPort());
+        options.setPort(configService.getConfig().getConnection().getPort());
     }
 }
 
