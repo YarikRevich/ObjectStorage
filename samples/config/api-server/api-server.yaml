@@ -1,7 +1,18 @@
 # Represents section used for ObjectStorage API Server connection configuration.
 connection:
   # Represents port of ObjectStorage API Server used for connection establishment.
-  port: 8085
+  port: 8086
+
+  # Represents section used for ObjectStorage API Server security configuration.
+  security:
+    # Enables security functionality.
+    enabled: false
+
+    # Represents path to security certificate key file in JKS format.
+    file: "~/test/test.jks"
+
+    # Represents password, which will be used to decode operations.
+    password: "test123"
 
 # Represents section used for ObjectStorage API Server temporate storage configuration.
 temporate-storage:

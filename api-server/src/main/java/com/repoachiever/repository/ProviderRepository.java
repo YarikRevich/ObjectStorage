@@ -7,6 +7,7 @@ import com.objectstorage.exception.QueryEmptyResultException;
 import com.objectstorage.exception.QueryExecutionFailureException;
 import com.objectstorage.exception.RepositoryOperationFailureException;
 import com.objectstorage.repository.executor.RepositoryExecutor;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -18,6 +19,7 @@ import java.sql.SQLException;
  * Represents repository implementation to handle provider table.
  */
 @ApplicationScoped
+@RegisterForReflection
 public class ProviderRepository {
     @Inject
     PropertiesEntity properties;

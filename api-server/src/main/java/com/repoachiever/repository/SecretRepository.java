@@ -7,6 +7,7 @@ import com.objectstorage.exception.QueryEmptyResultException;
 import com.objectstorage.exception.QueryExecutionFailureException;
 import com.objectstorage.exception.RepositoryOperationFailureException;
 import com.objectstorage.repository.executor.RepositoryExecutor;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +21,7 @@ import java.util.Optional;
  * Represents repository implementation to handle secret table.
  */
 @ApplicationScoped
+@RegisterForReflection
 public class SecretRepository {
     @Inject
     PropertiesEntity properties;

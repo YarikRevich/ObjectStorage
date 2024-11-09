@@ -21,7 +21,7 @@ public class ConfigEntity {
     public static class Content {
         @NotNull
         @JsonProperty("root")
-        public Stirng root;
+        public String root;
     }
 
     @Valid

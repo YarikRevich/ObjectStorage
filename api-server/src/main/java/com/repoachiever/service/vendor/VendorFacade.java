@@ -1,7 +1,7 @@
 package com.objectstorage.service.vendor;
 
 import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.model.CredentialsFieldsExternal;
+//import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
 import com.objectstorage.model.ValidationSecretsApplicationResult;
 import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
@@ -45,19 +45,19 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @return result of the check.
      */
-    public Boolean areExternalCredentialsValid(Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
-        return switch (provider) {
-            case S3 -> {
-//                AWSSecretsDto secrets =
-//                        SecretsConverter.convert(AWSSecretsDto.class, validationSecretsApplication.getFile());
-//
-//                AWSCredentialsProvider awsCredentialsProvider =
-//                        AWSVendorService.getAWSCredentialsProvider(secrets);
-//
-//                awsVendorService.isCallerValid(
-//                                awsCredentialsProvider, properties.getAwsDefaultRegion())
-                yield false;
-            }
-        };
-    }
+//    public Boolean areExternalCredentialsValid(Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
+//        return switch (provider) {
+//            case S3 -> {
+////                AWSSecretsDto secrets =
+////                        SecretsConverter.convert(AWSSecretsDto.class, validationSecretsApplication.getFile());
+////
+////                AWSCredentialsProvider awsCredentialsProvider =
+////                        AWSVendorService.getAWSCredentialsProvider(secrets);
+////
+////                awsVendorService.isCallerValid(
+////                                awsCredentialsProvider, properties.getAwsDefaultRegion())
+//                yield false;
+//            }
+//        };
+//    }
 }

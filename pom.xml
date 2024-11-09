@@ -120,83 +120,93 @@
       <!-- QUARKUS -->
       <dependency>
         <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-rest</artifactId>
+        <version>3.16.2</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
         <artifactId>quarkus-rest-client</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-rest-client-jackson</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-vertx-http</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-vertx-http-deployment</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
-        <version>3.4.3</version>
+        <artifactId>quarkus-rest-jackson</artifactId>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-smallrye-openapi</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-smallrye-health</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-arc</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-hibernate-validator</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-liquibase</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-hibernate-orm-panache</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-hibernate-orm</artifactId>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-agroal</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkiverse.jdbc</groupId>
         <artifactId>quarkus-jdbc-sqlite</artifactId>
-        <version>3.0.7</version>
+        <version>3.0.11</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-smallrye-jwt</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-smallrye-jwt-build</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
       </dependency>
 
       <!-- PICOCLI -->
@@ -209,6 +219,18 @@
         <groupId>info.picocli</groupId>
         <artifactId>picocli-spring-boot-starter</artifactId>
         <version>4.6.3</version>
+      </dependency>
+
+      <!-- HIBERNATE -->
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-core</artifactId>
+        <version>6.6.2.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate.validator</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>8.0.1.Final</version>
       </dependency>
 
       <!-- JAVAFX -->
@@ -232,6 +254,16 @@
 
       <!-- THIRD PARTY -->
       <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-core</artifactId>
+        <version>1.13.6</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.18.1</version>
+      </dependency>
+      <dependency>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy</artifactId>
         <version>1.15.3</version>
@@ -244,7 +276,7 @@
       <dependency>
         <groupId>org.jboss</groupId>
         <artifactId>jandex</artifactId>
-        <version>3.1.5</version>
+        <version>3.2.0</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>
@@ -413,7 +445,7 @@
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-junit5</artifactId>
-        <version>3.4.3</version>
+        <version>3.16.2</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -531,7 +563,7 @@
         <plugin>
           <groupId>org.openapitools</groupId>
           <artifactId>openapi-generator-maven-plugin</artifactId>
-          <version>6.4.0</version>
+          <version>7.9.0</version>
         </plugin>
 
         <!-- JAVAFX -->
@@ -603,17 +635,7 @@
         <plugin>
           <groupId>io.quarkus.platform</groupId>
           <artifactId>quarkus-maven-plugin</artifactId>
-          <version>3.4.3</version>
-          <extensions>true</extensions>
-          <executions>
-            <execution>
-              <goals>
-                <goal>build</goal>
-                <goal>generate-code</goal>
-                <goal>generate-code-tests</goal>
-              </goals>
-            </execution>
-          </executions>
+          <version>3.16.2</version>
         </plugin>
 
         <!-- GIT INFO -->

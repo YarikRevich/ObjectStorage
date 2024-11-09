@@ -51,7 +51,7 @@ end loop
 loop temporate storage mechanism
 
 activate externalservice
-temporatestorage -> externalservice : request object upload
+temporatestorage ->> externalservice : request object upload
 deactivate externalservice
 
 end loop
@@ -89,6 +89,7 @@ deactivate externalservice
 
 activate localstorage
 apiserver -> localstorage: apply provided user configuration
+localstorage -> apiserver: user configuration update result
 deactivate localstorage
 
 end group
@@ -99,6 +100,7 @@ client -> apiserver: withdraw configuration for the user
 
 activate localstorage
 apiserver -> localstorage: remove configuration for the given user
+localstorage -> apiserver: user configuration removal result
 deactivate localstorage
 
 end group
@@ -108,7 +110,7 @@ group /v1/content/upload POST
 client -> apiserver: upload object
 
 activate temporatestorage
-apiserver -> temporatestorage: schedule object upload
+apiserver ->> temporatestorage: schedule object upload
 deactivate temporatestorage
 
 end group
@@ -145,12 +147,14 @@ opt if any object is still not processed
 
 activate temporatestorage
 apiserver -> temporatestorage: remove requested object for the given user
+temporatestorage -> apiserver: object removal result
 deactivate temporatestorage
 
 end opt
 
 activate externalservice
 apiserver -> externalservice: remove requested object for the given user
+externalservice -> apiserver: object removal result
 deactivate externalservice
 
 end group
@@ -163,12 +167,14 @@ opt if any object is still not processed
 
 activate temporatestorage
 apiserver -> temporatestorage: remove all content for the given user
+temporatestorage -> apiserver: content removal result
 deactivate temporatestorage
 
 end opt
 
 activate externalservice
 apiserver -> externalservice: remove all content for the given user
+externalservice -> apiserver: content removal result
 deactivate externalservice
 
 end group

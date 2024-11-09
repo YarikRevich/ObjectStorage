@@ -14,6 +14,7 @@ import jakarta.ws.rs.BadRequestException;
 import lombok.SneakyThrows;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
@@ -40,7 +41,10 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public ContentRetrievalResult v1ContentPost(String authorization) {
-        resourceConfigurationHelper.getJwtDetails(authorization);
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
+
+
 //
 //        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
 //                contentRetrievalApplication.getProvider(),
@@ -61,7 +65,8 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentApplyPost(String authorization, ContentApplication contentApplication) {
-
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
 //
 //        if (!resourceConfigurationHelper.isExporterFieldValid(
 //                contentApplication.getProvider(), contentApplication.getExporter())) {
@@ -121,6 +126,9 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentWithdrawDelete(String authorization) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
+
 //
 //        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
 //                contentWithdrawal.getProvider(), contentWithdrawal.getCredentials().getExternal())) {
@@ -138,8 +146,12 @@ public class ContentResource implements ContentResourceApi {
      * @param authorization
      */
     @Override
-    public void v1ContentUploadPost(String authorization) {
+    @SneakyThrows
+    public void v1ContentUploadPost(String authorization, InputStream file) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
 
+        System.out.println(file.available());
     }
 
     /**
@@ -151,6 +163,8 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
 //
 //        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
 //                contentDownload.getProvider(), contentDownload.getCredentials().getExternal())) {
@@ -170,6 +184,8 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
 //        if (Objects.isNull(contentCleanup)) {
 //            throw new BadRequestException();
 //        }
@@ -198,6 +214,8 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentCleanAllDelete(String authorization) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
 //        if (Objects.isNull(contentCleanupAll)) {
 //            throw new BadRequestException();
 //        }

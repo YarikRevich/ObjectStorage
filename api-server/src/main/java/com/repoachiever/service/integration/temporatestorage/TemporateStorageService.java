@@ -20,7 +20,6 @@ public class TemporateStorageService {
     @PostConstruct
     public void process() {
 
-
     }
 }
 

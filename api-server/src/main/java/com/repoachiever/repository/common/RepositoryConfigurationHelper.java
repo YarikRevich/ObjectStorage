@@ -1,6 +1,6 @@
 package com.objectstorage.repository.common;
 
-import com.objectstorage.model.CredentialsFieldsExternal;
+//import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.CredentialsFieldsInternal;
 import com.objectstorage.model.Provider;
@@ -17,13 +17,13 @@ public class RepositoryConfigurationHelper {
      * @param credentialsFieldExternal given credentials field.
      * @return extracted external credentials as optional.
      */
-    public static Optional<String> getExternalCredentials(
-            Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
-        return switch (provider) {
-//            case S3 -> Optional.ofNullable(credentialsFieldExternal.getToken());
-            case S3 -> Optional.empty();
-        };
-    }
+//    public static Optional<String> getExternalCredentials(
+//            Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
+//        return switch (provider) {
+////            case S3 -> Optional.ofNullable(credentialsFieldExternal.getToken());
+//            case S3 -> Optional.empty();
+//        };
+//    }
 
     /**
      * Converts given raw provider to content provider.

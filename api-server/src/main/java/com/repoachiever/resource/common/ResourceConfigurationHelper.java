@@ -14,6 +14,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,7 +77,18 @@ public class ResourceConfigurationHelper {
         return Jwt
                 .upn(properties.getSecretsJwtUpn())
                 .claim(properties.getSecretsJwtClaimsName(), key)
+                .expiresIn(Duration.ofMillis(properties.getSecretsJwtTtl()))
                 .signWithSecret(StateService.getJwtSecretKey());
+    }
+
+    /**
+     * Checks if the given locations have duplicates.
+     *
+     * @return result of the check.
+     */
+    public Boolean areProvidersDuplicated(List<String> d) {
+//        return locations.stream().distinct().count() == locations.size();
+        return true;
     }
 
 //    /**

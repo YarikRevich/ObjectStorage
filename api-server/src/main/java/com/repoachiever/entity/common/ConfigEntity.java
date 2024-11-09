@@ -22,6 +22,27 @@ public class ConfigEntity {
         @NotNull
         @JsonProperty("port")
         public Integer port;
+
+        /**
+         * Represents ObjectStorage API Server security configuration.
+         */
+        @Getter
+        public static class Security {
+            @NotNull
+            @JsonProperty("enabled")
+            public Boolean enabled;
+
+            @NotNull
+            @JsonProperty("file")
+            public String file;
+
+            @NotNull
+            @JsonProperty("password")
+            public String password;
+        }
+
+        @JsonProperty("security")
+        public Security security;
     }
 
     @Valid
@@ -30,8 +51,7 @@ public class ConfigEntity {
     public Connection connection;
 
     /**
-     * Represents section used for ObjectStorage API Server temporate storage
-     * configuration.
+     * Represents ObjectStorage API Server configuration used for temporate storage setup.
      */
     @Getter
     public static class TemporateStorage {
