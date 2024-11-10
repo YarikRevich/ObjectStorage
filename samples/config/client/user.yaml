@@ -8,17 +8,6 @@ service:
     # Represents selected provider for ObjectStorage. Supported provider is "s3" only.
   - provider: "s3"
 
-    # Represents section used for ObjectStorage backup configuration.
-    backup:
-      # Enables backup functionality.
-      enabled: true
-
-      # Represents format used for content to be saved.
-      format: "zip"
-
-      # Represents frequency of backup operation for selected provider.
-      frequency: "0 */5 * * * ?"
-
     # Represents credentials used for the selected provider.
     credentials:
       # Represents session identificator, used to distinguish different workspaces and thus separate content inside.

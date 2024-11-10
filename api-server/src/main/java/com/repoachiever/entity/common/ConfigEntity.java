@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents configuration model used for ObjectStorage API Server operations.
@@ -92,6 +93,51 @@ public class ConfigEntity {
     @NotNull
     @JsonProperty("temporate-storage")
     public TemporateStorage temporateStorage;
+
+    /**
+     * Represents ObjectStorage API Server configuration used for backup setup.
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class Backup {
+        @NotNull
+        @JsonProperty("enabled")
+        public Boolean enabled;
+
+        /**
+         * Represents all supported content formats, which can be used by ObjectStorage backup service.
+         */
+        @Getter
+        public enum Format {
+            @JsonProperty("zip")
+            ZIP("zip"),
+
+            @JsonProperty("tar")
+            TAR("tar");
+
+            private final String value;
+
+            Format(String value) {
+                this.value = value;
+            }
+
+            public String toString() {
+                return value;
+            }
+        }
+
+        @Valid
+        @NotNull
+        @JsonProperty("format")
+        public Format format;
+
+        @NotNull
+        @JsonProperty("frequency")
+        public String frequency;
+    }
+
+    @JsonProperty("backup")
+    public Backup backup;
 
     /**
      * Represents ObjectStorage API Server configuration used for diagnostics.

@@ -22,6 +22,17 @@ temporate-storage:
   # Represents frequency of scheduled operations processing.
   frequency: "*/5 * * * * ?"
 
+# Represents section used for ObjectStorage API Server backup configuration.
+backup:
+  # Enables backup functionality.
+  enabled: true
+
+  # Represents format used for content to be saved.
+  format: "zip"
+
+  # Represents frequency of backup operation for selected provider.
+  frequency: "0 */5 * * * ?"
+
 # Represents section used for ObjectStorage API Server diagnostics configuration.
 diagnostics:
   # Enables diagnostics functionality.

@@ -246,6 +246,7 @@ components:
       type: string
       enum:
         - s3
+        - gcs
     CredentialsFieldsFull:
       required:
         - internal
@@ -264,6 +265,7 @@ components:
     CredentialsFieldsExternal:
       anyOf:
         - $ref: "#/components/schemas/S3Credentials"
+        - $ref: "#/components/schemas/GCSCredentials"
     S3Credentials:
       required:
         - file
@@ -272,6 +274,12 @@ components:
         file:
           type: string
         region:
+          type: string
+    GCSCredentials:
+      required:
+        - test
+      properties:
+        test:
           type: string
     ValidationSecretsApplication:
       required:

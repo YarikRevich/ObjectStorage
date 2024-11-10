@@ -50,6 +50,7 @@ public class RepositoryConfigurationHelper {
 //                    CredentialsFieldsInternal.of(session),
 //                    CredentialsFieldsExternal.of(credentials.get()));
             case S3 -> null;
+            case GCS -> null;
         };
     }
 }

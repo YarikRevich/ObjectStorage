@@ -24,6 +24,8 @@ Features:
 
 ![](./docs/detailed-design.png)
 
+![](./docs/internal-storage-design.png)
+
 ## Setup
 
 All setup related operations are processed via **Makefile** placed in the root directory.
@@ -51,8 +53,98 @@ After the execution of command given above the executable will be generated and 
 ## Use cases
 
 For **ObjectStorage CLI** example, there was used the following user configuration file located at **~/.objectstorage/config** directory as **user.yaml**:
+```yaml
+# Represents section used to declare file configurations.
+content:
+  # Represents file system root location.
+  root: "/"
+
+# Represents section used for storage provider configuration.
+service:
+    # Represents selected provider for ObjectStorage. Supported provider is "s3" only.
+  - provider: "s3"
+
+    # Represents credentials used for the selected provider.
+    credentials:
+      # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
+      id: "1"
+
+      # Represents a path to the credentials CSV file, which contains both access
+      # and secret keys.
+      file: "~/.aws/credentials"
+
+      # Represents a select region where the deployment of infrastructure will be performed.
+      # Remember that it may influence the availability of the ResourceTracker deployed infrastructure.
+      region: "us-west-2"
+
+# Represents section used for ObjectStorage API Server configuration.
+api-server:
+  # Represents address for the host of ObjectStorage API Server.
+  host: "http://localhost:8085"
+```
 
 For **ObjectStorage API Server** there was used the following configuration file located at **~/.objectstorage/config** directory as **api-server.yaml**:
+```yaml
+# Represents section used for ObjectStorage API Server connection configuration.
+connection:
+  # Represents port of ObjectStorage API Server used for connection establishment.
+  port: 8086
+
+  # Represents section used for ObjectStorage API Server security configuration.
+  security:
+    # Enables security functionality.
+    enabled: false
+
+    # Represents path to security certificate key file in JKS format.
+    file: "~/test/test.jks"
+
+    # Represents password, which will be used to decode operations.
+    password: "test123"
+
+# Represents section used for ObjectStorage API Server temporate storage configuration.
+temporate-storage:
+  # Represents format used for content to be saved.
+  format: "zip"
+
+  # Represents frequency of scheduled operations processing.
+  frequency: "*/5 * * * * ?"
+
+# Represents section used for ObjectStorage API Server backup configuration.
+backup:
+  # Enables backup functionality.
+  enabled: true
+
+  # Represents format used for content to be saved.
+  format: "zip"
+
+  # Represents frequency of backup operation for selected provider.
+  frequency: "0 */5 * * * ?"
+
+# Represents section used for ObjectStorage API Server diagnostics configuration.
+diagnostics:
+  # Enables diagnostics functionality.
+  enabled: false
+
+  # Represents section used for ObjectStorage diagnostics metrics configuration.
+  metrics:
+    # Represents port used for metrics endpoint.
+    port: 8090
+
+  # Represents section used for ObjectStorage diagnostics Grafana instance.
+  grafana:
+    # Represents port used for Grafana instance deployment.
+    port: 8091
+
+  # Represents section used for ObjectStorage diagnostics Prometheus instance.
+  prometheus:
+    # Represents port used for Prometheus instance deployment.
+    port: 8120
+
+  # Represents section used for ObjectStorage diagnostics Prometheus Node Exporter instance.
+  node-exporter:
+    # Represents port used for Prometheus Node Exporter instance deployment.
+    port: 8121
+```
 
 ### Diagnostics dashboard
 
