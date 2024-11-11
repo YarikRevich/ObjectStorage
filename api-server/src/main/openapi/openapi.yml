@@ -267,17 +267,12 @@ components:
         - $ref: "#/components/schemas/S3Credentials"
         - $ref: "#/components/schemas/GCSCredentials"
     S3Credentials:
-      required:
-        - file
-        - region
       properties:
         file:
           type: string
         region:
           type: string
     GCSCredentials:
-      required:
-        - test
       properties:
         test:
           type: string
