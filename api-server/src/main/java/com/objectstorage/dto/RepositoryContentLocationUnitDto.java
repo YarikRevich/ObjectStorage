@@ -9,7 +9,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor(staticName = "of")
 public class RepositoryContentLocationUnitDto {
+    /**
+     *
+     */
     private String location;
 
+    /**
+     *
+     */
     private Boolean additional;
 }

@@ -33,24 +33,15 @@ public class SecretRepository {
      * Inserts given values into the provider table.
      *
      * @param session given internal secret.
-     * @param credentials   given optional external credentials.
+     * @param credentials given signature of external credentials.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void insert(Integer session, Optional<String> credentials) throws RepositoryOperationFailureException {
-        String query;
-
-        if (credentials.isPresent()) {
-            query = String.format(
-                    "INSERT INTO %s (session, credentials) VALUES (%d, '%s')",
-                    properties.getDatabaseSecretTableName(),
-                    session,
-                    credentials.get());
-        } else {
-            query = String.format(
-                    "INSERT INTO %s (session) VALUES (%d)",
-                    properties.getDatabaseSecretTableName(),
-                    session);
-        }
+    public void insert(Integer session, String credentials) throws RepositoryOperationFailureException {
+        String query = String.format(
+                "INSERT INTO %s (session, credentials) VALUES (%d, '%s')",
+                properties.getDatabaseSecretTableName(),
+                session,
+                credentials);
 
         try {
             repositoryExecutor.performQuery(query);
@@ -63,25 +54,16 @@ public class SecretRepository {
      * Checks if secret entity with the given session and credentials is present.
      *
      * @param session given session of the secrets set.
-     * @param credentials   given optional external credentials.
+     * @param credentials given signature of external credentials.
      * @return result of the check.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
-    public Boolean isPresentBySessionAndCredentials(Integer session, Optional<String> credentials) throws RepositoryOperationFailureException {
-        String query;
-
-        if (credentials.isPresent()) {
-            query = String.format(
-                    "SELECT t.id FROM %s as t WHERE t.session = %d AND t.credentials = '%s'",
-                    properties.getDatabaseSecretTableName(),
-                    session,
-                    credentials.get());
-        } else {
-            query = String.format(
-                    "SELECT t.id FROM %s as t WHERE t.session = %d",
-                    properties.getDatabaseSecretTableName(),
-                    session);
-        }
+    public Boolean isPresentBySessionAndCredentials(Integer session, String credentials) throws RepositoryOperationFailureException {
+        String query = String.format(
+                "SELECT t.id FROM %s as t WHERE t.session = %d AND t.credentials = '%s'",
+                properties.getDatabaseSecretTableName(),
+                session,
+                credentials);
 
         try {
             ResultSet resultSet = repositoryExecutor.performQueryWithResult(query);
@@ -104,25 +86,16 @@ public class SecretRepository {
      * Attempts to retrieve secret entity by the given session and credentials.
      *
      * @param session given session of the secrets set.
-     * @param credentials   given optional external credentials.
+     * @param credentials given signature of external credentials.
      * @return retrieved secret entity.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
-    public SecretEntity findBySessionAndCredentials(Integer session, Optional<String> credentials) throws RepositoryOperationFailureException {
-        String query;
-
-        if (credentials.isPresent()) {
-            query = String.format(
-                    "SELECT t.id FROM %s as t WHERE t.session = %d AND t.credentials = '%s'",
-                    properties.getDatabaseSecretTableName(),
-                    session,
-                    credentials.get());
-        } else {
-            query = String.format(
-                    "SELECT t.id FROM %s as t WHERE t.session = %d",
-                    properties.getDatabaseSecretTableName(),
-                    session);
-        }
+    public SecretEntity findBySessionAndCredentials(Integer session, String credentials) throws RepositoryOperationFailureException {
+        String query = String.format(
+                "SELECT t.id FROM %s as t WHERE t.session = %d AND t.credentials = '%s'",
+                properties.getDatabaseSecretTableName(),
+                session,
+                credentials);
 
         ResultSet resultSet;
 
@@ -191,6 +164,6 @@ public class SecretRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return SecretEntity.of(id, session, Optional.ofNullable(credentials));
+        return SecretEntity.of(id, session, credentials);
     }
 }

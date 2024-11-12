@@ -1,7 +1,7 @@
 package com.objectstorage.resource.common;
 
 import com.objectstorage.dto.SecretsCacheDto;
-import com.objectstorage.dto.ValidationSecretsResultDto;
+import com.objectstorage.dto.ValidationSecretsCompoundDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.ValidationSecretsApplication;
@@ -92,30 +92,26 @@ public class ResourceConfigurationHelper {
     }
 
     /**
-     * Validates provided secrets application and converts to secrets result dto.
+     * Converts and validates given external credentials according to the selected provider type.
      *
      * @param validationSecretsApplication given validation secrets application to be validated.
-     * @return converted secrets result dto
+     * @return converted secrets compound dto.
      * @throws SecretsConversionException if secrets conversion fails or provided secrets are invalid.
      */
-    public List<ValidationSecretsResultDto> validateSecretsApplication(
+    public List<ValidationSecretsCompoundDto> getExternalSecrets(
             ValidationSecretsApplication validationSecretsApplication) throws SecretsConversionException {
-        List<ValidationSecretsResultDto> validationSecretsResultDtoList = new ArrayList<>();
+        List<ValidationSecretsCompoundDto> result = new ArrayList<>();
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            ValidationSecretsResultDto validationSecretsResultDto =
-                    vendorFacade.areExternalCredentialsValid(
+            Object validationSecretsResult =
+                    vendorFacade.getExternalCredentialsSecrets(
                             validationSecretsUnit.getProvider(),
                             validationSecretsUnit.getCredentials().getExternal());
 
-            if (!validationSecretsResultDto.getValid()) {
-                throw new SecretsConversionException();
-            }
-
-            validationSecretsResultDtoList.add(validationSecretsResultDto);
+            result.add(ValidationSecretsCompoundDto.of(validationSecretsUnit, validationSecretsResult));
         }
 
-        return validationSecretsResultDtoList;
+        return result;
     }
 
     /**

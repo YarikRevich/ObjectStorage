@@ -19,5 +19,5 @@ public class SecretEntity {
 
     private Integer session;
 
-    private Optional<String> credentials;
+    private String credentials;
 }

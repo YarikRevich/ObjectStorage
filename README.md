@@ -24,6 +24,8 @@ Features:
 
 ![](./docs/detailed-design.png)
 
+![](./docs/internal-database-design.png)
+
 ![](./docs/internal-storage-design.png)
 
 ## Setup

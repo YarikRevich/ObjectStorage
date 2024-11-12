@@ -14,11 +14,13 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: name
-                  type: VARCHAR
+                  name: secret
+                  type: INT
                   constraints:
-                    unique: true
+                    foreignKeyName: secret_fk
+                    references: secret(id)
                     nullable: false
+                    deleteCascade: true
               - column:
                   name: hash
                   type: VARCHAR
@@ -90,6 +92,7 @@ databaseChangeLog:
                     foreignKeyName: secret_fk
                     references: secret(id)
                     nullable: false
+                    unique: true
                     deleteCascade: true
         - loadData:
             tableName: provider

@@ -22,14 +22,14 @@ public class VendorFacade {
     S3VendorService s3VendorService;
 
     /**
-     * Checks if the given external credentials are valid, according to the given provider name.
+     * Converts given raw credentials according to the selected provider, according to the given provider name.
      *
      * @param provider                 given external provider name.
      * @param credentialsFieldExternal given external credentials.
-     * @return result of provider credentials validation.
-     * @throws SecretsConversionException if secrets conversion fails.
+     * @return converted provider credentials validation.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
      */
-    public ValidationSecretsResultDto areExternalCredentialsValid(
+    public Object getExternalCredentialsSecrets(
             Provider provider, CredentialsFieldsExternal credentialsFieldExternal) throws SecretsConversionException {
         return switch (provider) {
             case S3 -> {
@@ -39,11 +39,12 @@ public class VendorFacade {
                 AWSCredentialsProvider awsCredentialsProvider =
                         s3VendorService.getAWSCredentialsProvider(secrets);
 
-                yield ValidationSecretsResultDto.of(
-                        provider,
-                        s3VendorService.isCallerValid(
-                                awsCredentialsProvider, credentialsFieldExternal.getRegion()),
-                        secrets);
+                if (!s3VendorService.isCallerValid(
+                        awsCredentialsProvider, credentialsFieldExternal.getRegion())) {
+                    throw new SecretsConversionException();
+                }
+
+                yield secrets;
             }
             case GCS -> null;
         };

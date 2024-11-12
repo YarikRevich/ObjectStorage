@@ -44,6 +44,7 @@ public class ContentResource implements ContentResourceApi {
     public ContentRetrievalResult v1ContentPost(String authorization) {
         SecretsCacheDto secretsCacheDto =
                 resourceConfigurationHelper.getJwtDetails(authorization);
+
 //
 //        if (!resourceConfigurationHelper.isExternalCredentialsFieldValid(
 //                contentRetrievalApplication.getProvider(),
@@ -66,6 +67,7 @@ public class ContentResource implements ContentResourceApi {
     public void v1ContentApplyPost(String authorization, ContentApplication contentApplication) {
         SecretsCacheDto secretsCacheDto =
                 resourceConfigurationHelper.getJwtDetails(authorization);
+
 //
 //        if (!resourceConfigurationHelper.isExporterFieldValid(
 //                contentApplication.getProvider(), contentApplication.getExporter())) {

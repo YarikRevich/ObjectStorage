@@ -258,30 +258,30 @@ public class RepositoryFacade {
 //        }
 //    }
 //
-//    /**
-//     * Applies given content withdrawal, removing previous state.
-//     *
-//     * @param contentWithdrawal given content application used for topology configuration.
-//     * @throws RepositoryContentDestructionFailureException if ObjectStorage Cluster repository content destruction failed.
-//     */
-//    public void destroy(ContentWithdrawal contentWithdrawal) throws RepositoryContentDestructionFailureException {
-//        Optional<String> credentials = RepositoryConfigurationHelper.getExternalCredentials(
-//                contentWithdrawal.getProvider(), contentWithdrawal.getCredentials().getExternal());
-//
-//        SecretEntity secret;
-//
-//        try {
-//            secret = secretRepository.findBySessionAndCredentials(
-//                    contentWithdrawal.getCredentials().getInternal().getId(),
-//                    credentials);
-//        } catch (RepositoryOperationFailureException e) {
-//            return;
-//        }
-//
-//        try {
-//            contentRepository.deleteBySecret(secret.getId());
-//        } catch (RepositoryOperationFailureException e) {
-//            throw new RepositoryContentDestructionFailureException(e.getMessage());
-//        }
-//    }
+    /**
+     * Applies given content withdrawal, removing previous state.
+     *
+     * @param validationSecretsUnit given validation secret application unit.
+     * @throws RepositoryContentDestructionFailureException if repository content destruction failed.
+     */
+    public void destroy(ValidationSecretsUnit validationSecretsUnit) throws RepositoryContentDestructionFailureException {
+        String credentials = RepositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    credentials);
+        } catch (RepositoryOperationFailureException e) {
+            return;
+        }
+
+        try {
+            contentRepository.deleteBySecret(secret.getId());
+        } catch (RepositoryOperationFailureException e) {
+            throw new RepositoryContentDestructionFailureException(e.getMessage());
+        }
+    }
 }
