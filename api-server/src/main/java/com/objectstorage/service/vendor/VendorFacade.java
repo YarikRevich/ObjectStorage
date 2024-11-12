@@ -1,15 +1,12 @@
 package com.objectstorage.service.vendor;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
-import com.objectstorage.model.ValidationSecretsApplicationResult;
 import com.objectstorage.service.vendor.s3.S3VendorService;
 import com.objectstorage.converter.SecretsConverter;
 import com.objectstorage.dto.AWSSecretsDto;
-import com.objectstorage.dto.ValidationSecretsResultDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

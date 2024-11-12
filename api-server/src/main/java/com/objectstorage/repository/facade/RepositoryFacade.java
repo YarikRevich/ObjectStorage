@@ -152,20 +152,13 @@ public class RepositoryFacade {
                                         groupingBy(RepositoryContentUnitDto::getProvider)));
 
         groups
-                .forEach((key1, value1) -> {
-                    value1
-                            .forEach((key2, value2) -> {
-                                            result.add(
-                                                    ContentApplication.of(
-                                                            RepositoryContentUnitDto.of(
-                                                                    value2
-                                                                            .stream()
-                                                                            .map(RepositoryContentUnitDto::getRoot)
-                                                                            .toList()),
-                                                            key2,
-                                                            key1));
-                            });
-                });
+                .forEach((key1, value1) -> value1
+                        .forEach((key2, value2) -> value2.forEach(
+                                value3 -> result.add(
+                                        RepositoryContentUnitDto.of(
+                                                value3.getRoot(),
+                                                key2,
+                                                key1)))));
 
         return result;
     }
