@@ -2,22 +2,16 @@ package com.objectstorage.resource;
 
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.dto.SecretsCacheDto;
-import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
-import com.objectstorage.service.cluster.facade.ClusterFacade;
+import com.objectstorage.service.handler.facade.HandlerFacade;
 import com.objectstorage.service.vendor.VendorFacade;
-import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import lombok.SneakyThrows;
 
-import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Objects;
 
 /** Contains implementation of ContentResource. */
 @ApplicationScoped
@@ -26,7 +20,7 @@ public class ContentResource implements ContentResourceApi {
     RepositoryFacade repositoryFacade;
 
     @Inject
-    ClusterFacade clusterFacade;
+    HandlerFacade clusterFacade;
 
     @Inject
     VendorFacade vendorFacade;

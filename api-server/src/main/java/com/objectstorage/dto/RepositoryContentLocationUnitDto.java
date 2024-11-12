@@ -10,12 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor(staticName = "of")
 public class RepositoryContentLocationUnitDto {
     /**
-     *
+     * Represents root location for internal file system.
      */
-    private String location;
-
-    /**
-     *
-     */
-    private Boolean additional;
+    private String root;
 }

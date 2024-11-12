@@ -1,12 +1,9 @@
-package com.objectstorage.service.cluster.facade;
+package com.objectstorage.service.handler.facade;
 
 import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.exception.*;
-import com.objectstorage.model.*;
 import com.objectstorage.repository.facade.RepositoryFacade;
-import com.objectstorage.service.cluster.ClusterService;
+import com.objectstorage.service.handler.HandlerService;
 import com.objectstorage.service.config.ConfigService;
-import com.objectstorage.service.state.StateService;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,17 +11,12 @@ import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-
 /**
  * Provides high-level access to ObjectStorage Cluster related operations.
  */
 @ApplicationScoped
-public class ClusterFacade {
-    private static final Logger logger = LogManager.getLogger(ClusterFacade.class);
+public class HandlerFacade {
+    private static final Logger logger = LogManager.getLogger(HandlerFacade.class);
 
     @Inject
     PropertiesEntity properties;
@@ -39,7 +31,7 @@ public class ClusterFacade {
     WorkspaceFacade workspaceFacade;
 
     @Inject
-    ClusterService clusterService;
+    HandlerService clusterService;
 
     @Inject
     TelemetryService telemetryService;

@@ -1,20 +1,15 @@
-package com.objectstorage.service.cluster;
+package com.objectstorage.service.handler;
 
 import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.exception.*;
 import com.objectstorage.service.executor.CommandExecutorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Service used for cluster deployment management, including distribution process.
  */
 @ApplicationScoped
-public class ClusterService {
+public class HandlerService {
     @Inject
     PropertiesEntity properties;
 
@@ -156,10 +151,3 @@ public class ClusterService {
 //        }
 //    }
 }
-
-
-// TODO: make assignment of random identificators
-
-// TODO: probably move this logic to ClusterService
-
-// TODO: should regenerate topology after each location added

@@ -13,11 +13,18 @@ import java.util.Optional;
 @Getter
 @AllArgsConstructor(staticName = "of")
 public class RepositoryContentUnitDto {
-    private String location;
+    /**
+     * Represents root location for internal file system.
+     */
+    private String root;
 
-    private Boolean additional;
-
+    /**
+     * Represents selected service provider.
+     */
     private Provider provider;
 
+    /**
+     * Represents raw credentials.
+     */
     private CredentialsFieldsFull credentials;
 }
