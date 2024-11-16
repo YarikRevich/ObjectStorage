@@ -1,4 +1,4 @@
-package com.objectstorage.service.handler;
+package com.objectstorage.service.processor;
 
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.service.executor.CommandExecutorService;
@@ -6,10 +6,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service used for cluster deployment management, including distribution process.
+ * Service used for request processing management.
  */
 @ApplicationScoped
-public class HandlerService {
+public class ProcessorService {
     @Inject
     PropertiesEntity properties;
 

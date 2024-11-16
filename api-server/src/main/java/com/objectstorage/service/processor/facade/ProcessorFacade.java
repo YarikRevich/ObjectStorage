@@ -1,8 +1,8 @@
-package com.objectstorage.service.handler.facade;
+package com.objectstorage.service.processor.facade;
 
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.repository.facade.RepositoryFacade;
-import com.objectstorage.service.handler.HandlerService;
+import com.objectstorage.service.processor.ProcessorService;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
  * Provides high-level access to ObjectStorage Cluster related operations.
  */
 @ApplicationScoped
-public class HandlerFacade {
-    private static final Logger logger = LogManager.getLogger(HandlerFacade.class);
+public class ProcessorFacade {
+    private static final Logger logger = LogManager.getLogger(ProcessorFacade.class);
 
     @Inject
     PropertiesEntity properties;
@@ -31,7 +31,7 @@ public class HandlerFacade {
     WorkspaceFacade workspaceFacade;
 
     @Inject
-    HandlerService clusterService;
+    ProcessorService processorService;
 
     @Inject
     TelemetryService telemetryService;

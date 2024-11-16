@@ -1,4 +1,4 @@
-package com.objectstorage.service.handler.common;
+package com.objectstorage.service.processor.common;
 
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 /**
  * Contains helpful tools used for ObjectStorage Cluster configuration.
  */
-public class HandlerConfigurationHelper {
+public class ProcessorConfigurationHelper {
     private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(0, Thread.ofVirtual().factory());
 

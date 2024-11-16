@@ -20,6 +20,9 @@ public class PropertiesEntity {
     @ConfigProperty(name = "quarkus.http.port")
     Integer applicationPort;
 
+    @ConfigProperty(name = "content.root.notation")
+    String contentRootNotation;
+
     @ConfigProperty(name = "secrets.jwt.upn")
     String secretsJwtUpn;
 

@@ -7,15 +7,15 @@ import java.util.Formatter;
 /**
  * Represents exception used when given credentials are not valid.
  */
-public class LocationsAreNotValidException extends IOException {
-    public LocationsAreNotValidException() {
+public class ProvidersAreNotValidException extends IOException {
+    public ProvidersAreNotValidException() {
         this("");
     }
 
-    public LocationsAreNotValidException(Object... message) {
+    public ProvidersAreNotValidException(Object... message) {
         super(
                 new Formatter()
-                        .format("Locations are not valid: %s", Arrays.stream(message).toArray())
+                        .format("Providers are not valid: %s", Arrays.stream(message).toArray())
                         .toString());
     }
 }

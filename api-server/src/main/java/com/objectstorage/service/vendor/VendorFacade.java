@@ -4,6 +4,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
+import com.objectstorage.service.vendor.gcs.GCSVendorService;
 import com.objectstorage.service.vendor.s3.S3VendorService;
 import com.objectstorage.converter.SecretsConverter;
 import com.objectstorage.dto.AWSSecretsDto;
@@ -17,6 +18,9 @@ import jakarta.inject.Inject;
 public class VendorFacade {
     @Inject
     S3VendorService s3VendorService;
+
+    @Inject
+    GCSVendorService gcsVendorService;
 
     /**
      * Converts given raw credentials according to the selected provider, according to the given provider name.

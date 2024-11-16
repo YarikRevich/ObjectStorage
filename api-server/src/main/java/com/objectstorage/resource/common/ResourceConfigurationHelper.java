@@ -6,12 +6,12 @@ import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.model.ValidationSecretsUnit;
+import com.objectstorage.model.Provider;
 import com.objectstorage.service.state.StateService;
 import com.objectstorage.exception.JwtVerificationFailureException;
 import com.objectstorage.exception.TimeLimitedCacheKeyNotFoundException;
 import com.objectstorage.service.secrets.cache.TimeLimitedCacheService;
 import com.objectstorage.service.vendor.VendorFacade;
-import io.smallrye.jwt.algorithm.SignatureAlgorithm;
 import io.smallrye.jwt.auth.principal.JWTParser;
 import io.smallrye.jwt.auth.principal.ParseException;
 import io.smallrye.jwt.build.Jwt;
@@ -115,26 +115,22 @@ public class ResourceConfigurationHelper {
     }
 
     /**
-     * Checks if the given locations have duplicates.
+     * Checks if the given providers have duplicates.
      *
+     * @param providers given providers to be checked.
      * @return result of the check.
      */
-    public Boolean areProvidersDuplicated(List<String> d) {
-//        return locations.stream().distinct().count() == locations.size();
-        return true;
+    public Boolean areProvidersDuplicated(List<Provider> providers) {
+        return providers.stream().distinct().count() == providers.size();
     }
 
-//    /**
-//     * Checks if the given external credentials field is valid according to the used provider.
-//     *
-//     * @param provider given vendor provider.
-//     * @param credentialsFieldExternal given credentials field.
-//     * @return result of the check.
-//     */
-//    public Boolean isExternalCredentialsFieldValid(
-//            Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
-//        return switch (provider) {
-//            case S3 -> Objects.nonNull(credentialsFieldExternal);
-//        };
-//    }
+    /**
+     * Checks if the given root definition is valid.
+     *
+     * @param root given root to be validated.
+     * @return result of the check.
+     */
+    public Boolean isRootDefinitionValid(String root) {
+        return root.matches(properties.getContentRootNotation());
+    }
 }
