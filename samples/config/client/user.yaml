@@ -1,0 +1,27 @@
+# Represents section used to declare file configurations.
+content:
+  # Represents file system root location.
+  root: "/"
+
+# Represents section used for storage provider configuration.
+service:
+    # Represents selected provider for ObjectStorage. Supported provider is "s3" only.
+  - provider: "s3"
+
+    # Represents credentials used for the selected provider.
+    credentials:
+      # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
+      id: "1"
+
+      # Represents a path to the credentials CSV file, which contains both access
+      # and secret keys.
+      file: "~/.aws/credentials"
+
+      # Represents a select region where the deployment of infrastructure will be performed.
+      # Remember that it may influence the availability of the ResourceTracker deployed infrastructure.
+      region: "us-west-2"
+
+# Represents section used for ObjectStorage API Server configuration.
+api-server:
+  # Represents address for the host of ObjectStorage API Server.
+  host: "http://localhost:8085"

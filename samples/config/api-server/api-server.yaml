@@ -1,0 +1,59 @@
+# Represents section used for ObjectStorage API Server connection configuration.
+connection:
+  # Represents port of ObjectStorage API Server used for connection establishment.
+  port: 8086
+
+  # Represents section used for ObjectStorage API Server security configuration.
+  security:
+    # Enables security functionality.
+    enabled: false
+
+    # Represents path to security certificate key file in JKS format.
+    file: "~/test/test.jks"
+
+    # Represents password, which will be used to decode operations.
+    password: "test123"
+
+# Represents section used for ObjectStorage API Server temporate storage configuration.
+temporate-storage:
+  # Represents format used for content to be saved.
+  format: "zip"
+
+  # Represents frequency of scheduled operations processing.
+  frequency: "*/5 * * * * ?"
+
+# Represents section used for ObjectStorage API Server backup configuration.
+backup:
+  # Enables backup functionality.
+  enabled: true
+
+  # Represents format used for content to be saved.
+  format: "zip"
+
+  # Represents frequency of backup operation for selected provider.
+  frequency: "0 */5 * * * ?"
+
+# Represents section used for ObjectStorage API Server diagnostics configuration.
+diagnostics:
+  # Enables diagnostics functionality.
+  enabled: false
+
+  # Represents section used for ObjectStorage diagnostics metrics configuration.
+  metrics:
+    # Represents port used for metrics endpoint.
+    port: 8090
+
+  # Represents section used for ObjectStorage diagnostics Grafana instance.
+  grafana:
+    # Represents port used for Grafana instance deployment.
+    port: 8091
+
+  # Represents section used for ObjectStorage diagnostics Prometheus instance.
+  prometheus:
+    # Represents port used for Prometheus instance deployment.
+    port: 8120
+
+  # Represents section used for ObjectStorage diagnostics Prometheus Node Exporter instance.
+  node-exporter:
+    # Represents port used for Prometheus Node Exporter instance deployment.
+    port: 8121

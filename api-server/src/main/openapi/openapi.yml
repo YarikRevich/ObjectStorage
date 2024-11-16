@@ -1,0 +1,337 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI document of ObjectStorage API Server
+  description: ObjectStorage API Server Open API documentation
+  version: "1.0"
+
+tags:
+  - name: ContentResource
+    description: Contains all endpoints related to operations on processed content.
+  - name: ValidationResource
+    description: Contains all endpoints related to secrets validation.
+  - name: InfoResource
+    description: Contains all endpoints related to general info of API Server.
+  - name: HealthResource
+    description: Contains all endpoints related to general API Server health information.
+
+paths:
+  /v1/content:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: A list of all available content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentRetrievalResult"
+        400:
+          description: Content was not retrieved
+  /v1/content/apply:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content configuration application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentApplication"
+      responses:
+        204:
+          description: Given content configuration was successfully applied
+        400:
+          description: Given content configuration was not applied
+  /v1/content/withdraw:
+    delete:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Given content configuration was successfully withdrawn
+        400:
+          description: Given content configuration was not withdrawn
+  /v1/content/upload:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content download application
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: A content was successfully uploaded
+        400:
+          description: Content was not uploaded
+  /v1/content/download:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content download application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentDownload"
+      responses:
+        201:
+          description: A content was successfully retrieved
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Content was not retrieved
+  /v1/content/clean:
+    delete:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content cleanup application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentCleanup"
+      responses:
+        201:
+          description: Content with the given configuration was successfully deleted
+        400:
+          description: Content with the given configuration was not deleted
+  /v1/content/clean/all:
+    delete:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Content with the given configuration was successfully deleted
+        400:
+          description: Content with the given configuration was not deleted
+  /v1/secrets/acquire:
+    post:
+      tags:
+        - ValidationResource
+      requestBody:
+        required: true
+        description: Checks if the given secrets are correct
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationSecretsApplication"
+      responses:
+        201:
+          description: Given secrets are correct and JWT is generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationSecretsApplicationResult"
+        400:
+          description: Given secrets application contains incorrect data
+  /v1/info/version:
+    get:
+      tags:
+        - InfoResource
+      responses:
+        200:
+          description: General information about running API Server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfoResult"
+  /v1/health:
+    get:
+      tags:
+        - HealthResource
+      responses:
+        200:
+          description: General health information about running API Server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResult"
+components:
+  schemas:
+    ContentRetrievalResult:
+      required:
+        - objects
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalUnit"
+    ContentRetrievalUnit:
+      required:
+        - name
+        - size
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+    ContentApplication:
+      required:
+        - root
+      properties:
+        root:
+          type: string
+    ContentDownload:
+      required:
+        - location
+      properties:
+        location:
+          type: string
+    ContentCleanup:
+      required:
+        - location
+      properties:
+        location:
+          type: string
+    Provider:
+      type: string
+      enum:
+        - s3
+        - gcs
+    CredentialsFieldsFull:
+      required:
+        - internal
+        - external
+      properties:
+        internal:
+          $ref: "#/components/schemas/CredentialsFieldsInternal"
+        external:
+          $ref: "#/components/schemas/CredentialsFieldsExternal"
+    CredentialsFieldsInternal:
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    CredentialsFieldsExternal:
+      anyOf:
+        - $ref: "#/components/schemas/S3Credentials"
+        - $ref: "#/components/schemas/GCSCredentials"
+    S3Credentials:
+      properties:
+        file:
+          type: string
+        region:
+          type: string
+    GCSCredentials:
+      properties:
+        file:
+          type: string
+    ValidationSecretsApplication:
+      required:
+        - secrets
+      properties:
+        secrets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationSecretsUnit"
+    ValidationSecretsUnit:
+      required:
+        - provider
+        - credentials
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        credentials:
+          $ref: "#/components/schemas/CredentialsFieldsFull"
+    ValidationSecretsApplicationResult:
+      properties:
+        token:
+          type: string
+    VersionInfoResult:
+      properties:
+        external_api:
+          $ref: "#/components/schemas/VersionExternalApiInfoResult"
+    VersionExternalApiInfoResult:
+      required:
+        - version
+        - hash
+      properties:
+        version:
+          type: string
+        hash:
+          type: string
+    HealthCheckResult:
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthCheckStatus"
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheckUnit"
+    HealthCheckUnit:
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/HealthCheckStatus"
+    HealthCheckStatus:
+      type: string
+      enum:
+        - UP
+        - DOWN
