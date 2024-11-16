@@ -12,20 +12,11 @@ import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceExcepti
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.waiters.WaiterParameters;
 import com.objectstorage.dto.AWSSecretsDto;
-import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.model.S3Credentials;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.GenericType;
-import jakarta.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -34,12 +25,12 @@ import java.util.Objects;
 @ApplicationScoped
 public class S3VendorService {
     /**
-     * Composes AWS Credentials Provider used by AWS SDK clients.
+     * Composes AWS Credentials Provider used by AWS SDK client.
      *
      * @param secrets given AWS client secrets.
      * @return composed AWS Credentials Provider.
      */
-    public AWSCredentialsProvider getAWSCredentialsProvider(AWSSecretsDto secrets) {
+    public AWSCredentialsProvider getCredentialsProvider(AWSSecretsDto secrets) {
         return new AWSStaticCredentialsProvider(
                 new BasicAWSCredentials(secrets.getAccessKey(), secrets.getSecretKey()));
     }
@@ -47,13 +38,13 @@ public class S3VendorService {
     /**
      * Checks if S3 bucket with the given name exists.
      *
-     * @param name given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @return result of the check.
      */
     public Boolean isS3BucketPresent(
-            String name, AWSCredentialsProvider awsCredentialsProvider, String region) {
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
         return AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .withCredentials(awsCredentialsProvider)
@@ -64,12 +55,12 @@ public class S3VendorService {
     /**
      * Creates S3 bucket with the given name.
      *
-     * @param name given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      */
     public void createS3Bucket(
-            String name, AWSCredentialsProvider awsCredentialsProvider, String region) {
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
@@ -85,12 +76,12 @@ public class S3VendorService {
     /**
      * Removes S3 bucket with the given name.
      *
-     * @param name given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      */
     public void removeS3Bucket(
-            String name, AWSCredentialsProvider awsCredentialsProvider, String region) {
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
@@ -116,15 +107,15 @@ public class S3VendorService {
     /**
      * Uploads object to the S3 bucket with the given name.
      *
-     * @param bucketName given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be uploaded.
      * @param inputStream given file input stream to be used for object upload.
      */
     public void uploadObjectToS3Bucket(
-            String bucketName,
             AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
             String region,
             String fileName,
             InputStream inputStream) {
@@ -149,15 +140,15 @@ public class S3VendorService {
     /**
      * Retrieves object from the S3 bucket with the given name.
      *
-     * @param bucketName given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be retrieved.
      * @return retrieved object content.
      */
     public byte[] retrieveObjectFromS3Bucket(
-            String bucketName,
             AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
             String region,
             String fileName) {
         AmazonS3 simpleStorage =
@@ -177,14 +168,14 @@ public class S3VendorService {
     /**
      * Remove object from the S3 bucket with the given name.
      *
-     * @param bucketName given name of the S3 bucket.
      * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be removed.
      */
     public void removeObjectFromS3Bucket(
-            String bucketName,
             AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
             String region,
             String fileName) {
         AmazonS3 simpleStorage =

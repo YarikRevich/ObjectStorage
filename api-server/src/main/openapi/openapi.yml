@@ -274,7 +274,7 @@ components:
           type: string
     GCSCredentials:
       properties:
-        test:
+        file:
           type: string
     ValidationSecretsApplication:
       required:

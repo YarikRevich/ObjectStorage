@@ -52,7 +52,7 @@ public class RepositoryConfigurationHelper {
         return switch (provider) {
             case S3 -> packExternalCredentials(
                     credentialsFieldExternal.getFile(), credentialsFieldExternal.getRegion());
-            case GCS -> null;
+            case GCS -> packExternalCredentials(credentialsFieldExternal.getFile());
         };
     }
 
@@ -76,20 +76,19 @@ public class RepositoryConfigurationHelper {
      */
     public static CredentialsFieldsFull convertRawSecretsToContentCredentials(
             Provider provider, Integer session, String signature) {
-        return switch (provider) {
-            case S3 -> {
-                List<String> credentials = unpackExternalCredentials(signature);
+        List<String> credentials = unpackExternalCredentials(signature);
 
-                yield CredentialsFieldsFull.of(
-                        CredentialsFieldsInternal.of(session),
-                        CredentialsFieldsExternal.of(
-                                credentials.get(0),
-                                credentials.get(1),
-                                null));
-            }
-            case GCS -> {
-                yield null;
-            }
+        return switch (provider) {
+            case S3 -> CredentialsFieldsFull.of(
+                    CredentialsFieldsInternal.of(session),
+                    CredentialsFieldsExternal.of(
+                            credentials.get(0),
+                            credentials.get(1)));
+            case GCS -> CredentialsFieldsFull.of(
+                    CredentialsFieldsInternal.of(session),
+                    CredentialsFieldsExternal.of(
+                            credentials.getFirst(),
+                            null));
         };
     }
 }

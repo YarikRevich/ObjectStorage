@@ -1,6 +1,8 @@
 package com.objectstorage.service.vendor;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.google.auth.Credentials;
+import com.objectstorage.exception.GCPCredentialsInitializationFailureException;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
@@ -38,7 +40,7 @@ public class VendorFacade {
                         SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
 
                 AWSCredentialsProvider awsCredentialsProvider =
-                        s3VendorService.getAWSCredentialsProvider(secrets);
+                        s3VendorService.getCredentialsProvider(secrets);
 
                 if (!s3VendorService.isCallerValid(
                         awsCredentialsProvider, credentialsFieldExternal.getRegion())) {
@@ -47,7 +49,15 @@ public class VendorFacade {
 
                 yield secrets;
             }
-            case GCS -> null;
+            case GCS -> {
+                try {
+                    gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e);
+                }
+
+                yield credentialsFieldExternal.getFile();
+            }
         };
     }
 }

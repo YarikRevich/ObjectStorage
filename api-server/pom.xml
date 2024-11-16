@@ -124,6 +124,20 @@
             <artifactId>aws-java-sdk-s3</artifactId>
         </dependency>
 
+        <!-- GCP -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+        </dependency>
+
         <!-- HIBERNATE -->
         <dependency>
             <groupId>org.hibernate</groupId>
