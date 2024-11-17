@@ -33,7 +33,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public ContentRetrievalResult v1ContentPost(String authorization) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
 //        secretsCacheDto.getValidationSecretsCompoundDto().getFirst()
@@ -50,7 +50,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentApplyPost(String authorization, ContentApplication contentApplication) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
         if (resourceConfigurationHelper.isRootDefinitionValid(contentApplication.getRoot())) {
@@ -67,8 +67,9 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentWithdrawDelete(String authorization) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
+
 //
 //        clusterFacade.destroy(contentWithdrawal);
 //
@@ -83,7 +84,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentUploadPost(String authorization, InputStream file) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
     }
 
@@ -96,7 +97,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 //
 //        return clusterFacade.retrieveContentReference(contentDownload);
@@ -112,7 +113,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 //        clusterFacade.removeContent(contentCleanup);
     }
@@ -124,7 +125,7 @@ public class ContentResource implements ContentResourceApi {
     @Override
     @SneakyThrows
     public void v1ContentCleanAllDelete(String authorization) {
-        SecretsCacheDto secretsCacheDto =
+        ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
 //        clusterFacade.removeAll(contentCleanupAll);

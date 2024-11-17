@@ -39,11 +39,11 @@ public class ValidationResource implements ValidationResourceApi {
             throw new ProvidersAreNotValidException();
         };
 
-        List<ValidationSecretsCompoundDto> externalSecrets =
-                resourceConfigurationHelper.getExternalSecrets(validationSecretsApplication);
+        if (!resourceConfigurationHelper.areSecretsValid(validationSecretsApplication)) {
+            throw new ProvidersAreNotValidException();
+        }
 
         return ValidationSecretsApplicationResult.of(
-                resourceConfigurationHelper.createJwtToken(
-                        SecretsCacheDto.of(externalSecrets)));
+                resourceConfigurationHelper.createJwtToken(validationSecretsApplication));
     }
 }
