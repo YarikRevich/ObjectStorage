@@ -1,8 +1,15 @@
 package com.objectstorage.service.vendor.gcs;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
+import com.google.cloud.resourcemanager.ResourceManager;
+import com.google.cloud.resourcemanager.ResourceManagerOptions;
+import com.google.cloud.resourcemanager.Project;
 import com.google.cloud.storage.*;
 import com.objectstorage.exception.GCPCredentialsInitializationFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Service used to represent GCS external service provider operations.
@@ -152,5 +160,24 @@ public class GCSVendorService {
                 .getService();
 
         storage.delete(BlobId.of(bucketName, fileName));
+    }
+
+    /**
+     * Checks if the selected credentials are valid.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @return result of credentials validation.
+     */
+    public Boolean isCallerValid(Credentials credentials) {
+        ResourceManager resourceManager = ResourceManagerOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        for (Project project : resourceManager.list().iterateAll()) {
+            return true;
+        }
+
+        return false;
     }
 }

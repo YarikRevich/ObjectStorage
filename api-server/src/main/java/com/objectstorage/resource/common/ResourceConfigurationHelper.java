@@ -49,7 +49,7 @@ public class ResourceConfigurationHelper {
      * @return retrieved jwt token details.
      * @throws JwtVerificationFailureException if jwt token verification fails.
      */
-    public SecretsCacheDto getJwtDetails(String rawToken) throws JwtVerificationFailureException {
+    public ValidationSecretsApplication getJwtDetails(String rawToken) throws JwtVerificationFailureException {
         Pattern pattern = Pattern.compile(properties.getSecretsJwtHeaderNotation());
 
         Matcher matcher = pattern.matcher(rawToken);
@@ -78,11 +78,11 @@ public class ResourceConfigurationHelper {
     /**
      * Create new jwt token with the help of internally created jwt secret key.
 
-     * @param secretsCacheDto given secrets cache dto to be used as token claim.
+     * @param validationSecretsApplication given secrets cache dto to be used as token claim.
      * @return created new jwt token with the help of internally created jwt secret key.
      */
-    public String createJwtToken(SecretsCacheDto secretsCacheDto) {
-        String key = timeLimitedCacheService.add(secretsCacheDto);
+    public String createJwtToken(ValidationSecretsApplication validationSecretsApplication) {
+        String key = timeLimitedCacheService.add(validationSecretsApplication);
 
         return Jwt
                 .upn(properties.getSecretsJwtUpn())
@@ -95,23 +95,20 @@ public class ResourceConfigurationHelper {
      * Converts and validates given external credentials according to the selected provider type.
      *
      * @param validationSecretsApplication given validation secrets application to be validated.
-     * @return converted secrets compound dto.
+     * @return result of the check.
      * @throws SecretsConversionException if secrets conversion fails or provided secrets are invalid.
      */
-    public List<ValidationSecretsCompoundDto> getExternalSecrets(
+    public Boolean areSecretsValid(
             ValidationSecretsApplication validationSecretsApplication) throws SecretsConversionException {
-        List<ValidationSecretsCompoundDto> result = new ArrayList<>();
-
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            Object validationSecretsResult =
-                    vendorFacade.getExternalCredentialsSecrets(
+            if (!vendorFacade.areCredentialsValid(
                             validationSecretsUnit.getProvider(),
-                            validationSecretsUnit.getCredentials().getExternal());
-
-            result.add(ValidationSecretsCompoundDto.of(validationSecretsUnit, validationSecretsResult));
+                            validationSecretsUnit.getCredentials().getExternal())) {
+                return false;
+            }
         }
 
-        return result;
+        return true;
     }
 
     /**
