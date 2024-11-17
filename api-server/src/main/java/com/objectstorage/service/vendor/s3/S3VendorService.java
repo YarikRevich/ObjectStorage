@@ -166,7 +166,7 @@ public class S3VendorService {
     }
 
     /**
-     * Remove object from the S3 bucket with the given name.
+     * Removes object from the S3 bucket with the given name.
      *
      * @param awsCredentialsProvider given providers to be used for client configuration.
      * @param bucketName given name of the S3 bucket.

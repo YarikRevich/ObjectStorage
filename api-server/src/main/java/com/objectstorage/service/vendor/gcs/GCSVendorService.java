@@ -1,9 +1,5 @@
 package com.objectstorage.service.vendor.gcs;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
@@ -18,7 +14,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 /**
  * Service used to represent GCS external service provider operations.
@@ -144,7 +139,7 @@ public class GCSVendorService {
     }
 
     /**
-     * Remove object from the GCS bucket with the given name.
+     * Removes object from the GCS bucket with the given name.
      *
      * @param credentials given credentials to be used for client configuration.
      * @param bucketName given name of the GCS bucket.
