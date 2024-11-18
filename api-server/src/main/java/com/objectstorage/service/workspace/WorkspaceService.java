@@ -209,72 +209,27 @@ public class WorkspaceService {
 
 
     /**
-     * Compresses given file input.
+     * Compresses given file input stream.
      *
-     * @param input         given file input.
+     * @param inputStream         given file input stream.
      * @return compressed file input.
-     * @throws ContentReferenceCreationFailureException if content reference creation failed.
+     * @throws InputCompressionFailureException if content reference creation failed.
      */
-    public byte[] compressFile(byte[] input) throws
-            ContentReferenceCreationFailureException {
+    public byte[] compressFile(InputStream inputStream) throws
+            InputCompressionFailureException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         try (ZipOutputStream writer = new ZipOutputStream(result)) {
-            if (isRawContentAvailable(workspaceUnitDirectory, location)) {
-                writer.putNextEntry(new ZipEntry(
-                        WorkspaceConfigurationHelper.getZipFolderDefinition(properties.getWorkspaceRawContentDirectory())));
+            writer.putNextEntry(new ZipEntry("/"));
 
-                List<String> rawContentLocations =
-                        workspaceService.getRawContentFilesLocations(workspaceUnitDirectory, location);
-
-                byte[] rawContent;
-
-                for (String rawContentLocation : rawContentLocations) {
-                    writer.putNextEntry(new ZipEntry(
-                            Path.of(properties.getWorkspaceRawContentDirectory(), rawContentLocation).toString()));
-
-                    rawContent =
-                            workspaceService.getRawContentFile(workspaceUnitDirectory, location, rawContentLocation);
-
-                    writer.write(rawContent);
-                }
-
-            }
-
-            if (isAdditionalContentAvailable(workspaceUnitDirectory, location)) {
-                writer.putNextEntry(new ZipEntry(
-                        WorkspaceConfigurationHelper.getZipFolderDefinition(
-                                properties.getWorkspaceAdditionalContentDirectory())));
-
-                List<String> additionalContentLocations =
-                        workspaceService.getAdditionalContentFilesLocations(workspaceUnitDirectory, location);
-
-                String rawContent;
-
-                for (String additionalContentLocation : additionalContentLocations) {
-                    writer.putNextEntry(new ZipEntry(
-                            Path.of(properties.getWorkspaceAdditionalContentDirectory(), additionalContentLocation)
-                                    .toString()));
-
-
-                    rawContent = AdditionalContentFileToJsonConverter.convert(
-                            workspaceService.getAdditionalContentFileContent(
-                                    workspaceUnitDirectory, location, additionalContentLocation));
-
-                    if (Objects.isNull(rawContent)) {
-                        continue;
-                    }
-
-                    writer.write(rawContent.getBytes());
-                }
-            }
+            writer.write(inputStream.readAllBytes());
 
             writer.flush();
 
             writer.finish();
 
         } catch (IOException e) {
-            throw new ContentReferenceCreationFailureException(e.getMessage());
+            throw new InputCompressionFailureException(e.getMessage());
         }
 
         return result.toByteArray();
@@ -291,10 +246,10 @@ public class WorkspaceService {
      *
      * @param input         given file input.
      * @return decompressed file input.
-     * @throws ContentReferenceCreationFailureException if content reference creation failed.
+     * @throws InputCompressionFailureException if content reference creation failed.
      */
     public byte[] decompressFile(byte[] input) throws
-            ContentReferenceCreationFailureException {
+            InputCompressionFailureException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         try (ZipOutputStream writer = new ZipOutputStream(result)) {
@@ -352,7 +307,7 @@ public class WorkspaceService {
             writer.finish();
 
         } catch (IOException e) {
-            throw new ContentReferenceCreationFailureException(e.getMessage());
+            throw new InputCompressionFailureException(e.getMessage());
         }
 
         return result.toByteArray();

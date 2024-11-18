@@ -6,17 +6,10 @@ import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.Provider;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.workspace.WorkspaceService;
-import com.objectstorage.service.workspace.common.WorkspaceConfigurationHelper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Provides high-level access to workspace operations.
@@ -58,15 +51,15 @@ public class WorkspaceFacade {
      * @param workspaceUnitKey given user workspace unit key.
      * @param name             given content name.
      * @param inputStream          given input.
-     * @throws RawContentCreationFailureException if raw content creation operation failed.
+     * @throws FileCreationFailureException if file creation operation failed.
      */
     public void addFile(String workspaceUnitKey, String name, InputStream inputStream)
-            throws RawContentCreationFailureException {
+            throws FileCreationFailureException {
         if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
             try {
                 workspaceService.createUnitDirectory(workspaceUnitKey);
             } catch (WorkspaceUnitDirectoryCreationFailureException e) {
-                throw new RawContentCreationFailureException(e.getMessage());
+                throw new FileCreationFailureException(e.getMessage());
             }
         }
 
@@ -75,17 +68,23 @@ public class WorkspaceFacade {
         try {
             workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
         } catch (WorkspaceUnitDirectoryNotFoundException e) {
-            throw new RawContentCreationFailureException(e.getMessage());
+            throw new FileCreationFailureException(e.getMessage());
         }
 
         if (workspaceService.isFilePresent(workspaceUnitDirectory, name)) {
-            throw new RawContentCreationFailureException();
+            throw new FileCreationFailureException();
+        }
+
+        try {
+            workspaceService.compressFile(inputStream);
+        } catch (InputCompressionFailureException e) {
+            throw new FileCreationFailureException(e.getMessage());
         }
 
         try {
             workspaceService.createFile(workspaceUnitDirectory, name, inputStream);
         } catch (RawContentFileWriteFailureException e) {
-            throw new RawContentCreationFailureException(e.getMessage());
+            throw new FileCreationFailureException(e.getMessage());
         }
     }
 //
