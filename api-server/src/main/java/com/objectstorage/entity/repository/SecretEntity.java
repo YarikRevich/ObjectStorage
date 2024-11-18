@@ -1,13 +1,7 @@
 package com.objectstorage.entity.repository;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Optional;
 
 /**
  * Represents entity used to describe registered secrets.
@@ -15,9 +9,18 @@ import java.util.Optional;
 @Getter
 @AllArgsConstructor(staticName = "of")
 public class SecretEntity {
+    /**
+     * Represents id primary key column.
+     */
     private Integer id;
 
+    /**
+     * Represents session id column.
+     */
     private Integer session;
 
+    /**
+     * Represents credentials signature column.
+     */
     private String credentials;
 }

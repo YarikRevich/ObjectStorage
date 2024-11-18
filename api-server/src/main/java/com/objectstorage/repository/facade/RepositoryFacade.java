@@ -212,7 +212,7 @@ public class RepositoryFacade {
         }
 
         try {
-            contentRepository.insert(contentApplication.getRoot(), provider.getId(), secret.getId());
+            contentRepository.insert(provider.getId(), secret.getId(), contentApplication.getRoot());
         } catch (RepositoryOperationFailureException e) {
             throw new RepositoryContentApplicationFailureException(e.getMessage());
         }

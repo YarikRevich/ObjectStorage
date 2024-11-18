@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,22 +26,34 @@ public class WorkspaceFacade {
     WorkspaceService workspaceService;
 
     /**
-     * Creates unit key with the help of the given readiness check application.
+     * Creates workspace unit key with the help of the given provider and credentials.
      *
      * @param provider          given provider.
      * @param credentialsFields given credentials.
-     * @return result of the readiness check for the given configuration.
+     * @return created workspace unit key.
      */
-    public String createUnitKey(Provider provider, CredentialsFieldsFull credentialsFields) {
+    public String createWorkspaceUnitKey(Provider provider, CredentialsFieldsFull credentialsFields) {
         return switch (provider) {
             case S3 -> workspaceService.createUnitKey(
+                    provider.name(),
                     String.valueOf(credentialsFields.getInternal().getId()),
                     credentialsFields.getExternal().getFile(),
                     credentialsFields.getExternal().getRegion());
             case GCS -> workspaceService.createUnitKey(
+                    provider.name(),
                     String.valueOf(credentialsFields.getInternal().getId()),
                     credentialsFields.getExternal().getFile());
         };
+    }
+
+    /**
+     * Creates file unit key with the help of the given file name and current datetime.
+     *
+     * @param name          given file name.
+     * @return created file unit key.
+     */
+    public String createFileUnitKey(String name) {
+        return workspaceService.createUnitKey(name, Instant.now().toString());
     }
 
     /**

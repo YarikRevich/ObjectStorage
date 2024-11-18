@@ -2,7 +2,6 @@ package com.objectstorage.repository;
 
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.entity.repository.ContentEntity;
-import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.exception.QueryEmptyResultException;
 import com.objectstorage.exception.QueryExecutionFailureException;
 import com.objectstorage.exception.RepositoryOperationFailureException;
@@ -11,19 +10,17 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Represents repository implementation to handle content table.
+ * Represents repository implementation to handle temporate table.
  */
 @ApplicationScoped
 @RegisterForReflection
-public class ContentRepository {
+public class TemporateRepository {
     @Inject
     PropertiesEntity properties;
 
@@ -31,20 +28,20 @@ public class ContentRepository {
     RepositoryExecutor repositoryExecutor;
 
     /**
-     * Inserts given values into the content table.
+     * Inserts given values into the temporate table.
      *
      * @param provider given provider.
      * @param secret   given secret.
-     * @param root     given file root location.
+     * @param hash given file name hash.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void insert(Integer provider, Integer secret, String root) throws RepositoryOperationFailureException {
+    public void insert(Integer provider, Integer secret, String hash) throws RepositoryOperationFailureException {
         String query = String.format(
-                "INSERT INTO %s (provider, secret, root) VALUES (%d, %d, '%s')",
-                properties.getDatabaseContentTableName(),
+                "INSERT INTO %s (provider, secret, hash) VALUES (%d, %d, '%s')",
+                properties.getDatabaseTemporateTableName(),
                 provider,
                 secret,
-                root);
+                hash);
 
         try {
             repositoryExecutor.performQuery(query);
@@ -55,9 +52,9 @@ public class ContentRepository {
     }
 
     /**
-     * Retrieves all the persisted temporate entities with the given provider and secret.
+     * Retrieves all the persisted content entities with the given provider and secret.
      *
-     * @return retrieved temporate entities.
+     * @return retrieved content entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
     public List<ContentEntity> findByProviderAndSecret(Integer provider, Integer secret) throws
@@ -87,7 +84,7 @@ public class ContentRepository {
                 id = resultSet.getInt("id");
                 root = resultSet.getString("root");
 
-                result.add(ContentEntity.of(id, provider, secret, root));
+                result.add(ContentEntity.of(id, root, provider, secret));
             }
         } catch (SQLException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
@@ -115,7 +112,7 @@ public class ContentRepository {
             resultSet =
                     repositoryExecutor.performQueryWithResult(
                             String.format(
-                                    "SELECT t.id, t.provider, t.secret, t.root FROM %s as t",
+                                    "SELECT t.id, t.root, t.provider, t.secret FROM %s as t",
                                     properties.getDatabaseContentTableName()));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
@@ -125,18 +122,18 @@ public class ContentRepository {
         List<ContentEntity> result = new ArrayList<>();
 
         Integer id;
+        String root;
         Integer provider;
         Integer secret;
-        String root;
 
         try {
             while (resultSet.next()) {
                 id = resultSet.getInt("id");
+                root = resultSet.getString("root");
                 provider = resultSet.getInt("provider");
                 secret = resultSet.getInt("secret");
-                root = resultSet.getString("root");
 
-                result.add(ContentEntity.of(id, provider, secret, root));
+                result.add(ContentEntity.of(id, root, provider, secret));
             }
         } catch (SQLException e) {
             throw new RepositoryOperationFailureException(e.getMessage());

@@ -265,26 +265,6 @@ public class WorkspaceService {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         try (ZipOutputStream writer = new ZipOutputStream(result)) {
-            if (isRawContentAvailable(workspaceUnitDirectory, location)) {
-                writer.putNextEntry(new ZipEntry(
-                        WorkspaceConfigurationHelper.getZipFolderDefinition(properties.getWorkspaceRawContentDirectory())));
-
-                List<String> rawContentLocations =
-                        workspaceService.getRawContentFilesLocations(workspaceUnitDirectory, location);
-
-                byte[] rawContent;
-
-                for (String rawContentLocation : rawContentLocations) {
-                    writer.putNextEntry(new ZipEntry(
-                            Path.of(properties.getWorkspaceRawContentDirectory(), rawContentLocation).toString()));
-
-                    rawContent =
-                            workspaceService.getRawContentFile(workspaceUnitDirectory, location, rawContentLocation);
-
-                    writer.write(rawContent);
-                }
-
-            }
 
             if (isAdditionalContentAvailable(workspaceUnitDirectory, location)) {
                 writer.putNextEntry(new ZipEntry(

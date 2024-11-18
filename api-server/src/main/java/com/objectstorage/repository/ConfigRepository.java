@@ -29,17 +29,19 @@ public class ConfigRepository {
     /**
      * Inserts given values into the config table.
      *
-     * @param name given name of the configuration.
-     * @param hash given hash of the configuration.
+     * @param provider given provider.
+     * @param secret   given secret.
+     * @param hash given configuration file hash.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void insert(String name, String hash) throws RepositoryOperationFailureException {
+    public void insert(Integer provider, Integer secret, String hash) throws RepositoryOperationFailureException {
         try {
             repositoryExecutor.performQuery(
                             String.format(
-                                    "INSERT INTO %s (name, hash) VALUES ('%s', '%s')",
+                                    "INSERT INTO %s (provider, secret, hash) VALUES (%d, %d, '%s')",
                                     properties.getDatabaseConfigTableName(),
-                                    name,
+                                    provider,
+                                    secret,
                                     hash));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
