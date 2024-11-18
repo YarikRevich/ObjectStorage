@@ -35,7 +35,7 @@ public class ProcessorFacade {
 
     @Inject
     TelemetryService telemetryService;
-//
+
 //    /**
 //     * Retrieves ObjectStorage Cluster content, using given content retrieval application.
 //     *

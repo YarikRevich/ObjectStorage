@@ -31,122 +31,63 @@ public class WorkspaceFacade {
 
     @Inject
     WorkspaceService workspaceService;
-//
-//    /**
-//     * Creates unit key with the help of the given readiness check application.
-//     *
-//     * @param provider          given provider.
-//     * @param credentialsFields given credentials.
-//     * @return result of the readiness check for the given configuration.
-//     */
-//    public String createUnitKey(Provider provider, CredentialsFieldsFull credentialsFields) {
-//        return switch (provider) {
-//            case S3 -> workspaceService.createUnitKey(
-//                    String.valueOf(credentialsFields.getInternal().getId()),
-//                    credentialsFields.getExternal().getToken());
-//        };
-//    }
-//
-//    /**
-//     * Adds new content directory for the given workspace unit key and location.
-//     *
-//     * @param workspaceUnitKey given user workspace unit key.
-//     * @param location given content location.
-//     * @throws UnitDirectoryCreationFailureException if content directory creation failed.
-//     */
-//    public void createContentDirectory(String workspaceUnitKey, String location) throws UnitDirectoryCreationFailureException {
-//        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-//            try {
-//                workspaceService.createUnitDirectory(workspaceUnitKey);
-//            } catch (WorkspaceUnitDirectoryCreationFailureException e) {
-//                throw new UnitDirectoryCreationFailureException(e.getMessage());
-//            }
-//        }
-//
-//        String workspaceUnitDirectory;
-//
-//        try {
-//            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-//        } catch (WorkspaceUnitDirectoryNotFoundException e) {
-//            throw new UnitDirectoryCreationFailureException(e.getMessage());
-//        }
-//
-//        if (!workspaceService.isContentDirectoryExist(workspaceUnitDirectory, location)) {
-//            try {
-//                workspaceService.createContentDirectory(workspaceUnitDirectory, location);
-//            } catch (WorkspaceContentDirectoryCreationFailureException e) {
-//                throw new UnitDirectoryCreationFailureException(e.getMessage());
-//            }
-//        }
-//    }
-//
-//    /**
-//     * Adds new version of raw content file as the raw input stream.
-//     *
-//     * @param workspaceUnitKey given user workspace unit key.
-//     * @param location         given content location.
-//     * @param name             given content name.
-//     * @param content          given content input.
-//     * @throws RawContentCreationFailureException if raw content creation operation failed.
-//     */
-//    public void addRawContent(String workspaceUnitKey, String location, String name, InputStream content)
-//            throws RawContentCreationFailureException {
-//        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-//            try {
-//                workspaceService.createUnitDirectory(workspaceUnitKey);
-//            } catch (WorkspaceUnitDirectoryCreationFailureException e) {
-//                throw new RawContentCreationFailureException(e.getMessage());
-//            }
-//        }
-//
-//        String workspaceUnitDirectory;
-//
-//        try {
-//            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-//        } catch (WorkspaceUnitDirectoryNotFoundException e) {
-//            throw new RawContentCreationFailureException(e.getMessage());
-//        }
-//
-//        if (!workspaceService.isContentDirectoryExist(workspaceUnitDirectory, location)) {
-//            try {
-//                workspaceService.createContentDirectory(workspaceUnitDirectory, location);
-//            } catch (WorkspaceContentDirectoryCreationFailureException e) {
-//                throw new RawContentCreationFailureException(e.getMessage());
-//            }
-//        }
-//
-//        if (!workspaceService.isRawContentDirectoryExist(workspaceUnitDirectory, location)) {
-//            try {
-//                workspaceService.createRawContentDirectory(workspaceUnitDirectory, location);
-//            } catch (WorkspaceContentDirectoryCreationFailureException e) {
-//                throw new RawContentCreationFailureException(e.getMessage());
-//            }
-//        }
-//
-//        Integer amount;
-//
-//        try {
-//            amount = workspaceService.getRawContentFilesAmount(workspaceUnitDirectory, location);
-//        } catch (RawContentFilesAmountRetrievalFailureException e) {
-//            throw new RawContentCreationFailureException(e.getMessage());
-//        }
-//
-//        try {
-//            workspaceService.createRawContentFile(workspaceUnitDirectory, location, name, content);
-//        } catch (RawContentFileWriteFailureException e) {
-//            throw new RawContentCreationFailureException(e.getMessage());
-//        }
-//
-//        while (amount > configService.getConfig().getResource().getCluster().getMaxVersions() - 1) {
-//            try {
-//                workspaceService.removeEarliestRawContentFile(workspaceUnitDirectory, location);
-//            } catch (RawContentFileRemovalFailureException e) {
-//                throw new RawContentCreationFailureException(e.getMessage());
-//            }
-//
-//            amount--;
-//        }
-//    }
+
+    /**
+     * Creates unit key with the help of the given readiness check application.
+     *
+     * @param provider          given provider.
+     * @param credentialsFields given credentials.
+     * @return result of the readiness check for the given configuration.
+     */
+    public String createUnitKey(Provider provider, CredentialsFieldsFull credentialsFields) {
+        return switch (provider) {
+            case S3 -> workspaceService.createUnitKey(
+                    String.valueOf(credentialsFields.getInternal().getId()),
+                    credentialsFields.getExternal().getFile(),
+                    credentialsFields.getExternal().getRegion());
+            case GCS -> workspaceService.createUnitKey(
+                    String.valueOf(credentialsFields.getInternal().getId()),
+                    credentialsFields.getExternal().getFile());
+        };
+    }
+
+
+    /**
+     * Adds new file as the compressed input stream.
+     *
+     * @param workspaceUnitKey given user workspace unit key.
+     * @param name             given content name.
+     * @param inputStream          given input.
+     * @throws RawContentCreationFailureException if raw content creation operation failed.
+     */
+    public void addFile(String workspaceUnitKey, String name, InputStream inputStream)
+            throws RawContentCreationFailureException {
+        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
+            try {
+                workspaceService.createUnitDirectory(workspaceUnitKey);
+            } catch (WorkspaceUnitDirectoryCreationFailureException e) {
+                throw new RawContentCreationFailureException(e.getMessage());
+            }
+        }
+
+        String workspaceUnitDirectory;
+
+        try {
+            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
+        } catch (WorkspaceUnitDirectoryNotFoundException e) {
+            throw new RawContentCreationFailureException(e.getMessage());
+        }
+
+        if (workspaceService.isFilePresent(workspaceUnitDirectory, name)) {
+            throw new RawContentCreationFailureException();
+        }
+
+        try {
+            workspaceService.createFile(workspaceUnitDirectory, name, inputStream);
+        } catch (RawContentFileWriteFailureException e) {
+            throw new RawContentCreationFailureException(e.getMessage());
+        }
+    }
 //
 //    /**
 //     * Checks if raw content file exists with the given location and the given name.
@@ -503,88 +444,4 @@ public class WorkspaceFacade {
 //        return result;
 //    }
 //
-//    /**
-//     * Creates content reference with the help of the given workspace unit key and content location.
-//     *
-//     * @param workspaceUnitKey given user workspace unit key.
-//     * @param location         given content location.
-//     * @return created content reference.
-//     * @throws ContentReferenceCreationFailureException if content reference creation failed.
-//     */
-//    public byte[] createContentReference(String workspaceUnitKey, String location) throws
-//            ContentReferenceCreationFailureException {
-//        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-//            throw new ContentReferenceCreationFailureException();
-//        }
-//
-//        String workspaceUnitDirectory;
-//
-//        try {
-//            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-//        } catch (WorkspaceUnitDirectoryNotFoundException e) {
-//            throw new ContentReferenceCreationFailureException(e.getMessage());
-//        }
-//
-//        ByteArrayOutputStream result = new ByteArrayOutputStream();
-//
-//        try (ZipOutputStream writer = new ZipOutputStream(result)) {
-//            if (isRawContentAvailable(workspaceUnitDirectory, location)) {
-//                writer.putNextEntry(new ZipEntry(
-//                        WorkspaceConfigurationHelper.getZipFolderDefinition(properties.getWorkspaceRawContentDirectory())));
-//
-//                List<String> rawContentLocations =
-//                        workspaceService.getRawContentFilesLocations(workspaceUnitDirectory, location);
-//
-//                byte[] rawContent;
-//
-//                for (String rawContentLocation : rawContentLocations) {
-//                    writer.putNextEntry(new ZipEntry(
-//                            Path.of(properties.getWorkspaceRawContentDirectory(), rawContentLocation).toString()));
-//
-//                    rawContent =
-//                            workspaceService.getRawContentFile(workspaceUnitDirectory, location, rawContentLocation);
-//
-//                    writer.write(rawContent);
-//                }
-//
-//            }
-//
-//            if (isAdditionalContentAvailable(workspaceUnitDirectory, location)) {
-//                writer.putNextEntry(new ZipEntry(
-//                        WorkspaceConfigurationHelper.getZipFolderDefinition(
-//                                properties.getWorkspaceAdditionalContentDirectory())));
-//
-//                List<String> additionalContentLocations =
-//                        workspaceService.getAdditionalContentFilesLocations(workspaceUnitDirectory, location);
-//
-//                String rawContent;
-//
-//                for (String additionalContentLocation : additionalContentLocations) {
-//                    writer.putNextEntry(new ZipEntry(
-//                            Path.of(properties.getWorkspaceAdditionalContentDirectory(), additionalContentLocation)
-//                                    .toString()));
-//
-//
-//                    rawContent = AdditionalContentFileToJsonConverter.convert(
-//                                    workspaceService.getAdditionalContentFileContent(
-//                                            workspaceUnitDirectory, location, additionalContentLocation));
-//
-//                    if (Objects.isNull(rawContent)) {
-//                        continue;
-//                    }
-//
-//                    writer.write(rawContent.getBytes());
-//                }
-//            }
-//
-//            writer.flush();
-//
-//            writer.finish();
-//
-//        } catch (IOException e) {
-//            throw new ContentReferenceCreationFailureException(e.getMessage());
-//        }
-//
-//        return result.toByteArray();
-//    }
 }
