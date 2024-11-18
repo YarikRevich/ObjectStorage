@@ -2,6 +2,7 @@ package com.objectstorage.service.workspace;
 
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
+import com.objectstorage.exception.FileNotFoundException;
 import com.objectstorage.service.workspace.common.WorkspaceConfigurationHelper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -91,6 +92,20 @@ public class WorkspaceService {
     }
 
     /**
+     * Removes workspace unit with the help of the given key.
+     *
+     * @param key given workspace unit key.
+     * @throws WorkspaceUnitDirectoryRemovalFailureException if IO operation failed.
+     */
+    public void removeUnitDirectory(String key) throws WorkspaceUnitDirectoryRemovalFailureException {
+        try {
+            FileSystemUtils.deleteRecursively(Path.of(properties.getWorkspaceDirectory(), key));
+        } catch (IOException e) {
+            throw new WorkspaceUnitDirectoryRemovalFailureException(e.getMessage());
+        }
+    }
+
+    /**
      * Writes given input to the given workspace unit directory.
      *
      * @param workspaceUnitDirectory given workspace unit directory.
@@ -98,8 +113,7 @@ public class WorkspaceService {
      * @param input                  given file input.
      * @throws RawContentFileWriteFailureException if file cannot be created.
      */
-    public void createFile(
-            String workspaceUnitDirectory, String name, InputStream input) throws
+    public void createFile(String workspaceUnitDirectory, String name, InputStream input) throws
             RawContentFileWriteFailureException {
         Path directoryPath = Path.of(workspaceUnitDirectory, name);
 
@@ -130,10 +144,10 @@ public class WorkspaceService {
      *
      * @param workspaceUnitDirectory given workspace unit directory.
      * @return a list of content locations.
-     * @throws ContentFilesLocationsRetrievalFailureException if content files locations retrieval operation failed. .
+     * @throws FilesLocationsRetrievalFailureException if content files locations retrieval operation failed. .
      */
     public List<String> getFilesLocations(String workspaceUnitDirectory) throws
-            ContentFilesLocationsRetrievalFailureException {
+            FilesLocationsRetrievalFailureException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(workspaceUnitDirectory))) {
             List<String> result = new ArrayList<>();
 
@@ -143,7 +157,7 @@ public class WorkspaceService {
 
             return result;
         } catch (IOException e) {
-            throw new ContentFilesLocationsRetrievalFailureException(e.getMessage());
+            throw new FilesLocationsRetrievalFailureException(e.getMessage());
         }
     }
 
@@ -153,31 +167,30 @@ public class WorkspaceService {
      * @param workspaceUnitDirectory given workspace unit directory.
      * @param name                   given name of the content file.
      * @return raw content file stream.
-     * @throws ContentFileNotFoundException if the raw content file not found.
+     * @throws FileNotFoundException if the raw content file not found.
      */
     public byte[] getFileContent(String workspaceUnitDirectory, String name) throws
-            ContentFileNotFoundException {
+            FileNotFoundException {
         Path contentDirectoryPath = Path.of(workspaceUnitDirectory, name);
 
         try {
             return FileUtils.readFileToByteArray(new File(contentDirectoryPath.toString()));
         } catch (IOException e) {
-            throw new ContentFileNotFoundException(e.getMessage());
+            throw new FileNotFoundException(e.getMessage());
         }
     }
 
     /**
-     * Retrieves amount of files in the given workspace unit.
+     * Retrieves amount of files of the given location.
      *
-     * @param workspaceUnitDirectory given workspace unit directory.
-     * @throws ContentFilesAmountRetrievalFailureException if files amount retrieval failed.
+     * @param location given location.
+     * @throws FilesAmountRetrievalFailureException if files amount retrieval failed.
      */
-    private Integer getFilesAmount(String workspaceUnitDirectory) throws
-            ContentFilesAmountRetrievalFailureException {
-        try (Stream<Path> stream = Files.list(Path.of(workspaceUnitDirectory))) {
+    public Integer getFilesAmount(String location) throws FilesAmountRetrievalFailureException {
+        try (Stream<Path> stream = Files.list(Path.of(location))) {
             return (int) stream.count();
         } catch (IOException e) {
-            throw new ContentFilesAmountRetrievalFailureException(e.getMessage());
+            throw new FilesAmountRetrievalFailureException(e.getMessage());
         }
     }
 
@@ -186,14 +199,13 @@ public class WorkspaceService {
      *
      * @param workspaceUnitDirectory given workspace unit directory.
      * @param name                   given file name.
-     * @throws ContentFileRemovalFailureException if earliest file removal operation failed. .
+     * @throws FileRemovalFailureException if earliest file removal operation failed. .
      */
-    private void removeFile(String workspaceUnitDirectory, String name) throws
-            ContentFileRemovalFailureException {
+    public void removeFile(String workspaceUnitDirectory, String name) throws FileRemovalFailureException {
         try {
-            FileSystemUtils.deleteRecursively(Path.of(workspaceUnitDirectory, name));
+            Files.delete(Path.of(workspaceUnitDirectory, name));
         } catch (IOException e) {
-            throw new ContentFileRemovalFailureException(e.getMessage());
+            throw new FileRemovalFailureException(e.getMessage());
         }
     }
 

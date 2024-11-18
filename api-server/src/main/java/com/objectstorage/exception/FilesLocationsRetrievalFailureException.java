@@ -7,12 +7,12 @@ import java.util.Formatter;
 /**
  * Represents exception used when files locations retrieval fails.
  */
-public class ContentFilesLocationsRetrievalFailureException extends IOException {
-    public ContentFilesLocationsRetrievalFailureException() {
+public class FilesLocationsRetrievalFailureException extends IOException {
+    public FilesLocationsRetrievalFailureException() {
         this("");
     }
 
-    public ContentFilesLocationsRetrievalFailureException(Object... message) {
+    public FilesLocationsRetrievalFailureException(Object... message) {
         super(
                 new Formatter()
                         .format("Files locations retrieval failed: %s", Arrays.stream(message).toArray())

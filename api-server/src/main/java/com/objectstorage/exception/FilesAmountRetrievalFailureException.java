@@ -7,12 +7,12 @@ import java.util.Formatter;
 /**
  * Represents exception used when files amount retrieval fails.
  */
-public class ContentFilesAmountRetrievalFailureException extends IOException {
-    public ContentFilesAmountRetrievalFailureException() {
+public class FilesAmountRetrievalFailureException extends IOException {
+    public FilesAmountRetrievalFailureException() {
         this("");
     }
 
-    public ContentFilesAmountRetrievalFailureException(Object... message) {
+    public FilesAmountRetrievalFailureException(Object... message) {
         super(
                 new Formatter()
                         .format("Files amount retrieval failed: %s", Arrays.stream(message).toArray())
