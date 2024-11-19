@@ -1,7 +1,6 @@
 package com.objectstorage.service.secrets.cache;
 
 import com.google.common.cache.Cache;
-import com.objectstorage.dto.SecretsCacheDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 
 import com.google.common.cache.CacheBuilder;

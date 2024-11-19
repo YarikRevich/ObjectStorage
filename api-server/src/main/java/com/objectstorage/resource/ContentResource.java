@@ -1,7 +1,6 @@
 package com.objectstorage.resource;
 
 import com.objectstorage.api.ContentResourceApi;
-import com.objectstorage.dto.SecretsCacheDto;
 import com.objectstorage.exception.RootIsNotValidException;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.facade.RepositoryFacade;

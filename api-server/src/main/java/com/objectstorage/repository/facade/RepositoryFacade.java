@@ -206,7 +206,7 @@ public class RepositoryFacade {
         }
 
         try {
-            contentRepository.deleteBySecret(secret.getId());
+            contentRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
         } catch (RepositoryOperationFailureException e) {
             throw new RepositoryContentApplicationFailureException(e.getMessage());
         }
@@ -227,6 +227,13 @@ public class RepositoryFacade {
     public void destroy(ValidationSecretsUnit validationSecretsUnit) throws RepositoryContentDestructionFailureException {
         String signature = RepositoryConfigurationHelper.getExternalCredentials(
                 validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            return;
+        }
 
         SecretEntity secret;
 
@@ -239,7 +246,7 @@ public class RepositoryFacade {
         }
 
         try {
-            contentRepository.deleteBySecret(secret.getId());
+            contentRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
         } catch (RepositoryOperationFailureException e) {
             throw new RepositoryContentDestructionFailureException(e.getMessage());
         }

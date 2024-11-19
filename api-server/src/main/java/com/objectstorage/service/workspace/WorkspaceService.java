@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import lombok.SneakyThrows;
@@ -221,7 +222,7 @@ public class WorkspaceService {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         try (ZipOutputStream writer = new ZipOutputStream(result)) {
-            writer.putNextEntry(new ZipEntry("/"));
+            writer.putNextEntry(new ZipEntry(properties.getWorkspaceCompressionFileName()));
 
             writer.write(inputStream.readAllBytes());
 
@@ -236,12 +237,6 @@ public class WorkspaceService {
         return result.toByteArray();
     }
 
-
-
-
-
-
-
     /**
      * Decompresses given file input.
      *
@@ -251,46 +246,36 @@ public class WorkspaceService {
      */
     public byte[] decompressFile(byte[] input) throws
             InputDecompressionFailureException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        ZipInputStream reader = new ZipInputStream(new ByteArrayInputStream(input));
 
-        try (ZipOutputStream writer = new ZipOutputStream(result)) {
+        ZipEntry zipEntry;
 
-            if (isAdditionalContentAvailable(workspaceUnitDirectory, location)) {
-                writer.putNextEntry(new ZipEntry(
-                        WorkspaceConfigurationHelper.getZipFolderDefinition(
-                                properties.getWorkspaceAdditionalContentDirectory())));
-
-                List<String> additionalContentLocations =
-                        workspaceService.getAdditionalContentFilesLocations(workspaceUnitDirectory, location);
-
-                String rawContent;
-
-                for (String additionalContentLocation : additionalContentLocations) {
-                    writer.putNextEntry(new ZipEntry(
-                            Path.of(properties.getWorkspaceAdditionalContentDirectory(), additionalContentLocation)
-                                    .toString()));
-
-
-                    rawContent = AdditionalContentFileToJsonConverter.convert(
-                            workspaceService.getAdditionalContentFileContent(
-                                    workspaceUnitDirectory, location, additionalContentLocation));
-
-                    if (Objects.isNull(rawContent)) {
-                        continue;
-                    }
-
-                    writer.write(rawContent.getBytes());
-                }
-            }
-
-            writer.flush();
-
-            writer.finish();
-
+        try {
+            zipEntry = reader.getNextEntry();
         } catch (IOException e) {
-            throw new InputCompressionFailureException(e.getMessage());
+            throw new InputDecompressionFailureException(e.getMessage());
         }
 
-        return result.toByteArray();
+        byte[] content;
+
+        try {
+            content = reader.readAllBytes();
+        } catch (IOException e) {
+            throw new InputDecompressionFailureException(e.getMessage());
+        }
+
+        try {
+            reader.closeEntry();
+        } catch (IOException e) {
+            throw new InputDecompressionFailureException(e.getMessage());
+        }
+
+        try {
+            reader.close();
+        } catch (IOException e) {
+            throw new InputDecompressionFailureException(e.getMessage());
+        }
+
+        return content;
     }
 }

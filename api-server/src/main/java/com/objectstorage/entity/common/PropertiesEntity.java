@@ -62,6 +62,9 @@ public class PropertiesEntity {
     @ConfigProperty(name = "workspace.directory")
     String workspaceDirectory;
 
+    @ConfigProperty(name = "workspace.compression.file.name")
+    String workspaceCompressionFileName;
+
     @ConfigProperty(name = "communication.cluster.startup-await-frequency")
     Integer communicationClusterStartupAwaitFrequency;
 

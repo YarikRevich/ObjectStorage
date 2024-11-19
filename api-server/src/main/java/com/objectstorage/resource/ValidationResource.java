@@ -1,7 +1,5 @@
 package com.objectstorage.resource;
 
-import com.objectstorage.dto.SecretsCacheDto;
-import com.objectstorage.dto.ValidationSecretsCompoundDto;
 import com.objectstorage.exception.ProvidersAreNotValidException;
 import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
