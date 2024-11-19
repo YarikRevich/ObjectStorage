@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Represents entity used to describe added configuration.
+ * Represents entity used to describe files in temporate storage.
  */
 @Getter
 @AllArgsConstructor(staticName = "of")
-public class ConfigEntity {
+public class TemporateEntity {
     /**
      * Represents id primary key column.
      */
@@ -25,7 +25,7 @@ public class ConfigEntity {
     private Integer secret;
 
     /**
-     * Represents configuration file hash column.
+     * Represents file hash column.
      */
     private String hash;
 }

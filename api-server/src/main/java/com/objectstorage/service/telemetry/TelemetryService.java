@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides access to gather information and expose it to telemetry representation tool.
@@ -26,17 +27,13 @@ public class TelemetryService {
     @Inject
     TelemetryBinding telemetryBinding;
 
-    private final ConcurrentLinkedQueue<Runnable> clusterStateQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> temporateStorageFilesAmountQueue = new ConcurrentLinkedQueue<>();
 
-    private final ConcurrentLinkedQueue<Runnable> apiServerHealthCheckQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> currentCloudServiceUploadsQueue = new ConcurrentLinkedQueue<>();
 
-    private final ConcurrentLinkedQueue<Runnable> clusterHealthCheckQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> cloudServiceUploadRetriesQueue = new ConcurrentLinkedQueue<>();
 
-    private final ConcurrentLinkedQueue<Runnable> clusterDownloadQueue = new ConcurrentLinkedQueue<>();
-
-    private final ConcurrentLinkedQueue<Runnable> rawContentUploadQueue = new ConcurrentLinkedQueue<>();
-
-    private final ConcurrentLinkedQueue<Runnable> additionalContentUploadQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> averageUploadFileSizeQueue = new ConcurrentLinkedQueue<>();
 
     private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(0, Thread.ofVirtual().factory());
@@ -47,165 +44,119 @@ public class TelemetryService {
     @PostConstruct
     private void configure() {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!apiServerHealthCheckQueue.isEmpty()) {
-                apiServerHealthCheckQueue.poll().run();
+            if (!temporateStorageFilesAmountQueue.isEmpty()) {
+                temporateStorageFilesAmountQueue.poll().run();
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!clusterHealthCheckQueue.isEmpty()) {
-                clusterHealthCheckQueue.poll().run();
+            if (!currentCloudServiceUploadsQueue.isEmpty()) {
+                currentCloudServiceUploadsQueue.poll().run();
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!clusterStateQueue.isEmpty()) {
-                clusterStateQueue.poll().run();
+            if (!cloudServiceUploadRetriesQueue.isEmpty()) {
+                cloudServiceUploadRetriesQueue.poll().run();
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!clusterDownloadQueue.isEmpty()) {
-                clusterDownloadQueue.poll().run();
+            if (!averageUploadFileSizeQueue.isEmpty()) {
+                averageUploadFileSizeQueue.poll().run();
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!rawContentUploadQueue.isEmpty()) {
-                rawContentUploadQueue.poll().run();
-            }
-        }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
+        System.out.println(configService.getConfig().getTemporateStorage().getFrequency());
 
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            if (!additionalContentUploadQueue.isEmpty()) {
-                additionalContentUploadQueue.poll().run();
-            }
-        }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
+        telemetryBinding.getTemporateStorageFilesAmount().set(10);
     }
 
     /**
-     * Increases serving ObjectStorage Cluster allocations amount counter.
+     * Increases current amount of files in ObjectStorage Temporate Storage.
      */
-    public void increaseServingClustersAmount() {
+    public void increaseTemporateStorageFilesAmount() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterStateQueue.add(() -> telemetryBinding.getServingClusterAmount().set(telemetryBinding.getServingClusterAmount().get() + 1));
+            temporateStorageFilesAmountQueue.add(
+                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
+                            telemetryBinding.getTemporateStorageFilesAmount().get() + 1));
         }
     }
 
     /**
-     * Decreases serving ObjectStorage Cluster allocations amount counter.
+     * Decreases current amount of files in ObjectStorage Temporate Storage.
      */
-    public void decreaseServingClustersAmount() {
+    public void decreaseTemporateStorageFilesAmount() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterStateQueue.add(() -> telemetryBinding.getServingClusterAmount().set(telemetryBinding.getServingClusterAmount().get() - 1));
+            temporateStorageFilesAmountQueue.add(
+                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
+                            telemetryBinding.getTemporateStorageFilesAmount().get() - 1));
         }
     }
 
     /**
-     * Increases suspended ObjectStorage Cluster allocations amount counter.
+     * Increases current cloud service uploads from ObjectStorage Temporate Storage.
      */
-    public void increaseSuspendedClustersAmount() {
+    public void increaseCurrentCloudServiceUploads() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterStateQueue.add(() -> telemetryBinding.getSuspendedClusterAmount().set(telemetryBinding.getSuspendedClusterAmount().get() + 1));
+            currentCloudServiceUploadsQueue.add(
+                    () -> telemetryBinding.getCurrentCloudServiceUploadsAmount().set(
+                            telemetryBinding.getCurrentCloudServiceUploadsAmount().get() + 1));
         }
     }
 
     /**
-     * Decreases suspended ObjectStorage Cluster allocations amount counter.
+     * Decreases current cloud service uploads from ObjectStorage Temporate Storage.
      */
-    public void decreaseSuspendedClustersAmount() {
+    public void decreaseCurrentCloudServiceUploads() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterStateQueue.add(() -> telemetryBinding.getSuspendedClusterAmount().set(telemetryBinding.getSuspendedClusterAmount().get() - 1));
+            currentCloudServiceUploadsQueue.add(
+                    () -> telemetryBinding.getCurrentCloudServiceUploadsAmount().set(
+                            telemetryBinding.getCurrentCloudServiceUploadsAmount().get() - 1));
         }
     }
 
     /**
-     * Increases healthcheck requests for ObjectStorage API Server instance amount counter.
+     * Increases cloud service upload retries form ObjectStorage Temporate Storage.
      */
-    public void increaseApiServerHealthCheckAmount() {
+    public void increaseCloudServiceUploadRetries() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            apiServerHealthCheckQueue.add(() -> telemetryBinding.getApiServerHealthCheckAmount().set(telemetryBinding.getApiServerHealthCheckAmount().get() + 1));
+            cloudServiceUploadRetriesQueue.add(
+                    () -> telemetryBinding.getCloudServiceUploadRetries().set(
+                            telemetryBinding.getCloudServiceUploadRetries().get() + 1));
         }
     }
 
     /**
-     * Decreases healthcheck requests for ObjectStorage API Server instance amount counter.
+     * Decreases cloud service upload retries form ObjectStorage Temporate Storage.
      */
-    public void decreaseApiServerHealthCheckAmount() {
+    public void decreaseCloudServiceUploadRetries() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            apiServerHealthCheckQueue.add(() -> telemetryBinding.getApiServerHealthCheckAmount().set(telemetryBinding.getApiServerHealthCheckAmount().get() - 1));
+            cloudServiceUploadRetriesQueue.add(
+                    () -> telemetryBinding.getCloudServiceUploadRetries().set(
+                            telemetryBinding.getCloudServiceUploadRetries().get() - 1));
         }
     }
 
     /**
-     * Increases healthcheck requests for ObjectStorage Cluster allocations amount counter.
+     * Increases average upload file size to ObjectStorage Temporate Storage.
      */
-    public void increaseClusterHealthCheckAmount() {
+    public void increaseAverageUploadFileSizeQueue() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterHealthCheckQueue.add(() -> telemetryBinding.getClusterHealthCheckAmount().set(telemetryBinding.getClusterHealthCheckAmount().get() + 1));
+            averageUploadFileSizeQueue.add(
+                    () -> telemetryBinding.getAverageUploadFileSize().set(
+                            telemetryBinding.getAverageUploadFileSize().get() + 1));
         }
     }
 
     /**
-     * Decreases healthcheck requests for ObjectStorage Cluster allocations amount counter.
+     * Decreases average upload file size to ObjectStorage Temporate Storage.
      */
-    public void decreaseClusterHealthCheckAmount() {
+    public void decreaseAverageUploadFileSizeQueue() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterHealthCheckQueue.add(() -> telemetryBinding.getClusterHealthCheckAmount().set(telemetryBinding.getClusterHealthCheckAmount().get() - 1));
-        }
-    }
-
-    /**
-     * Increases downloads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void increaseClusterDownloadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterDownloadQueue.add(() -> telemetryBinding.getClusterDownloadAmount().set(telemetryBinding.getClusterDownloadAmount().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases downloads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void decreaseClusterDownloadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            clusterDownloadQueue.add(() -> telemetryBinding.getClusterDownloadAmount().set(telemetryBinding.getClusterDownloadAmount().get() - 1));
-        }
-    }
-
-    /**
-     * Increases raw content uploads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void increaseRawContentUploadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            rawContentUploadQueue.add(() -> telemetryBinding.getRawContentUploadAmount().set(telemetryBinding.getRawContentUploadAmount().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases raw content uploads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void decreaseRawContentUploadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            rawContentUploadQueue.add(() -> telemetryBinding.getRawContentUploadAmount().set(telemetryBinding.getRawContentUploadAmount().get() - 1));
-        }
-    }
-
-    /**
-     * Increases additional content uploads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void increaseAdditionalContentUploadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            additionalContentUploadQueue.add(() -> telemetryBinding.getAdditionalContentUploadAmount().set(telemetryBinding.getAdditionalContentUploadAmount().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases additional content uploads for ObjectStorage Cluster allocations amount counter.
-     */
-    public void decreaseAdditionalContentUploadAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            additionalContentUploadQueue.add(() -> telemetryBinding.getAdditionalContentUploadAmount().set(telemetryBinding.getAdditionalContentUploadAmount().get() - 1));
+            averageUploadFileSizeQueue.add(
+                    () -> telemetryBinding.getAverageUploadFileSize().set(
+                            telemetryBinding.getAverageUploadFileSize().get() - 1));
         }
     }
 }

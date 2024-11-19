@@ -1,7 +1,6 @@
 package com.objectstorage.service.secrets.cache;
 
 import com.google.common.cache.Cache;
-import com.objectstorage.dto.SecretsCacheDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 
 import com.google.common.cache.CacheBuilder;
@@ -25,7 +24,7 @@ public class TimeLimitedCacheService {
     @Inject
     PropertiesEntity properties;
 
-    private Cache<String, SecretsCacheDto> cache;
+    private Cache<String, ValidationSecretsApplication> cache;
 
     @PostConstruct
     private void process() {
@@ -37,11 +36,11 @@ public class TimeLimitedCacheService {
     /**
      * Adds provided secrets validation application to the cache.
      *
-     * @param SecretsCacheDto provided secrets dto to be added to the cache.
+     * @param validationSecretsApplication provided secrets dto to be added to the cache.
      * @return created secrets validation application cached key.
      */
     @SneakyThrows
-    public String add(SecretsCacheDto secretsCacheDto) {
+    public String add(ValidationSecretsApplication validationSecretsApplication) {
         KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
 
         keyGen.init(128);
@@ -50,7 +49,7 @@ public class TimeLimitedCacheService {
             String key = Base64.getEncoder().encodeToString(keyGen.generateKey().getEncoded());
 
             if (!exists(key)) {
-                cache.put(key, secretsCacheDto);
+                cache.put(key, validationSecretsApplication);
 
                 return key;
             }
@@ -77,8 +76,8 @@ public class TimeLimitedCacheService {
      * @param key secrets validation application key to be present in the cache.
      * @return cached secrets dto.
      */
-    public SecretsCacheDto get(String key) throws TimeLimitedCacheKeyNotFoundException {
-        SecretsCacheDto result = cache.getIfPresent(key);
+    public ValidationSecretsApplication get(String key) throws TimeLimitedCacheKeyNotFoundException {
+        ValidationSecretsApplication result = cache.getIfPresent(key);
 
         if (Objects.isNull(result)) {
             throw new TimeLimitedCacheKeyNotFoundException();

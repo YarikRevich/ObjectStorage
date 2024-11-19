@@ -1,22 +1,31 @@
 package com.objectstorage.entity.repository;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Optional;
-
 /**
- * Represents entity used to describe registered locations.
+ * Represents entity used to describe registered content.
  */
 @Getter
 @AllArgsConstructor(staticName = "of")
 public class ContentEntity {
+    /**
+     * Represents id primary key column.
+     */
     private Integer id;
 
-    private String root;
-
+    /**
+     * Represents foreign key, which references provider id.
+     */
     private Integer provider;
 
+    /**
+     * Represents foreign key, which references secret id.
+     */
     private Integer secret;
+
+    /**
+     * Represents content root column.
+     */
+    private String root;
 }

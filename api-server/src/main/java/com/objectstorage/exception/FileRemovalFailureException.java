@@ -7,12 +7,12 @@ import java.util.Formatter;
 /**
  * Represents exception used when file removal operation fails.
  */
-public class ContentFileRemovalFailureException extends IOException {
-    public ContentFileRemovalFailureException() {
+public class FileRemovalFailureException extends IOException {
+    public FileRemovalFailureException() {
         this("");
     }
 
-    public ContentFileRemovalFailureException(Object... message) {
+    public FileRemovalFailureException(Object... message) {
         super(
                 new Formatter()
                         .format("File removal failed: %s", Arrays.stream(message).toArray())

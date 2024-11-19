@@ -44,6 +44,9 @@ public class PropertiesEntity {
     @ConfigProperty(name = "database.tables.content.name")
     String databaseContentTableName;
 
+    @ConfigProperty(name = "database.tables.temporate.name")
+    String databaseTemporateTableName;
+
     @ConfigProperty(name = "database.tables.provider.name")
     String databaseProviderTableName;
 
@@ -53,20 +56,14 @@ public class PropertiesEntity {
     @ConfigProperty(name = "database.statement.close-delay")
     Integer databaseStatementCloseDelay;
 
-    @ConfigProperty(name = "cluster.bin.location")
-    String clusterBinLocation;
-
     @ConfigProperty(name = "config.location")
     String configLocation;
 
     @ConfigProperty(name = "workspace.directory")
     String workspaceDirectory;
 
-    @ConfigProperty(name = "workspace.content.raw.directory")
-    String workspaceRawContentDirectory;
-
-    @ConfigProperty(name = "workspace.content.additional.directory")
-    String workspaceAdditionalContentDirectory;
+    @ConfigProperty(name = "workspace.compression.file.name")
+    String workspaceCompressionFileName;
 
     @ConfigProperty(name = "communication.cluster.startup-await-frequency")
     Integer communicationClusterStartupAwaitFrequency;

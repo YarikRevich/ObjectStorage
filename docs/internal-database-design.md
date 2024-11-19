@@ -9,6 +9,7 @@ end title
 
 entity "config" {
     *id : number <<PK>>
+    *provider : number <<FK>> # provider(id)
     *secret: number <<FK>> # secret(id)
     --
     hash : varchar
@@ -29,13 +30,23 @@ entity "provider" {
 
 entity "content" {
     *id : number <<PK>>
-    *secret : number <<FK>> # secret(id)
     *provider : number <<FK>> # provider(id)
+    *secret : number <<FK>> # secret(id)
     --
     root : varchar
+}
+
+entity "temporate" {
+    *id : number <<PK>>
+    *provider : number <<FK>> # provider(id)
+    *secret : number <<FK>> # secret(id)
+    --
+    hash : varchar
 }
 
 config ||...|| secret #magenta : attached to
 content ||...|| secret #magenta : attached to
 content }|...|| provider  #magenta : configures
+temporate ||...|| secret #magenta : created with
+temporate }|...|| provider  #magenta : created with
 ```

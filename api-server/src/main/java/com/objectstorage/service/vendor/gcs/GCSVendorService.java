@@ -3,8 +3,12 @@ package com.objectstorage.service.vendor.gcs;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
+import com.google.cloud.resourcemanager.ResourceManager;
+import com.google.cloud.resourcemanager.ResourceManagerOptions;
+import com.google.cloud.resourcemanager.Project;
 import com.google.cloud.storage.*;
 import com.objectstorage.exception.GCPCredentialsInitializationFailureException;
+import com.objectstorage.exception.GCSBucketObjectUploadFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.ByteArrayInputStream;
@@ -28,7 +32,7 @@ public class GCSVendorService {
         try {
             return ServiceAccountCredentials.fromStream(new ByteArrayInputStream(secrets.getBytes()));
         } catch (IOException e) {
-            throw new GCPCredentialsInitializationFailureException(e);
+            throw new GCPCredentialsInitializationFailureException(e.getMessage());
         }
     }
 
@@ -93,12 +97,13 @@ public class GCSVendorService {
      * @param bucketName given name of the GCS bucket.
      * @param fileName given name of the file to be uploaded.
      * @param inputStream given file input stream to be used for object upload.
+     * @throws GCSBucketObjectUploadFailureException if GCS bucket object upload fails.
      */
     public void uploadObjectToGCSBucket(
             Credentials credentials,
             String bucketName,
             String fileName,
-            InputStream inputStream) {
+            InputStream inputStream) throws GCSBucketObjectUploadFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
@@ -109,7 +114,7 @@ public class GCSVendorService {
                         BlobId.of(bucketName, fileName)).build())) {
             writer.write(ByteBuffer.wrap(inputStream.readAllBytes()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new GCSBucketObjectUploadFailureException(e.getMessage());
         }
     }
 
@@ -136,7 +141,7 @@ public class GCSVendorService {
     }
 
     /**
-     * Remove object from the GCS bucket with the given name.
+     * Removes object from the GCS bucket with the given name.
      *
      * @param credentials given credentials to be used for client configuration.
      * @param bucketName given name of the GCS bucket.
@@ -152,5 +157,24 @@ public class GCSVendorService {
                 .getService();
 
         storage.delete(BlobId.of(bucketName, fileName));
+    }
+
+    /**
+     * Checks if the selected credentials are valid.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @return result of credentials validation.
+     */
+    public Boolean isCallerValid(Credentials credentials) {
+        ResourceManager resourceManager = ResourceManagerOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        for (Project project : resourceManager.list().iterateAll()) {
+            return true;
+        }
+
+        return false;
     }
 }

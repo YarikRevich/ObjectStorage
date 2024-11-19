@@ -1,7 +1,5 @@
 package com.objectstorage.resource;
 
-import com.objectstorage.dto.SecretsCacheDto;
-import com.objectstorage.dto.ValidationSecretsCompoundDto;
 import com.objectstorage.exception.ProvidersAreNotValidException;
 import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
@@ -39,11 +37,11 @@ public class ValidationResource implements ValidationResourceApi {
             throw new ProvidersAreNotValidException();
         };
 
-        List<ValidationSecretsCompoundDto> externalSecrets =
-                resourceConfigurationHelper.getExternalSecrets(validationSecretsApplication);
+        if (!resourceConfigurationHelper.areSecretsValid(validationSecretsApplication)) {
+            throw new ProvidersAreNotValidException();
+        }
 
         return ValidationSecretsApplicationResult.of(
-                resourceConfigurationHelper.createJwtToken(
-                        SecretsCacheDto.of(externalSecrets)));
+                resourceConfigurationHelper.createJwtToken(validationSecretsApplication));
     }
 }

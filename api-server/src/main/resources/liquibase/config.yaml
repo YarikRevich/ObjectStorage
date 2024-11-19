@@ -14,6 +14,14 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
+                  name: provider
+                  type: INT
+                  constraints:
+                    foreignKeyName: provider_fk
+                    references: provider(id)
+                    nullable: false
+                    deleteCascade: true
+              - column:
                   name: secret
                   type: INT
                   constraints:
@@ -73,9 +81,36 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
+                  name: provider
+                  type: INT
+                  constraints:
+                    foreignKeyName: provider_fk
+                    references: provider(id)
+                    nullable: false
+                    deleteCascade: true
+              - column:
+                  name: secret
+                  type: INT
+                  constraints:
+                    foreignKeyName: secret_fk
+                    references: secret(id)
+                    nullable: false
+                    unique: true
+                    deleteCascade: true
+              - column:
                   name: root
                   type: VARCHAR
                   constraints:
+                    nullable: false
+        - createTable:
+            tableName: temporate
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
                     nullable: false
               - column:
                   name: provider
@@ -94,6 +129,18 @@ databaseChangeLog:
                     nullable: false
                     unique: true
                     deleteCascade: true
+              - column:
+                  name: hash
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+                    unique: true
+        - createIndex:
+            columns:
+              - column:
+                  name: provider
+            indexName: idx_provider
+            tableName: temporate
         - loadData:
             tableName: provider
             usePreparedStatements: false

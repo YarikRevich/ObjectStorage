@@ -12,6 +12,7 @@ import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceExcepti
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.waiters.WaiterParameters;
 import com.objectstorage.dto.AWSSecretsDto;
+import com.objectstorage.exception.S3BucketObjectRetrievalFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.io.IOUtils;
 
@@ -145,12 +146,13 @@ public class S3VendorService {
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be retrieved.
      * @return retrieved object content.
+     * @throws S3BucketObjectRetrievalFailureException if s3 bucket object retrieval fails.
      */
     public byte[] retrieveObjectFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region,
-            String fileName) {
+            String fileName) throws S3BucketObjectRetrievalFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
@@ -161,12 +163,12 @@ public class S3VendorService {
         try {
             return IOUtils.toByteArray(object.getObjectContent());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new S3BucketObjectRetrievalFailureException(e.getMessage());
         }
     }
 
     /**
-     * Remove object from the S3 bucket with the given name.
+     * Removes object from the S3 bucket with the given name.
      *
      * @param awsCredentialsProvider given providers to be used for client configuration.
      * @param bucketName given name of the S3 bucket.

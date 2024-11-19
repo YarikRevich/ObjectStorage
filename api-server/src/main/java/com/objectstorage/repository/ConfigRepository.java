@@ -10,9 +10,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents repository implementation to handle config table.
@@ -29,17 +30,19 @@ public class ConfigRepository {
     /**
      * Inserts given values into the config table.
      *
-     * @param name given name of the configuration.
-     * @param hash given hash of the configuration.
+     * @param provider given provider.
+     * @param secret   given secret.
+     * @param hash given configuration file hash.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void insert(String name, String hash) throws RepositoryOperationFailureException {
+    public void insert(Integer provider, Integer secret, String hash) throws RepositoryOperationFailureException {
         try {
             repositoryExecutor.performQuery(
                             String.format(
-                                    "INSERT INTO %s (name, hash) VALUES ('%s', '%s')",
+                                    "INSERT INTO %s (provider, secret, hash) VALUES (%d, %d, '%s')",
                                     properties.getDatabaseConfigTableName(),
-                                    name,
+                                    provider,
+                                    secret,
                                     hash));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
@@ -48,68 +51,40 @@ public class ConfigRepository {
     }
 
     /**
-     * Checks if config entity with the given name is present.
+     * Retrieves all the persisted temporate entities with the given provider and secret.
      *
-     * @param name given name of the configuration.
-     * @return result of the check.
+     * @return retrieved temporate entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
-    public Boolean isPresentByName(String name) throws RepositoryOperationFailureException {
-        try {
-            ResultSet resultSet = repositoryExecutor.performQueryWithResult(
-                    String.format(
-                            "SELECT t.id, t.hash FROM %s as t WHERE t.name = '%s'",
-                            properties.getDatabaseConfigTableName(),
-                            name));
-
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new RepositoryOperationFailureException(e.getMessage());
-            }
-        } catch (QueryEmptyResultException e) {
-            return false;
-        } catch (QueryExecutionFailureException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        return true;
-    }
-
-    /**
-     * Attempts to retrieve config entity by the given name.
-     *
-     * @param name given name of the configuration.
-     * @return retrieved config entity.
-     * @throws RepositoryOperationFailureException if repository operation fails.
-     */
-    public ConfigEntity findByName(String name) throws RepositoryOperationFailureException {
+    public List<ConfigEntity> findByProviderAndSecret(Integer provider, Integer secret) throws
+            RepositoryOperationFailureException {
         ResultSet resultSet;
 
         try {
             resultSet =
                     repositoryExecutor.performQueryWithResult(
                             String.format(
-                                    "SELECT t.id, t.hash FROM %s as t WHERE t.name = '%s'",
+                                    "SELECT t.id, t.hash FROM %s as t WHERE t.provider = %d AND t.secret = %d",
                                     properties.getDatabaseConfigTableName(),
-                                    name));
+                                    provider,
+                                    secret));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
+        List<ConfigEntity> result = new ArrayList<>();
+
         Integer id;
-
-        try {
-            id = resultSet.getInt("id");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
         String hash;
 
         try {
-            hash = resultSet.getString("hash");
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+                hash = resultSet.getString("hash");
+
+                result.add(ConfigEntity.of(id, provider, secret, hash));
+            }
         } catch (SQLException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
@@ -120,6 +95,27 @@ public class ConfigRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return ConfigEntity.of(id, name, hash);
+        return result;
+    }
+
+    /**
+     * Deletes all entities with the given provider and secret from config table.
+     *
+     * @param provider given provider.
+     * @param secret given secret.
+     * @throws RepositoryOperationFailureException if operation execution fails.
+     */
+    public void deleteByProviderAndSecret(Integer provider, Integer secret) throws RepositoryOperationFailureException {
+        try {
+            repositoryExecutor.performQuery(
+                    String.format(
+                            "DELETE FROM %s as t WHERE t.provider = %d AND t.secret = %d",
+                            properties.getDatabaseConfigTableName(),
+                            provider,
+                            secret));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
     }
 }

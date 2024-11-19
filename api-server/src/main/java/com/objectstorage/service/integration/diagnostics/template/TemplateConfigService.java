@@ -43,13 +43,11 @@ public class TemplateConfigService {
     /**
      * Performs diagnostics infrastructure configuration templates parsing operations.
      *
-     * @throws ApplicationStartGuardFailureException         if ObjectStorage API Server application start guard operation fails.
      * @throws DiagnosticsTemplateProcessingFailureException if ObjectStorage API Server diagnostics template processing
      *                                                       operation fails.
      */
     @PostConstruct
     private void process() throws
-            ApplicationStartGuardFailureException,
             DiagnosticsTemplateProcessingFailureException {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             Configuration cfg = new Configuration(VERSION_2_3_32);
