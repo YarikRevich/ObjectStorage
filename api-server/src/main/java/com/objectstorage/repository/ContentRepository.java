@@ -152,17 +152,19 @@ public class ContentRepository {
     }
 
     /**
-     * Deletes all entities with the given secret from content table.
+     * Deletes all entities with the given provider and secret from content table.
      *
-     * @param secret given secret, which allows content retrieval.
+     * @param provider given provider.
+     * @param secret given secret.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void deleteBySecret(Integer secret) throws RepositoryOperationFailureException {
+    public void deleteByProviderAndSecret(Integer provider, Integer secret) throws RepositoryOperationFailureException {
         try {
             repositoryExecutor.performQuery(
                     String.format(
-                            "DELETE FROM %s as t WHERE t.secret = %d",
+                            "DELETE FROM %s as t WHERE t.provider = %d AND t.secret = %d",
                             properties.getDatabaseContentTableName(),
+                            provider,
                             secret));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {

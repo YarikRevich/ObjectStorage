@@ -100,15 +100,17 @@ public class WorkspaceFacade {
             throw new FileCreationFailureException();
         }
 
+        byte[] content;
+
         try {
-            workspaceService.compressFile(inputStream);
+            content = workspaceService.compressFile(inputStream);
         } catch (InputCompressionFailureException e) {
             throw new FileCreationFailureException(e.getMessage());
         }
 
         try {
-            workspaceService.createFile(workspaceUnitDirectory, name, inputStream);
-        } catch (RawContentFileWriteFailureException e) {
+            workspaceService.createFile(workspaceUnitDirectory, name, content);
+        } catch (FileWriteFailureException e) {
             throw new FileCreationFailureException(e.getMessage());
         }
     }
@@ -174,7 +176,7 @@ public class WorkspaceFacade {
 
         try {
             return workspaceService.decompressFile(content);
-        } catch (InputCompressionFailureException e) {
+        } catch (InputDecompressionFailureException e) {
             throw new FileUnitRetrievalFailureException(e.getMessage());
         }
     }

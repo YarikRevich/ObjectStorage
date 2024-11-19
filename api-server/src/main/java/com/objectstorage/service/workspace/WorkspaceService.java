@@ -49,7 +49,7 @@ public class WorkspaceService {
      * Creates workspace unit with the help of the given key.
      *
      * @param key given workspace unit key.
-     * @throws WorkspaceUnitDirectoryCreationFailureException if workspace unit directory creation operation failed.
+     * @throws WorkspaceUnitDirectoryCreationFailureException if workspace unit directory creation operation fails.
      */
     public void createUnitDirectory(String key) throws
             WorkspaceUnitDirectoryCreationFailureException {
@@ -95,7 +95,7 @@ public class WorkspaceService {
      * Removes workspace unit with the help of the given key.
      *
      * @param key given workspace unit key.
-     * @throws WorkspaceUnitDirectoryRemovalFailureException if IO operation failed.
+     * @throws WorkspaceUnitDirectoryRemovalFailureException if IO operation fails.
      */
     public void removeUnitDirectory(String key) throws WorkspaceUnitDirectoryRemovalFailureException {
         try {
@@ -111,18 +111,18 @@ public class WorkspaceService {
      * @param workspaceUnitDirectory given workspace unit directory.
      * @param name                   given file name.
      * @param input                  given file input.
-     * @throws RawContentFileWriteFailureException if file cannot be created.
+     * @throws FileWriteFailureException if file cannot be created.
      */
-    public void createFile(String workspaceUnitDirectory, String name, InputStream input) throws
-            RawContentFileWriteFailureException {
+    public void createFile(String workspaceUnitDirectory, String name, byte[] input) throws
+            FileWriteFailureException {
         Path directoryPath = Path.of(workspaceUnitDirectory, name);
 
         File file = new File(directoryPath.toString());
 
         try {
-            FileUtils.copyInputStreamToFile(input, file);
+            FileUtils.writeByteArrayToFile(file, input);
         } catch (IOException e) {
-            throw new RawContentFileWriteFailureException(e.getMessage());
+            throw new FileWriteFailureException(e.getMessage());
         }
     }
 
@@ -144,7 +144,7 @@ public class WorkspaceService {
      *
      * @param workspaceUnitDirectory given workspace unit directory.
      * @return a list of content locations.
-     * @throws FilesLocationsRetrievalFailureException if content files locations retrieval operation failed. .
+     * @throws FilesLocationsRetrievalFailureException if content files locations retrieval operation fails. .
      */
     public List<String> getFilesLocations(String workspaceUnitDirectory) throws
             FilesLocationsRetrievalFailureException {
@@ -184,7 +184,7 @@ public class WorkspaceService {
      * Retrieves amount of files of the given location.
      *
      * @param location given location.
-     * @throws FilesAmountRetrievalFailureException if files amount retrieval failed.
+     * @throws FilesAmountRetrievalFailureException if files amount retrieval fails.
      */
     public Integer getFilesAmount(String location) throws FilesAmountRetrievalFailureException {
         try (Stream<Path> stream = Files.list(Path.of(location))) {
@@ -199,7 +199,7 @@ public class WorkspaceService {
      *
      * @param workspaceUnitDirectory given workspace unit directory.
      * @param name                   given file name.
-     * @throws FileRemovalFailureException if earliest file removal operation failed. .
+     * @throws FileRemovalFailureException if file removal operation fails.
      */
     public void removeFile(String workspaceUnitDirectory, String name) throws FileRemovalFailureException {
         try {
@@ -209,23 +209,12 @@ public class WorkspaceService {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
     /**
      * Compresses given file input stream.
      *
      * @param inputStream         given file input stream.
      * @return compressed file input.
-     * @throws InputCompressionFailureException if content reference creation failed.
+     * @throws InputCompressionFailureException if input compression fails.
      */
     public byte[] compressFile(InputStream inputStream) throws
             InputCompressionFailureException {
@@ -257,11 +246,11 @@ public class WorkspaceService {
      * Decompresses given file input.
      *
      * @param input         given file input.
-     * @return decompressed file input.
-     * @throws InputCompressionFailureException if content reference creation failed.
+     * @return decompressed file content.
+     * @throws InputDecompressionFailureException if input decompression creation fails.
      */
     public byte[] decompressFile(byte[] input) throws
-            InputCompressionFailureException {
+            InputDecompressionFailureException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         try (ZipOutputStream writer = new ZipOutputStream(result)) {
