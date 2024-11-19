@@ -12,8 +12,6 @@ import com.objectstorage.service.command.nodeexporter.NodeExporterDeployCommandS
 import com.objectstorage.service.command.prometheus.PrometheusDeployCommandService;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.executor.CommandExecutorService;
-import com.objectstorage.service.state.StateService;
-import com.objectstorage.service.telemetry.TelemetryService;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -48,7 +46,6 @@ public class DiagnosticsConfigService {
     /**
      * Creates Docker diagnostics network and deploys diagnostics infrastructure instances with pre-defined configurations.
      *
-     * @throws ApplicationStartGuardFailureException if ObjectStorage API Server application start guard operation fails.
      * @throws DockerIsNotAvailableException if Docker is not available.
      * @throws DockerInspectRemovalFailureException if Docker container removal operation fails.
      * @throws DockerNetworkCreateFailureException if Docker network creation operation fails.
@@ -58,7 +55,6 @@ public class DiagnosticsConfigService {
      */
     @PostConstruct
     private void process() throws
-            ApplicationStartGuardFailureException,
             DockerIsNotAvailableException,
             DockerInspectRemovalFailureException,
             DockerNetworkCreateFailureException,

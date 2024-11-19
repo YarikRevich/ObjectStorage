@@ -16,51 +16,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @ApplicationScoped
 public class TelemetryBinding implements MeterBinder {
-    private final AtomicInteger servingClusterAmount = new AtomicInteger();
+    private final AtomicInteger temporateStorageFilesAmount = new AtomicInteger();
 
-    private final AtomicInteger suspendedClusterAmount = new AtomicInteger();
+    private final AtomicInteger currentCloudServiceUploadsAmount = new AtomicInteger();
 
-    private final AtomicInteger apiServerHealthCheckAmount = new AtomicInteger();
+    private final AtomicInteger cloudServiceUploadRetries = new AtomicInteger();
 
-    private final AtomicInteger clusterHealthCheckAmount = new AtomicInteger();
+    private final AtomicInteger configuredTemporateStorageAwaitTime = new AtomicInteger();
 
-    private final AtomicInteger clusterDownloadAmount = new AtomicInteger();
-
-    private final AtomicInteger rawContentUploadAmount = new AtomicInteger();
-
-    private final AtomicInteger additionalContentUploadAmount = new AtomicInteger();
+    private final AtomicInteger averageUploadFileSize = new AtomicInteger();
 
     /**
      * @see MeterBinder
      */
     @Override
     public void bindTo(@NotNull MeterRegistry meterRegistry) {
-        Gauge.builder("general.serving_cluster_amount", servingClusterAmount, AtomicInteger::get)
-                .description("Represents amount of serving ObjectStorage Cluster allocations")
+        Gauge.builder("general.temporate_storage_files_amount", temporateStorageFilesAmount, AtomicInteger::get)
+                .description("Represents amount of files in ObjectStorage Temporate Storage")
                 .register(meterRegistry);
 
-        Gauge.builder("general.suspended_cluster_amount", suspendedClusterAmount, AtomicInteger::get)
-                .description("Represents amount of suspended ObjectStorage Cluster allocations")
+        Gauge.builder("general.current_cloud_service_uploads_amount", currentCloudServiceUploadsAmount, AtomicInteger::get)
+                .description("Represents amount of uploads to different cloud services")
                 .register(meterRegistry);
 
-        Gauge.builder("general.api_server_health_check_amount", apiServerHealthCheckAmount, AtomicInteger::get)
-                .description("Represents amount of performed health check requests for ObjectStorage API Server instance")
+        Gauge.builder("general.cloud_service_upload_retries", cloudServiceUploadRetries, AtomicInteger::get)
+                .description("Represents cloud service uploads retries from ObjectStorage Temporate Storage")
                 .register(meterRegistry);
 
-        Gauge.builder("general.cluster_health_check_amount", clusterHealthCheckAmount, AtomicInteger::get)
-                .description("Represents amount of performed health check requests for ObjectStorage Cluster allocations")
+        Gauge.builder("general.configured_temporate_storage_await_time", configuredTemporateStorageAwaitTime, AtomicInteger::get)
+                .description("Represents configured ObjectStorage Temporate Storage await time")
                 .register(meterRegistry);
 
-        Gauge.builder("general.cluster_download_amount", clusterDownloadAmount, AtomicInteger::get)
-                .description("Represents amount of performed download requests for ObjectStorage Cluster allocations")
-                .register(meterRegistry);
-
-        Gauge.builder("general.raw_content_upload_amount", rawContentUploadAmount, AtomicInteger::get)
-                .description("Represents amount of performed raw content upload requests for ObjectStorage Cluster allocations")
-                .register(meterRegistry);
-
-        Gauge.builder("general.additional_content_upload_amount", additionalContentUploadAmount, AtomicInteger::get)
-                .description("Represents amount of performed additional content upload requests for ObjectStorage Cluster allocations")
+        Gauge.builder("general.average_upload_file_size", averageUploadFileSize, AtomicInteger::get)
+                .description("Represents average upload file size in ObjectStorage Temporate Storage")
                 .register(meterRegistry);
     }
 }

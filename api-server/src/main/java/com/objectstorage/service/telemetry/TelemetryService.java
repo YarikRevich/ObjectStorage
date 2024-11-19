@@ -41,12 +41,6 @@ public class TelemetryService {
     private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(0, Thread.ofVirtual().factory());
 
-    // TODO: show amount of files in the temporate storage.
-    // TODO: show current uploads to remote services.
-    // TODO: show file upload retries.
-    // TODO: show configured temporate storage await time.
-    // TODO: show average upload file size.
-
     /**
      * Starts telemetries listener, which handles incoming telemetries to be processed in a sequential way.
      */
