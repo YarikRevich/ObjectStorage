@@ -127,8 +127,12 @@ databaseChangeLog:
                     foreignKeyName: secret_fk
                     references: secret(id)
                     nullable: false
-                    unique: true
                     deleteCascade: true
+              - column:
+                  name: location
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
               - column:
                   name: hash
                   type: VARCHAR

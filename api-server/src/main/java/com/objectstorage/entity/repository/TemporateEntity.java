@@ -25,6 +25,11 @@ public class TemporateEntity {
     private Integer secret;
 
     /**
+     * Represents file location column.
+     */
+    private String location;
+
+    /**
      * Represents file hash column.
      */
     private String hash;
