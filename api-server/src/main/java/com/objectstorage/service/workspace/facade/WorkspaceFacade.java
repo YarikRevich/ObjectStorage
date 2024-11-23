@@ -28,7 +28,7 @@ public class WorkspaceFacade {
     /**
      * Creates workspace unit key with the help of the given provider and credentials.
      *
-     * @param provider          given provider.
+     * @param provider given provider.
      * @param credentialsFields given credentials.
      * @return created workspace unit key.
      */
@@ -49,7 +49,7 @@ public class WorkspaceFacade {
     /**
      * Creates file unit key with the help of the given file name and current datetime.
      *
-     * @param name          given file name.
+     * @param name given file name.
      * @return created file unit key.
      */
     public String createFileUnitKey(String name) {

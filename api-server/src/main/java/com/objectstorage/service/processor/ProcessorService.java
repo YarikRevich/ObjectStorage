@@ -1,7 +1,11 @@
 package com.objectstorage.service.processor;
 
 import com.objectstorage.entity.common.PropertiesEntity;
+import com.objectstorage.exception.FileCreationFailureException;
+import com.objectstorage.model.ContentDownload;
+import com.objectstorage.model.ContentRetrievalResult;
 import com.objectstorage.model.ValidationSecretsApplication;
+import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.telemetry.TelemetryService;
@@ -13,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * Provides high-level access to ObjectStorage processor operations.
@@ -48,7 +53,7 @@ public class ProcessorService {
      * @param contentRetrievalApplication given content retrieval application.
      * @return retrieved content.
      */
-    public ContentRetrievalResult retrieveContent(ContentRetrievalApplication contentRetrievalApplication) throws
+    public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication) throws
             ClusterContentRetrievalFailureException {
         StateService.getTopologyStateGuard().lock();
 
@@ -140,188 +145,73 @@ public class ProcessorService {
      *
      * @param location given file location.
      * @param file given input file stream.
-     * @param validationSecretsApplication given content application used for topology configuration.
+     * @param validationSecretsApplication given content application.
      */
     public void upload(String location, InputStream file, ValidationSecretsApplication validationSecretsApplication) {
-        StateService.getTopologyStateGuard().lock();
+        logger.info(String.format("Uploading content at '%s' location", location));
 
-        logger.info("Applying ObjectStorage content application");
+        try {
+            workspaceFacade.addFile(workspaceUnitKey, location, file);
+        } catch (FileCreationFailureException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            String workspaceUnitKey =
+                    workspaceFacade.createWorkspaceUnitKey(
+                            validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials());
+        }
+    }
+
+    /**
+     * Downloads given content with the help of the given content download application.
+     *
+     * @param contentDownload given content download application.
+     * @param validationSecretsApplication given content application.
+     * @return downloaded content.
+     */
+    public byte[] download(String location, ValidationSecretsUnit validationSecretsUnit)  {
+        logger.info(String.format("Downloading content for '%s' location", location));
 
         String workspaceUnitKey =
-                workspaceFacade.createUnitKey(
-                        contentApplication.getProvider(), contentApplication.getCredentials());
+                workspaceFacade.createWorkspaceUnitKey(validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials());
 
-        List<ClusterAllocationDto> suspends = new ArrayList<>();
+        Boolean result;
 
-        for (ClusterAllocationDto clusterAllocation : StateService.
-                getClusterAllocationsByWorkspaceUnitKey(workspaceUnitKey)) {
-            logger.info(
-                    String.format(
-                            "Setting ObjectStorage Cluster allocation to suspend state: '%s'",
-                            clusterAllocation.getName()));
+        try {
+            result = workspaceFacade.isAnyContentAvailable(workspaceUnitKey, contentDownload.getLocation());
+        } catch (ContentAvailabilityRetrievalFailureException e) {
+            StateService.getTopologyStateGuard().unlock();
 
-            try {
-                clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-
-            } catch (ClusterOperationFailureException e) {
-                logger.fatal(new ClusterApplicationFailureException(e.getMessage()).getMessage());
-
-                return;
-            }
-
-            suspends.add(clusterAllocation);
-
-            telemetryService.decreaseServingClustersAmount();
-
-            telemetryService.increaseSuspendedClustersAmount();
+            throw new ClusterContentReferenceRetrievalFailureException(
+                    new ClusterContentAvailabilityRetrievalFailureException(e.getMessage()).getMessage());
         }
 
-        List<List<LocationsUnit>> segregation = clusterService.performContentLocationsSegregation(
-                contentApplication.getContent().getLocations(),
-                configService.getConfig().getResource().getCluster().getMaxWorkers());
+        if (!result) {
+            StateService.getTopologyStateGuard().unlock();
 
-        List<ClusterAllocationDto> candidates = new ArrayList<>();
-
-        for (List<LocationsUnit> locations : segregation) {
-            String name = ClusterConfigurationHelper.getName(properties.getCommunicationClusterBase());
-
-            String context = ClusterContextToJsonConverter.convert(
-                    ClusterContextEntity.of(
-                            ClusterContextEntity.Metadata.of(name, workspaceUnitKey),
-                            ClusterContextEntity.Content.of(
-                                    ContentLocationsToClusterContextLocationsConverter.convert(locations),
-                                    ContentFormatToClusterContextFormatConverter.convert(
-                                            configService.getConfig().getContent().getFormat())),
-                            ClusterContextEntity.Service.of(
-                                    ContentProviderToClusterContextProviderConverter.convert(
-                                            contentApplication.getProvider()),
-                                    ContentExporterToClusterContextExporterConverter.convert(
-                                            contentApplication.getProvider(), contentApplication.getExporter()),
-                                    ContentCredentialsToClusterContextCredentialsConverter.convert(
-                                            contentApplication.getProvider(),
-                                            contentApplication.getCredentials().getExternal())),
-                            ClusterContextEntity.Communication.of(
-                                    properties.getCommunicationApiServerName(),
-                                    configService.getConfig().getCommunication().getPort()),
-                            ClusterContextEntity.Resource.of(
-                                    ClusterContextEntity.Resource.Worker.of(
-                                            configService.getConfig().getResource().getWorker().getFrequency()))));
-
-            logger.info(
-                    String.format("Deploying ObjectStorage Cluster new allocation: '%s'", name));
-
-            Integer pid;
-
-            try {
-                pid = clusterService.deploy(name, context);
-            } catch (ClusterDeploymentFailureException e1) {
-                for (ClusterAllocationDto candidate : candidates) {
-                    logger.info(
-                            String.format("Removing ObjectStorage Cluster candidate allocation: '%s'", candidate.getName()));
-
-                    try {
-                        clusterService.destroy(candidate.getPid());
-                    } catch (ClusterDestructionFailureException e2) {
-                        StateService.getTopologyStateGuard().unlock();
-
-                        throw new ClusterApplicationFailureException(e1.getMessage(), e2.getMessage());
-                    }
-                }
-
-                for (ClusterAllocationDto suspended : suspends) {
-                    logger.info(
-                            String.format("Setting ObjectStorage Cluster suspended allocation to serve state: '%s'", suspended.getName()));
-
-                    try {
-                        clusterCommunicationResource.performServe(suspended.getName());
-                    } catch (ClusterOperationFailureException e2) {
-                        logger.fatal(new ClusterApplicationFailureException(e1.getMessage(), e2.getMessage()).getMessage());
-
-                        return;
-                    }
-
-                    telemetryService.decreaseSuspendedClustersAmount();
-
-                    telemetryService.increaseServingClustersAmount();
-                }
-
-                StateService.getTopologyStateGuard().unlock();
-
-                throw new ClusterApplicationFailureException(e1.getMessage());
-            }
-
-            for (LocationsUnit location : locations) {
-                try {
-                    workspaceFacade.createContentDirectory(workspaceUnitKey, location.getName());
-                } catch (UnitDirectoryCreationFailureException e) {
-                    logger.fatal(new ClusterApplicationFailureException(e.getMessage()).getMessage());
-
-                    return;
-                }
-            }
-
-            candidates.add(ClusterAllocationDto.of(name, false, workspaceUnitKey, locations, pid, context));
+            throw new ClusterContentReferenceRetrievalFailureException(
+                    new ClusterContentAvailabilityRetrievalFailureException().getMessage());
         }
 
-        for (ClusterAllocationDto candidate : candidates) {
-            logger.info(
-                    String.format(
-                            "Setting ObjectStorage Cluster candidate allocation to serve state: '%s'",
-                            candidate.getName()));
+        byte[] contentReference;
 
-            try {
-                clusterCommunicationResource.performServe(candidate.getName());
-            } catch (ClusterOperationFailureException e1) {
-                for (ClusterAllocationDto suspended : suspends) {
-                    logger.info(
-                            String.format(
-                                    "Setting ObjectStorage Cluster suspended allocation to serve state: '%s'",
-                                    suspended.getName()));
+        try {
+            contentReference = workspaceFacade.createContentReference(workspaceUnitKey, contentDownload.getLocation());
+        } catch (ContentReferenceCreationFailureException e) {
+            StateService.getTopologyStateGuard().unlock();
 
-                    try {
-                        clusterCommunicationResource.performServe(suspended.getName());
-                    } catch (ClusterOperationFailureException e2) {
-                        logger.fatal(new ClusterApplicationFailureException(
-                                e1.getMessage(), e2.getMessage()).getMessage());
-
-                        return;
-                    }
-
-                    telemetryService.decreaseSuspendedClustersAmount();
-
-                    telemetryService.increaseServingClustersAmount();
-                }
-
-                StateService.getTopologyStateGuard().unlock();
-
-                throw new ClusterApplicationFailureException(e1.getMessage());
-            }
-
-            telemetryService.increaseServingClustersAmount();
+            throw new ClusterContentReferenceRetrievalFailureException(e.getMessage());
         }
-
-        for (ClusterAllocationDto suspended : suspends) {
-            logger.info(
-                    String.format("Removing ObjectStorage Cluster suspended allocation: '%s'", suspended.getName()));
-
-            try {
-                clusterService.destroy(suspended.getPid());
-            } catch (ClusterDestructionFailureException e) {
-                StateService.getTopologyStateGuard().unlock();
-
-                throw new ClusterApplicationFailureException(e.getMessage());
-            }
-
-            telemetryService.decreaseSuspendedClustersAmount();
-        }
-
-        StateService.addClusterAllocations(candidates);
-
-        StateService.removeClusterAllocationByNames(
-                suspends.stream().map(ClusterAllocationDto::getName).toList());
 
         StateService.getTopologyStateGuard().unlock();
+
+        return contentReference;
     }
+
+
+
+
 
 //    /**
 //     * Applies given content withdrawal, removing existing content configuration with the given properties.
@@ -540,200 +430,4 @@ public class ProcessorService {
 //        StateService.getTopologyStateGuard().unlock();
 //    }
 //
-//    /**
-//     * Retrieves content reference with the help of the given content download application.
-//     *
-//     * @param contentDownload given content download application.
-//     * @return retrieved content download reference.
-//     * @throws ClusterContentReferenceRetrievalFailureException if ObjectStorage Cluster content reference retrieval
-//     *                                                          operation failed.
-//     */
-//    public byte[] retrieveContentReference(ContentDownload contentDownload) throws
-//            ClusterContentReferenceRetrievalFailureException {
-//        StateService.getTopologyStateGuard().lock();
-//
-//        logger.info(String.format("Retrieving content for '%s' location", contentDownload.getLocation()));
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(contentDownload.getProvider(), contentDownload.getCredentials());
-//
-//        Boolean result;
-//
-//        try {
-//            result = workspaceFacade.isAnyContentAvailable(workspaceUnitKey, contentDownload.getLocation());
-//        } catch (ContentAvailabilityRetrievalFailureException e) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            throw new ClusterContentReferenceRetrievalFailureException(
-//                    new ClusterContentAvailabilityRetrievalFailureException(e.getMessage()).getMessage());
-//        }
-//
-//        if (!result) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            throw new ClusterContentReferenceRetrievalFailureException(
-//                    new ClusterContentAvailabilityRetrievalFailureException().getMessage());
-//        }
-//
-//        byte[] contentReference;
-//
-//        try {
-//            contentReference = workspaceFacade.createContentReference(workspaceUnitKey, contentDownload.getLocation());
-//        } catch (ContentReferenceCreationFailureException e) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            throw new ClusterContentReferenceRetrievalFailureException(e.getMessage());
-//        }
-//
-//        StateService.getTopologyStateGuard().unlock();
-//
-//        return contentReference;
-//    }
-//
-//    /**
-//     * Retrieves ObjectStorage Cluster allocation topology with the given application.
-//     *
-//     * @param topologyInfoApplication given topology retrieval application.
-//     * @return retrieved topology information.
-//     */
-//    public List<TopologyInfoUnit> retrieveTopology(TopologyInfoApplication topologyInfoApplication) {
-//        List<TopologyInfoUnit> result = new ArrayList<>();
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(
-//                        topologyInfoApplication.getProvider(), topologyInfoApplication.getCredentials());
-//
-//        for (ClusterAllocationDto clusterAllocation : StateService.getClusterAllocationsByWorkspaceUnitKey(
-//                workspaceUnitKey)) {
-//            result.add(TopologyInfoUnit.of(clusterAllocation.getName(), clusterAllocation.getLocations()));
-//        }
-//
-//        return result;
-//    }
-//
-//    /**
-//     * Reapplies all unhealthy ObjectStorage Cluster allocations, which healthcheck operation failed for, recreating them.
-//     *
-//     * @throws ClusterUnhealthyReapplicationFailureException if ObjectStorage Cluster unhealthy allocation reapplication fails.
-//     */
-//    public void reApplyUnhealthy() throws ClusterUnhealthyReapplicationFailureException {
-//        telemetryService.increaseClusterHealthCheckAmount();
-//
-//        StateService.getTopologyStateGuard().lock();
-//
-//        List<ClusterAllocationDto> removables = new ArrayList<>();
-//
-//        List<ClusterAllocationDto> candidates = new ArrayList<>();
-//
-//        for (ClusterAllocationDto clusterAllocation : StateService.getClusterAllocations()) {
-//            try {
-//                Boolean healthy =
-//                        clusterCommunicationResource.retrieveHealthCheck(clusterAllocation.getName());
-//
-//                if (!healthy) {
-//                    logger.info(
-//                            String.format(
-//                                    "Setting ObjectStorage Cluster allocation to suspend state: '%s'",
-//                                    clusterAllocation.getName()));
-//
-//                    try {
-//                        clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-//                    } catch (ClusterOperationFailureException ignored) {
-//                        logger.info(
-//                                String.format("ObjectStorage Cluster allocation is not responding on suspend request: '%s'",
-//                                        clusterAllocation.getName()));
-//                    }
-//
-//                    telemetryService.increaseSuspendedClustersAmount();
-//
-//                    telemetryService.decreaseServingClustersAmount();
-//
-//                    logger.info(
-//                            String.format("Removing ObjectStorage Cluster allocation: '%s'", clusterAllocation.getName()));
-//
-//                    try {
-//                        clusterService.destroy(clusterAllocation.getPid());
-//                    } catch (ClusterDestructionFailureException ignored) {
-//                    }
-//
-//                    telemetryService.decreaseSuspendedClustersAmount();
-//                } else {
-//                    continue;
-//                }
-//            } catch (ClusterOperationFailureException e) {
-//                logger.info(
-//                        String.format("Removing ObjectStorage Cluster allocation: '%s'", clusterAllocation.getName()));
-//
-//                try {
-//                    clusterService.destroy(clusterAllocation.getPid());
-//                } catch (ClusterDestructionFailureException ignored) {
-//                }
-//
-//                telemetryService.decreaseServingClustersAmount();
-//            }
-//
-//            removables.add(clusterAllocation);
-//        }
-//
-//        if (removables.isEmpty()) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            telemetryService.decreaseClusterHealthCheckAmount();
-//
-//            return;
-//        }
-//
-//        for (ClusterAllocationDto removable : removables) {
-//            logger.info(
-//                    String.format("Redeploying ObjectStorage Cluster allocation: '%s'", removable.getName()));
-//
-//            Integer pid;
-//
-//            try {
-//                pid = clusterService.deploy(removable.getName(), removable.getContext());
-//            } catch (ClusterDeploymentFailureException e) {
-//                StateService.getTopologyStateGuard().unlock();
-//
-//                telemetryService.decreaseClusterHealthCheckAmount();
-//
-//                throw new ClusterUnhealthyReapplicationFailureException(e.getMessage());
-//            }
-//
-//            candidates.add(ClusterAllocationDto.of(
-//                    removable.getName(),
-//                    false,
-//                    removable.getWorkspaceUnitKey(),
-//                    removable.getLocations(),
-//                    pid,
-//                    removable.getContext()));
-//        }
-//
-//        for (ClusterAllocationDto candidate : candidates) {
-//            logger.info(
-//                    String.format(
-//                            "Setting ObjectStorage Cluster candidate allocation to serve state: '%s'",
-//                            candidate.getName()));
-//
-//            try {
-//                clusterCommunicationResource.performServe(candidate.getName());
-//            } catch (ClusterOperationFailureException e1) {
-//                StateService.getTopologyStateGuard().unlock();
-//
-//                telemetryService.decreaseClusterHealthCheckAmount();
-//
-//                throw new ClusterUnhealthyReapplicationFailureException(e1.getMessage());
-//            }
-//
-//            telemetryService.increaseServingClustersAmount();
-//        }
-//
-//        StateService.removeClusterAllocationByNames(
-//                removables.stream().map(ClusterAllocationDto::getName).toList());
-//
-//        StateService.addClusterAllocations(candidates);
-//
-//        StateService.getTopologyStateGuard().unlock();
-//
-//        telemetryService.decreaseClusterHealthCheckAmount();
-//    }
 }

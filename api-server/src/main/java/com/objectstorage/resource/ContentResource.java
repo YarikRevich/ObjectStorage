@@ -19,7 +19,7 @@ public class ContentResource implements ContentResourceApi {
     RepositoryFacade repositoryFacade;
 
     @Inject
-    ProcessorService processorFacade;
+    ProcessorService processorService;
 
     @Inject
     ResourceConfigurationHelper resourceConfigurationHelper;
@@ -36,7 +36,7 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        return processorFacade.retrieveContent(validationSecretsApplication);
+        return processorService.retrieveContent(validationSecretsApplication);
     }
 
     /**
@@ -55,7 +55,7 @@ public class ContentResource implements ContentResourceApi {
             throw new RootIsNotValidException();
         }
 
-        repositoryFacade.apply(contentApplication, validationSecretsApplication);
+        processorService.apply(contentApplication, validationSecretsApplication);
     }
 
     /**
@@ -85,7 +85,7 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        processorFacade.upload(location, file, validationSecretsApplication);
+        processorService.upload(location, file, validationSecretsApplication);
     }
 
     /**
@@ -100,10 +100,12 @@ public class ContentResource implements ContentResourceApi {
     public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
-//
-//        return clusterFacade.retrieveContentReference(contentDownload);
 
-        return null;
+        ValidationSecretsUnit validationSecretsUnit =
+                resourceConfigurationHelper.getConfiguredProvider(
+                        contentDownload.getProvider(), validationSecretsApplication);
+
+        return processorService.download(contentDownload.getLocation(), validationSecretsUnit);
     }
 
     /**

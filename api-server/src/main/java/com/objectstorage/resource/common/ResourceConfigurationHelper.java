@@ -1,6 +1,7 @@
 package com.objectstorage.resource.common;
 
 import com.objectstorage.entity.common.PropertiesEntity;
+import com.objectstorage.exception.ProviderIsNotConfiguredException;
 import com.objectstorage.exception.SecretsConversionException;
 import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.model.ValidationSecretsUnit;
@@ -20,6 +21,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -127,5 +129,25 @@ public class ResourceConfigurationHelper {
      */
     public Boolean isRootDefinitionValid(String root) {
         return root.matches(properties.getContentRootNotation());
+    }
+
+    /**
+     * Checks if given provider is configured within given validation secrets application.
+     *
+     * @param provider given provider.
+     * @param validationSecretsApplication given validation secrets application.
+     * @return retrieved matched provider configuration.
+     * @throws ProviderIsNotConfiguredException if given provider is not configured.
+     */
+    public ValidationSecretsUnit getConfiguredProvider(Provider provider, ValidationSecretsApplication validationSecretsApplication)
+            throws ProviderIsNotConfiguredException {
+        List<ValidationSecretsUnit> validationSecretsUnits = validationSecretsApplication.getSecrets().stream().filter(
+            element -> Objects.equals(element.getProvider(), provider)).toList();
+
+        if (validationSecretsUnits.isEmpty()) {
+            throw new ProviderIsNotConfiguredException();
+        }
+
+        return validationSecretsUnits.getFirst();
     }
 }
