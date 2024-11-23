@@ -5,6 +5,7 @@ import com.objectstorage.exception.*;
 import com.objectstorage.exception.FileNotFoundException;
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.Provider;
+import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.service.workspace.WorkspaceService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -13,6 +14,7 @@ import java.io.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Provides high-level access to workspace operations.
@@ -28,22 +30,23 @@ public class WorkspaceFacade {
     /**
      * Creates workspace unit key with the help of the given provider and credentials.
      *
-     * @param provider given provider.
-     * @param credentialsFields given credentials.
+     * @param validationSecretsApplication given validation secrets application.
      * @return created workspace unit key.
      */
-    public String createWorkspaceUnitKey(Provider provider, CredentialsFieldsFull credentialsFields) {
-        return switch (provider) {
-            case S3 -> workspaceService.createUnitKey(
-                    provider.name(),
-                    String.valueOf(credentialsFields.getInternal().getId()),
-                    credentialsFields.getExternal().getFile(),
-                    credentialsFields.getExternal().getRegion());
-            case GCS -> workspaceService.createUnitKey(
-                    provider.name(),
-                    String.valueOf(credentialsFields.getInternal().getId()),
-                    credentialsFields.getExternal().getFile());
-        };
+    public String createWorkspaceUnitKey(ValidationSecretsApplication validationSecretsApplication) {
+        return validationSecretsApplication.getSecrets().stream().map(element ->
+            switch (element.getProvider()) {
+                case S3 -> workspaceService.createUnitKey(
+                        element.getProvider().name(),
+                        String.valueOf(element.getCredentials().getInternal().getId()),
+                        element.getCredentials().getExternal().getFile(),
+                        element.getCredentials().getExternal().getRegion());
+                case GCS -> workspaceService.createUnitKey(
+                        element.getProvider().name(),
+                        String.valueOf(element.getCredentials().getInternal().getId()),
+                        element.getCredentials().getExternal().getFile());
+            })
+                .collect(Collectors.joining(""));
     }
 
     /**

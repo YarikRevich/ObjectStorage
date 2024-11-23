@@ -267,16 +267,15 @@ public class RepositoryFacade {
     }
 
     /**
-     * Applies given content application, updating previous state.
+     * Applies given temporate upload application.
      *
      * @param location given object location.
      * @param hash given object hash.
-     * @param validationSecretsApplication given validation secrets application.
+     * @param validationSecretsUnit given validation secrets unit.
      * @throws RepositoryContentApplicationFailureException if ObjectStorage repository content application failed.
      */
-    public void upload(String location, String hash, ValidationSecretsApplication validationSecretsApplication)
+    public void upload(String location, String hash, ValidationSecretsUnit validationSecretsUnit)
             throws RepositoryContentApplicationFailureException {
-        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             ProviderEntity provider;
 
             try {
@@ -314,6 +313,5 @@ public class RepositoryFacade {
             } catch (RepositoryOperationFailureException e) {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());
             }
-        }
     }
 }

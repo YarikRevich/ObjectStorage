@@ -1,11 +1,8 @@
 package com.objectstorage.service.processor;
 
 import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.exception.FileCreationFailureException;
-import com.objectstorage.model.ContentDownload;
-import com.objectstorage.model.ContentRetrievalResult;
-import com.objectstorage.model.ValidationSecretsApplication;
-import com.objectstorage.model.ValidationSecretsUnit;
+import com.objectstorage.exception.*;
+import com.objectstorage.model.*;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.telemetry.TelemetryService;
@@ -140,37 +137,86 @@ public class ProcessorService {
     }
 
     /**
-     * Uploads given content, adding provided input to ObjectStorage Temporate Storage, which will then be processed and
+     * Applies given content, adding provided input to ObjectStorage Temporate Storage, which will then be processed and
      * added to selected provider.
      *
-     * @param location given file location.
-     * @param file given input file stream.
+     * @param contentApplication given content application.
      * @param validationSecretsApplication given content application.
+     * @throws ProcessorContentApplicationFailureException if content application operation fails.
      */
-    public void upload(String location, InputStream file, ValidationSecretsApplication validationSecretsApplication) {
-        logger.info(String.format("Uploading content at '%s' location", location));
+    public void apply(ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentApplicationFailureException {
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            try {
+                if (vendorFacade.isBucketPresent(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        contentApplication.getRoot())) {
+                    continue;
+                }
+            } catch (SecretsConversionException e) {
+                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            }
 
-        try {
-            workspaceFacade.addFile(workspaceUnitKey, location, file);
-        } catch (FileCreationFailureException e) {
-            throw new RuntimeException(e);
+            try {
+                vendorFacade.createBucket(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        contentApplication.getRoot());
+            } catch (SecretsConversionException e) {
+                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            }
         }
 
-        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            String workspaceUnitKey =
-                    workspaceFacade.createWorkspaceUnitKey(
-                            validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials());
+        try {
+            repositoryFacade.apply(contentApplication, validationSecretsApplication);
+        } catch (RepositoryContentApplicationFailureException e) {
+            throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
     }
 
     /**
-     * Downloads given content with the help of the given content download application.
+     * Uploads given content, adding provided input to ObjectStorage Temporate Storage, which will then be processed and
+     * added to configured providers.
+     *
+     * @param location given file location.
+     * @param file given input file stream.
+     * @param validationSecretsApplication given content application.
+     * @throws ProcessorContentUploadFailureException if content upload operation fails.
+     */
+    public void upload(String location, InputStream file, ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentUploadFailureException {
+        logger.info(String.format("Uploading content at '%s' location", location));
+
+        String workspaceUnitKey =
+                workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
+        try {
+            workspaceFacade.addFile(workspaceUnitKey, location, file);
+        } catch (FileCreationFailureException e) {
+            throw new ProcessorContentUploadFailureException(e.getMessage());
+        }
+
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            try {
+                repositoryFacade.upload(location, "hash", validationSecretsUnit);
+            } catch (RepositoryContentApplicationFailureException e) {
+                throw new ProcessorContentUploadFailureException(e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Downloads given content with the help of the given content download application from Temporate Storage or
+     * configured provider.
      *
      * @param contentDownload given content download application.
      * @param validationSecretsApplication given content application.
      * @return downloaded content.
+     * @throws ProcessorContentDownloadFailureException if content download operation fails.
      */
-    public byte[] download(String location, ValidationSecretsUnit validationSecretsUnit)  {
+    public byte[] download(String location, ValidationSecretsUnit validationSecretsUnit)
+            throws ProcessorContentDownloadFailureException {
         logger.info(String.format("Downloading content for '%s' location", location));
 
         String workspaceUnitKey =
