@@ -21,4 +21,10 @@ public class StateService {
      */
     @Getter
     private final static ReentrantLock temporateStorageProcessorGuard = new ReentrantLock();
+
+    /**
+     * Represents ObjectStorage Backup processor guard.
+     */
+    @Getter
+    private final static ReentrantLock backupProcessorGuard = new ReentrantLock();
 }

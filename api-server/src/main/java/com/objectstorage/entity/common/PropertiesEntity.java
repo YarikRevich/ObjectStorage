@@ -35,9 +35,6 @@ public class PropertiesEntity {
     @ConfigProperty(name = "secrets.jwt.header.notation")
     String secretsJwtHeaderNotation;
 
-    @ConfigProperty(name = "state.location")
-    String stateLocation;
-
     @ConfigProperty(name = "database.tables.config.name")
     String databaseConfigTableName;
 
@@ -61,6 +58,12 @@ public class PropertiesEntity {
 
     @ConfigProperty(name = "workspace.directory")
     String workspaceDirectory;
+
+    @ConfigProperty(name = "workspace.content.temporate.directory")
+    String workspaceContentTemporateDirectory;
+
+    @ConfigProperty(name = "workspace.content.backups.directory")
+    String workspaceContentBackupsDirectory;
 
     @ConfigProperty(name = "workspace.compression.file.name")
     String workspaceCompressionFileName;

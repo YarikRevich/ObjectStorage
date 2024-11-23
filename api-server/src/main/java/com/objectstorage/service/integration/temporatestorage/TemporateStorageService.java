@@ -40,7 +40,8 @@ public class TemporateStorageService {
     @Inject
     VendorFacade vendorFacade;
 
-    ScheduledExecutorService operationScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduledOperationExecutorService =
+            Executors.newSingleThreadScheduledExecutor();
 
     /**
      * Performs temporate storage configuration.
@@ -58,7 +59,7 @@ public class TemporateStorageService {
             throw new TemporateStoragePeriodRetrievalFailureException(e.getMessage());
         }
 
-        operationScheduledExecutorService.scheduleWithFixedDelay(() -> {
+        scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
             StateService.getTemporateStorageProcessorGuard().lock();
 
 

@@ -37,7 +37,6 @@ create-local-api-server: ## Create ObjectStorage local directory for API Server
 	@mkdir -p $(HOME)/.objectstorage/diagnostics/grafana/config/datasources
 	@mkdir -p $(HOME)/.objectstorage/workspace
 	@mkdir -p $(HOME)/.objectstorage/internal/database
-	@mkdir -p $(HOME)/.objectstorage/internal/state
 
 .PHONY: clone-client-config
 clone-client-config: ## Clone configuration files to local directory
