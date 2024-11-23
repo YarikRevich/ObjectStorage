@@ -15,7 +15,7 @@ public class RepositoryContentDestructionFailureException extends IOException {
     public RepositoryContentDestructionFailureException(Object... message) {
         super(
                 new Formatter()
-                        .format("ObjectStorage Cluster repository content destruction failed: %s", Arrays.stream(message).toArray())
+                        .format("ObjectStorage repository content destruction failed: %s", Arrays.stream(message).toArray())
                         .toString());
     }
 }

@@ -89,8 +89,11 @@ paths:
             schema:
               type: object
               required:
+                - location
                 - file
               properties:
+                location:
+                  type: string
                 file:
                   type: string
                   format: binary
@@ -209,21 +212,34 @@ components:
   schemas:
     ContentRetrievalResult:
       required:
-        - objects
+        - root
+        - content
       properties:
-        objects:
+        root:
+          type: string
+        content:
           type: array
           items:
             $ref: "#/components/schemas/ContentRetrievalUnit"
     ContentRetrievalUnit:
       required:
+        - provider
+      properties:
+        provider:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+    ContentRetrievalProviderUnit:
+      required:
         - name
-        - size
+        - pending
       properties:
         name:
           type: string
-        size:
-          type: integer
+        pending:
+          type: boolean
     ContentApplication:
       required:
         - root

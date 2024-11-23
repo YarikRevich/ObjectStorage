@@ -166,4 +166,23 @@ public class SecretRepository {
 
         return SecretEntity.of(id, session, credentials);
     }
+
+    /**
+     * Deletes entity with the given identificator from secret table.
+     *
+     * @param id given identificator of the secrets set.
+     * @throws RepositoryOperationFailureException if operation execution fails.
+     */
+    public void deleteById(Integer id) throws RepositoryOperationFailureException {
+        try {
+            repositoryExecutor.performQuery(
+                    String.format(
+                            "DELETE FROM %s as t WHERE t.id = %d",
+                            properties.getDatabaseSecretTableName(),
+                            id));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+    }
 }

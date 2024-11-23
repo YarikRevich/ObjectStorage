@@ -34,6 +34,9 @@ public class RepositoryFacade {
     ContentRepository contentRepository;
 
     @Inject
+    TemporateRepository temporateRepository;
+
+    @Inject
     ProviderRepository providerRepository;
 
     @Inject
@@ -164,91 +167,153 @@ public class RepositoryFacade {
     }
 
     /**
-     * Applies given content application, updating previous state.
+     * Applies given content application.
      *
      * @param contentApplication given content application used for topology configuration.
-     * @param validationSecretsUnit given validation secret application unit.
-     * @throws RepositoryContentApplicationFailureException if ObjectStorage Cluster repository content application failed.
+     * @param validationSecretsApplication given validation secrets application.
+     * @throws RepositoryContentApplicationFailureException if ObjectStorage repository content application failed.
      */
     public void apply(
-            ContentApplication contentApplication, ValidationSecretsUnit validationSecretsUnit)
+            ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
             throws RepositoryContentApplicationFailureException {
-        ProviderEntity provider;
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            ProviderEntity provider;
 
-        try {
-            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentApplicationFailureException(e.getMessage());
-        }
+            try {
+                provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
 
-        String signature = RepositoryConfigurationHelper.getExternalCredentials(
-                validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
+            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+                    validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
 
-        try {
-            if (!secretRepository.isPresentBySessionAndCredentials(
+            try {
+                if (secretRepository.isPresentBySessionAndCredentials(
                     validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                    throw new RepositoryContentApplicationFailureException(
+                            new RepositoryContentApplicationExistsException().getMessage());
+                }
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
+
+            try {
                 secretRepository.insert(
                         validationSecretsUnit.getCredentials().getInternal().getId(),
                         signature);
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
             }
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentApplicationFailureException(e.getMessage());
-        }
 
-        SecretEntity secret;
+            SecretEntity secret;
 
-        try {
-            secret = secretRepository.findBySessionAndCredentials(
-                    validationSecretsUnit.getCredentials().getInternal().getId(),
-                    signature);
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentApplicationFailureException(e.getMessage());
-        }
+            try {
+                secret = secretRepository.findBySessionAndCredentials(
+                        validationSecretsUnit.getCredentials().getInternal().getId(),
+                        signature);
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
 
-        try {
-            contentRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentApplicationFailureException(e.getMessage());
-        }
-
-        try {
-            contentRepository.insert(provider.getId(), secret.getId(), contentApplication.getRoot());
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentApplicationFailureException(e.getMessage());
+            try {
+                contentRepository.insert(provider.getId(), secret.getId(), contentApplication.getRoot());
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
         }
     }
 
     /**
      * Applies given content withdrawal, removing previous state.
      *
-     * @param validationSecretsUnit given validation secret application unit.
+     * @param validationSecretsApplication given validation secrets application.
      * @throws RepositoryContentDestructionFailureException if repository content destruction failed.
      */
-    public void destroy(ValidationSecretsUnit validationSecretsUnit) throws RepositoryContentDestructionFailureException {
-        String signature = RepositoryConfigurationHelper.getExternalCredentials(
-                validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
-        ProviderEntity provider;
+    public void destroy(ValidationSecretsApplication validationSecretsApplication) throws RepositoryContentDestructionFailureException {
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+                    validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
+            ProviderEntity provider;
 
-        try {
-            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
-        } catch (RepositoryOperationFailureException e) {
-            return;
+            try {
+                provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+            } catch (RepositoryOperationFailureException e) {
+                return;
+            }
+
+            SecretEntity secret;
+
+            try {
+                secret = secretRepository.findBySessionAndCredentials(
+                        validationSecretsUnit.getCredentials().getInternal().getId(),
+                        signature);
+            } catch (RepositoryOperationFailureException e) {
+                return;
+            }
+
+            try {
+                contentRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentDestructionFailureException(e.getMessage());
+            }
+
+            try {
+                secretRepository.deleteById(secret.getId());
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentDestructionFailureException(e.getMessage());
+            }
         }
+    }
 
-        SecretEntity secret;
+    /**
+     * Applies given content application, updating previous state.
+     *
+     * @param location given object location.
+     * @param hash given object hash.
+     * @param validationSecretsApplication given validation secrets application.
+     * @throws RepositoryContentApplicationFailureException if ObjectStorage repository content application failed.
+     */
+    public void upload(String location, String hash, ValidationSecretsApplication validationSecretsApplication)
+            throws RepositoryContentApplicationFailureException {
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            ProviderEntity provider;
 
-        try {
-            secret = secretRepository.findBySessionAndCredentials(
-                    validationSecretsUnit.getCredentials().getInternal().getId(),
-                    signature);
-        } catch (RepositoryOperationFailureException e) {
-            return;
-        }
+            try {
+                provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
 
-        try {
-            contentRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
-        } catch (RepositoryOperationFailureException e) {
-            throw new RepositoryContentDestructionFailureException(e.getMessage());
+            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+                    validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
+
+            try {
+                if (!secretRepository.isPresentBySessionAndCredentials(
+                        validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                    secretRepository.insert(
+                            validationSecretsUnit.getCredentials().getInternal().getId(),
+                            signature);
+                }
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
+
+            SecretEntity secret;
+
+            try {
+                secret = secretRepository.findBySessionAndCredentials(
+                        validationSecretsUnit.getCredentials().getInternal().getId(),
+                        signature);
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
+
+            try {
+                temporateRepository.insert(provider.getId(), secret.getId(), location, hash);
+            } catch (RepositoryOperationFailureException e) {
+                throw new RepositoryContentApplicationFailureException(e.getMessage());
+            }
         }
     }
 }

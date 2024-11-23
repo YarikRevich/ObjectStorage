@@ -15,7 +15,7 @@ public class RepositoryContentApplicationFailureException extends IOException {
     public RepositoryContentApplicationFailureException(Object... message) {
         super(
                 new Formatter()
-                        .format("ObjectStorage Cluster repository content application failed: %s", Arrays.stream(message).toArray())
+                        .format("ObjectStorage repository content application failed: %s", Arrays.stream(message).toArray())
                         .toString());
     }
 }

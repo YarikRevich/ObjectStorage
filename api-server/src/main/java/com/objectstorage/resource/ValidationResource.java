@@ -23,6 +23,7 @@ public class ValidationResource implements ValidationResourceApi {
     /**
      * Implementation for declared in OpenAPI configuration v1SecretsAcquirePost method.
      *
+     * @param validationSecretsApplication given validation secrets application.
      * @return created jwt token.
      */
     @Override
