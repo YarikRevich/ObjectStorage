@@ -117,9 +117,6 @@ backup:
   # Enables backup functionality.
   enabled: true
 
-  # Represents format used for content to be saved.
-  format: "zip"
-
   # Represents frequency of backup operation for selected provider.
   frequency: "0 */5 * * * ?"
 

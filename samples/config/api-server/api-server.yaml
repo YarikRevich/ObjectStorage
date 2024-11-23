@@ -14,7 +14,8 @@ connection:
     # Represents password, which will be used to decode operations.
     password: "test123"
 
-# Represents section used for ObjectStorage API Server temporate storage configuration.
+# Represents section used for ObjectStorage API Server temporate storage configuration. Same compression will be
+# used to upload files to the configured cloud providers.
 temporate-storage:
   # Represents format used for content to be saved.
   format: "zip"
@@ -26,9 +27,6 @@ temporate-storage:
 backup:
   # Enables backup functionality.
   enabled: true
-
-  # Represents format used for content to be saved.
-  format: "zip"
 
   # Represents frequency of backup operation for selected provider.
   frequency: "0 */5 * * * ?"
