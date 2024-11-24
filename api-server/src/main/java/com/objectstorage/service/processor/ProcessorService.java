@@ -26,15 +26,6 @@ public class ProcessorService {
     private static final Logger logger = LogManager.getLogger(ProcessorService.class);
 
     @Inject
-    PropertiesEntity properties;
-
-    @Inject
-    ConfigService configService;
-
-    @Inject
-    ProcessorService processorService;
-
-    @Inject
     TelemetryService telemetryService;
 
     @Inject
@@ -47,94 +38,29 @@ public class ProcessorService {
     VendorFacade vendorFacade;
 
     /**
-     * Retrieves ObjectStorage Cluster content, using given content retrieval application.
+     * Retrieves all the content from ObjectStorage Temporate Storage or configured providers.
      *
-     * @param contentRetrievalApplication given content retrieval application.
+     * @param validationSecretsApplication given validation secrets application.
      * @return retrieved content.
+     * @throws ProcessorContentRetrievalFailureException if content retrieval fails.
      */
-    public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication) {
-        StateService.getTopologyStateGuard().lock();
-
-        String workspaceUnitKey =
-                workspaceFacade.createUnitKey(
-                        contentRetrievalApplication.getProvider(), contentRetrievalApplication.getCredentials());
-
-        List<String> locationUnits;
+    public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentRetrievalFailureException {
+        RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
         try {
-            locationUnits = workspaceFacade.getContentUnits(workspaceUnitKey);
-        } catch (ContentUnitRetrievalFailureException e) {
-            throw new ClusterContentRetrievalFailureException(e.getMessage());
-        }
-
-        List<RepositoryContentLocationUnitDto> repositoryContentLocations;
-
-        try {
-            repositoryContentLocations =
-                    repositoryFacade.retrieveLocations(contentRetrievalApplication);
+            repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
         } catch (ContentLocationsRetrievalFailureException e) {
-            StateService.getTopologyStateGuard().unlock();
-
-            throw new ClusterContentRetrievalFailureException(e.getMessage());
+            throw new ProcessorContentRetrievalFailureException(e.getMessage());
         }
 
-        ContentRetrievalResult result = new ContentRetrievalResult();
-
-        for (String locationUnit : locationUnits) {
-            List<String> rawContentUnits;
-
-            try {
-                rawContentUnits = workspaceFacade.getRawContentUnits(workspaceUnitKey, locationUnit);
-            } catch (RawContentUnitRetrievalFailureException e) {
-                StateService.getTopologyStateGuard().unlock();
-
-                throw new ClusterContentRetrievalFailureException(e.getMessage());
-            }
-
-            List<String> additionalContentUnits;
-
-            try {
-                additionalContentUnits = workspaceFacade.getAdditionalContentUnits(
-                        workspaceUnitKey, locationUnit);
-            } catch (AdditionalContentUnitRetrievalFailureException e) {
-                StateService.getTopologyStateGuard().unlock();
-
-                throw new ClusterContentRetrievalFailureException(e.getMessage());
-            }
-
-            Boolean active =
-                    repositoryContentLocations
-                            .stream()
-                            .anyMatch(element -> Objects.equals(element.getLocation(), locationUnit));
-
-            result.addLocationsItem(
-                    ContentRetrievalUnit.of(
-                            locationUnit,
-                            active,
-                            ContentRetrievalUnitRaw.of(rawContentUnits),
-                            ContentRetrievalUnitAdditional.of(additionalContentUnits)));
-        }
-
-        for (RepositoryContentLocationUnitDto repositoryContentLocation : repositoryContentLocations) {
-            if (!result
-                    .getLocations()
-                    .stream()
-                    .anyMatch(element ->
-                            Objects.equals(
-                                    element.getName(), repositoryContentLocation.getLocation()))) {
-                result.addLocationsItem(
-                        ContentRetrievalUnit.of(
-                                repositoryContentLocation.getLocation(),
-                                true,
-                                ContentRetrievalUnitRaw.of(new ArrayList<>()),
-                                ContentRetrievalUnitAdditional.of(new ArrayList<>())));
-
-            }
-        }
-
-        StateService.getTopologyStateGuard().unlock();
-
-        return result;
+        repositoryFacade.
+//
+//        String workspaceUnitKey =
+//                workspaceFacade.createUnitKey(
+//                        contentRetrievalApplication.getProvider(), contentRetrievalApplication.getCredentials());
+//
+        return ContentRetrievalResult.of(repositoryContentLocationUnitDto.getRoot(), null);
     }
 
     /**
