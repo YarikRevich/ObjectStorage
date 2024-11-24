@@ -55,9 +55,9 @@ public class ContentRepository {
     }
 
     /**
-     * Retrieves all the persisted temporate entities with the given provider and secret.
+     * Retrieves all the persisted content entities with the given provider and secret.
      *
-     * @return retrieved temporate entities.
+     * @return retrieved content entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
     public List<ContentEntity> findByProviderAndSecret(Integer provider, Integer secret) throws

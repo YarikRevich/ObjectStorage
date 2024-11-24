@@ -106,6 +106,56 @@ public class TemporateRepository {
     }
 
     /**
+     * Retrieves all the persisted temporate entities with the given provider and secret.
+     *
+     * @return retrieved temporate entities.
+     * @throws RepositoryOperationFailureException if repository operation fails.
+     */
+    public List<TemporateEntity> findByProviderAndSecret(Integer provider, Integer secret) throws
+            RepositoryOperationFailureException {
+        ResultSet resultSet;
+
+        try {
+            resultSet =
+                    repositoryExecutor.performQueryWithResult(
+                            String.format(
+                                    "SELECT t.id, t.location, t.hash FROM %s as t WHERE t.provider = %d AND t.secret = %d",
+                                    properties.getDatabaseTemporateTableName(),
+                                    provider,
+                                    secret));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        List<TemporateEntity> result = new ArrayList<>();
+
+        Integer id;
+        String location;
+        String hash;
+
+        try {
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+                location = resultSet.getString("location");
+                hash = resultSet.getString("hash");
+
+                result.add(TemporateEntity.of(id, provider, secret, location, hash));
+            }
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * Deletes entity with the given hash from temporate table.
      *
      * @param hash given provider.

@@ -222,9 +222,12 @@ components:
     ContentRetrievalCompound:
       required:
         - root
+        - provider
         - content
       properties:
         root:
+          type: string
+        provider:
           type: string
         content:
           type: array
@@ -238,40 +241,17 @@ components:
         pending:
           type: array
           items:
-            $ref: "#/components/schemas/ContentRetrievalPendingUnit"
-        uploaded:
-          type: array
-          items:
-            $ref: "#/components/schemas/ContentRetrievalUploadedUnit"
-    ContentRetrievalPendingUnit:
-      required:
-        - provider
-      properties:
-        provider:
-          type: string
-        files:
-          type: array
-          items:
             $ref: "#/components/schemas/ContentRetrievalProviderUnit"
-    ContentRetrievalUploadedUnit:
-      required:
-        - provider
-      properties:
-        provider:
-          type: string
-        files:
+        uploaded:
           type: array
           items:
             $ref: "#/components/schemas/ContentRetrievalProviderUnit"
     ContentRetrievalProviderUnit:
       required:
-        - name
-        - pending
+        - location
       properties:
-        name:
+        location:
           type: string
-        pending:
-          type: boolean
     ContentApplication:
       required:
         - root

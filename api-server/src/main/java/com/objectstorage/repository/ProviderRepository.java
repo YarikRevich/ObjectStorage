@@ -113,43 +113,4 @@ public class ProviderRepository {
 
         return ProviderEntity.of(id, name);
     }
-
-    /**
-     * Attempts to retrieve provider entity by the given identificator.
-     *
-     * @param id given identificator of the configuration.
-     * @return retrieved provider entity.
-     * @throws RepositoryOperationFailureException if repository operation fails.
-     */
-    public ProviderEntity findById(Integer id) throws RepositoryOperationFailureException {
-        ResultSet resultSet;
-
-        try {
-            resultSet =
-                    repositoryExecutor.performQueryWithResult(
-                            String.format(
-                                    "SELECT t.name FROM %s as t WHERE t.id = '%s'",
-                                    properties.getDatabaseProviderTableName(),
-                                    id));
-
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        String name;
-
-        try {
-            name = resultSet.getString("name");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        try {
-            resultSet.close();
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        return ProviderEntity.of(id, name);
-    }
 }

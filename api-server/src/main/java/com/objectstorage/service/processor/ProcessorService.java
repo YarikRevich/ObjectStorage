@@ -1,11 +1,9 @@
 package com.objectstorage.service.processor;
 
-import com.objectstorage.dto.RepositoryContentLocationUnitDto;
-import com.objectstorage.entity.common.PropertiesEntity;
+import com.objectstorage.dto.RepositoryContentUnitDto;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.facade.RepositoryFacade;
-import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.vendor.VendorFacade;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
@@ -17,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Provides high-level access to ObjectStorage processor operations.
@@ -50,8 +47,7 @@ public class ProcessorService {
         List<ContentRetrievalCompound> compounds = new ArrayList<>();
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-
-            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+            RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
@@ -59,18 +55,30 @@ public class ProcessorService {
                 throw new ProcessorContentRetrievalFailureException(e.getMessage());
             }
 
-            List<ContentRetrievalPendingUnit> pending;
+            List<ContentRetrievalProviderUnit> pending;
 
             try {
-                pending = repositoryFacade.retrieveTemporateContent();
-            } catch (ContentApplicationRetrievalFailureException e) {
+                pending = repositoryFacade.retrieveFilteredTemporateContent(validationSecretsUnit);
+            } catch (TemporateContentRetrievalFailureException e) {
+                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+            }
+
+            List<ContentRetrievalProviderUnit> uploaded;
+
+            try {
+                uploaded = vendorFacade.listAllObjectsFromBucket(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        repositoryContentLocationUnitDto.getRoot());
+            } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
                 throw new ProcessorContentRetrievalFailureException(e.getMessage());
             }
 
             compounds.add(
-                    ContentRetrievalCompound.of(repositoryContentLocationUnitDto.getRoot(),
-                            List.of(ContentRetrievalUnits.of(
-                                    pending, null))));
+                    ContentRetrievalCompound.of(
+                            repositoryContentLocationUnitDto.getRoot(),
+                            validationSecretsUnit.getProvider().name(),
+                            List.of(ContentRetrievalUnits.of(pending, uploaded))));
         }
 
         return ContentRetrievalResult.of(compounds);
@@ -118,7 +126,7 @@ public class ProcessorService {
     public void withdraw(ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentApplicationFailureException {
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+            RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
@@ -208,7 +216,7 @@ public class ProcessorService {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
-        RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+        RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
         try {
             repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
@@ -264,7 +272,7 @@ public class ProcessorService {
         }
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+            RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
@@ -313,7 +321,7 @@ public class ProcessorService {
         }
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+            RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);

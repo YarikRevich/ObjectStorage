@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -189,6 +190,31 @@ public class S3VendorService {
         } catch (IOException e) {
             throw new S3BucketObjectRetrievalFailureException(e.getMessage());
         }
+    }
+
+    /**
+     * Lists all the objects from the S3 bucket with the given name.
+     *
+     * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
+     * @param region given region to be used for client configuration.
+     * @return listed objects.
+     */
+    public List<String> listObjectsFromS3Bucket(
+            AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
+            String region) {
+        AmazonS3 simpleStorage =
+                AmazonS3ClientBuilder.standard()
+                        .withRegion(region)
+                        .withCredentials(awsCredentialsProvider)
+                        .build();
+
+        return simpleStorage
+                .listObjects(bucketName)
+                .getObjectSummaries()
+                .stream().map(S3ObjectSummary::getKey)
+                .toList();
     }
 
     /**

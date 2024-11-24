@@ -1,10 +1,10 @@
 package com.objectstorage.repository.facade;
 
-import com.objectstorage.dto.RepositoryContentLocationUnitDto;
 import com.objectstorage.dto.RepositoryContentUnitDto;
-import com.objectstorage.entity.repository.ContentEntity;
+import com.objectstorage.dto.RepositoryTemporateUnitDto;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
+import com.objectstorage.entity.repository.TemporateEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.*;
@@ -12,13 +12,11 @@ import com.objectstorage.repository.common.RepositoryConfigurationHelper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import com.objectstorage.repository.ConfigRepository;
 import com.objectstorage.repository.ContentRepository;
 import com.objectstorage.repository.ProviderRepository;
 import com.objectstorage.repository.SecretRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -27,9 +25,6 @@ import static java.util.stream.Collectors.groupingBy;
  */
 @ApplicationScoped
 public class RepositoryFacade {
-    @Inject
-    ConfigRepository configRepository;
-
     @Inject
     ContentRepository contentRepository;
 
@@ -43,82 +38,46 @@ public class RepositoryFacade {
     SecretRepository secretRepository;
 
     /**
-     * Retrieves all the content from temporate repository.
+     * Retrieves filtered content from temporate repository.
      *
-     * @return retrieved list of temporate content.
-     * @throws ContentApplicationRetrievalFailureException if temporate content retrieval fails.
+     * @param validationSecretsUnit given validation secrets unit.
+     * @return retrieved list of filtered temporate content.
+     * @throws TemporateContentRetrievalFailureException if filtered temporate content retrieval fails.
      */
-    public List<ContentRetrievalPendingUnit> retrieveTemporateContent() throws ContentApplicationRetrievalFailureException {
-        List<RepositoryContentUnitDto> result = new ArrayList<>();
-
-        List<RepositoryContentUnitDto> units = new ArrayList<>();
-
-        List<ContentEntity> contents;
+    public List<ContentRetrievalProviderUnit> retrieveFilteredTemporateContent(ValidationSecretsUnit validationSecretsUnit)
+            throws TemporateContentRetrievalFailureException {
+        ProviderEntity rawProvider;
 
         try {
-            contents = contentRepository.findAll();
+            rawProvider = providerRepository.findByName(validationSecretsUnit.getProvider().name());
         } catch (RepositoryOperationFailureException e) {
-            throw new ContentApplicationRetrievalFailureException(e.getMessage());
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        for (ContentEntity content : contents) {
-            ProviderEntity rawProvider;
+        String signature = RepositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
 
-            try {
-                rawProvider = providerRepository.findById(content.getProvider());
-            } catch (RepositoryOperationFailureException e) {
-                throw new ContentApplicationRetrievalFailureException(e.getMessage());
-            }
+        SecretEntity secret;
 
-            Provider provider =
-                    RepositoryConfigurationHelper.convertRawProviderToContentProvider(
-                            rawProvider.getName());
-
-            SecretEntity rawSecret;
-
-            try {
-                rawSecret = secretRepository.findById(content.getSecret());
-            } catch (RepositoryOperationFailureException e) {
-                throw new ContentApplicationRetrievalFailureException(e.getMessage());
-            }
-
-            CredentialsFieldsFull credentials =
-                    RepositoryConfigurationHelper.convertRawSecretsToContentCredentials(
-                            provider, rawSecret.getSession(), rawSecret.getCredentials());
-
-            units.add(RepositoryContentUnitDto.of(
-                    content.getRoot(),
-                    provider,
-                    credentials));
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        //s3: ["works"]
-        //gcs: ["works"]
-        //
-        //
-        //
-        //
+        List<TemporateEntity> temporateContent;
 
-        ContentRetrievalUnit.
+        try {
+            temporateContent = temporateRepository.findByProviderAndSecret(rawProvider.getId(), secret.getId());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        }
 
-                Map<CredentialsFieldsFull, Map<Provider, List<RepositoryContentUnitDto>>> groups =
-                units
-                        .stream()
-                        .collect(
-                                groupingBy(
-                                        RepositoryContentUnitDto::getCredentials,
-                                        groupingBy(RepositoryContentUnitDto::getProvider)));
-
-        groups
-                .forEach((key1, value1) -> value1
-                        .forEach((key2, value2) -> value2.forEach(
-                                value3 -> result.add(
-                                        RepositoryContentUnitDto.of(
-                                                value3.getRoot(),
-                                                key2,
-                                                key1)))));
-
-        return result;
+        return temporateContent.stream().map(
+                element -> ContentRetrievalProviderUnit.of(element.getLocation())).toList();
     }
 
     /**
@@ -128,7 +87,7 @@ public class RepositoryFacade {
      * @return retrieved content application for the given configuration properties.
      * @throws ContentLocationsRetrievalFailureException if content application retrieval fails.
      */
-    public RepositoryContentLocationUnitDto retrieveContentApplication(ValidationSecretsUnit validationSecretsUnit)
+    public RepositoryContentUnitDto retrieveContentApplication(ValidationSecretsUnit validationSecretsUnit)
             throws ContentLocationsRetrievalFailureException {
         ProviderEntity provider;
 
@@ -165,7 +124,7 @@ public class RepositoryFacade {
             return contentRepository
                     .findByProviderAndSecret(provider.getId(), secret.getId())
                     .stream()
-                    .map(element -> RepositoryContentLocationUnitDto.of(element.getRoot()))
+                    .map(element -> RepositoryContentUnitDto.of(element.getRoot()))
                     .toList().getFirst();
         } catch (RepositoryOperationFailureException e) {
             throw new ContentLocationsRetrievalFailureException(e.getMessage());

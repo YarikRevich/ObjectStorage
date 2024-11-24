@@ -3,7 +3,6 @@ package com.objectstorage.resource;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.RootIsNotValidException;
 import com.objectstorage.model.*;
-import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
 import com.objectstorage.service.processor.ProcessorService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,9 +14,6 @@ import java.io.InputStream;
 /** Contains implementation of ContentResource. */
 @ApplicationScoped
 public class ContentResource implements ContentResourceApi {
-    @Inject
-    RepositoryFacade repositoryFacade;
-
     @Inject
     ProcessorService processorService;
 

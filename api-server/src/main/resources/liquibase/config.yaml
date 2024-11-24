@@ -142,9 +142,9 @@ databaseChangeLog:
         - createIndex:
             columns:
               - column:
-                  name: provider
-            indexName: idx_provider
-            tableName: temporate
+                  name: name
+            indexName: idx_provider_name
+            tableName: provider
         - loadData:
             tableName: provider
             usePreparedStatements: false

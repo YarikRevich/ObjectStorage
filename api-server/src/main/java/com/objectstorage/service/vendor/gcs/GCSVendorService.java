@@ -16,7 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 /**
  * Service used to represent GCS external service provider operations.
@@ -162,6 +164,28 @@ public class GCSVendorService {
         Blob blob = storage.get(BlobId.of(bucketName, fileName));
 
         return blob.getContent();
+    }
+
+    /**
+     * Lists objects from the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     * @return listed objects.
+     */
+    public List<String> listObjectsFromGCSBucket(
+            Credentials credentials,
+            String bucketName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Page<Blob> blobs = storage.list(bucketName);
+
+        return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
+                .map(element -> element.getBlobId().getName())
+                .toList();
     }
 
     /**

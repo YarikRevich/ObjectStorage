@@ -68,15 +68,6 @@ public class PropertiesEntity {
     @ConfigProperty(name = "workspace.compression.file.name")
     String workspaceCompressionFileName;
 
-    @ConfigProperty(name = "communication.cluster.startup-await-frequency")
-    Integer communicationClusterStartupAwaitFrequency;
-
-    @ConfigProperty(name = "communication.cluster.startup-timeout")
-    Integer communicationClusterStartupTimeout;
-
-    @ConfigProperty(name = "communication.cluster.health-check.frequency")
-    Integer communicationClusterHealthCheckFrequency;
-
     @ConfigProperty(name = "diagnostics.scrape.delay")
     Integer diagnosticsScrapeDelay;
 
