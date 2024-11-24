@@ -43,63 +43,12 @@ public class RepositoryFacade {
     SecretRepository secretRepository;
 
     /**
-     * Retrieves all the content for the given configuration properties.
+     * Retrieves all the content from temporate repository.
      *
-     * @param validationSecretsUnit given validation secret application unit.
-     * @return retrieved content for the given configuration properties.
-     * @throws ContentLocationsRetrievalFailureException if content retrieval fails.
+     * @return retrieved list of temporate content.
+     * @throws ContentApplicationRetrievalFailureException if temporate content retrieval fails.
      */
-    public RepositoryContentLocationUnitDto retrieveContent(ValidationSecretsUnit validationSecretsUnit)
-            throws ContentLocationsRetrievalFailureException {
-        ProviderEntity provider;
-
-        try {
-            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
-        } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
-        }
-
-        String signature = RepositoryConfigurationHelper.getExternalCredentials(
-                validationSecretsUnit.getProvider(),
-                validationSecretsUnit.getCredentials().getExternal());
-
-        try {
-            if (!secretRepository.isPresentBySessionAndCredentials(
-                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
-                throw new ContentLocationsRetrievalFailureException();
-            }
-        } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
-        }
-
-        SecretEntity secret;
-
-        try {
-            secret = secretRepository.findBySessionAndCredentials(
-                    validationSecretsUnit.getCredentials().getInternal().getId(),
-                    signature);
-        } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
-        }
-
-        try {
-            return contentRepository
-                    .findByProviderAndSecret(provider.getId(), secret.getId())
-                    .stream()
-                    .map(element -> RepositoryContentLocationUnitDto.of(element.getRoot()))
-                    .toList().getFirst();
-        } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
-        }
-    }
-
-    /**
-     * Retrieves all the data from content repository in a form of content applications.
-     *
-     * @return retrieved list of content applications.
-     * @throws ContentApplicationRetrievalFailureException if content application retrieval fails.
-     */
-    public List<RepositoryContentUnitDto> retrieveContentApplication() throws ContentApplicationRetrievalFailureException {
+    public List<ContentRetrievalPendingUnit> retrieveTemporateContent() throws ContentApplicationRetrievalFailureException {
         List<RepositoryContentUnitDto> result = new ArrayList<>();
 
         List<RepositoryContentUnitDto> units = new ArrayList<>();
@@ -143,7 +92,16 @@ public class RepositoryFacade {
                     credentials));
         }
 
-        Map<CredentialsFieldsFull, Map<Provider, List<RepositoryContentUnitDto>>> groups =
+        //s3: ["works"]
+        //gcs: ["works"]
+        //
+        //
+        //
+        //
+
+        ContentRetrievalUnit.
+
+                Map<CredentialsFieldsFull, Map<Provider, List<RepositoryContentUnitDto>>> groups =
                 units
                         .stream()
                         .collect(
@@ -161,6 +119,57 @@ public class RepositoryFacade {
                                                 key1)))));
 
         return result;
+    }
+
+    /**
+     * Retrieves content application from the content repository.
+     *
+     * @param validationSecretsUnit given validation secret application unit.
+     * @return retrieved content application for the given configuration properties.
+     * @throws ContentLocationsRetrievalFailureException if content application retrieval fails.
+     */
+    public RepositoryContentLocationUnitDto retrieveContentApplication(ValidationSecretsUnit validationSecretsUnit)
+            throws ContentLocationsRetrievalFailureException {
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+        }
+
+        String signature = RepositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
+
+        try {
+            if (!secretRepository.isPresentBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                throw new ContentLocationsRetrievalFailureException();
+            }
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+        }
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+        }
+
+        try {
+            return contentRepository
+                    .findByProviderAndSecret(provider.getId(), secret.getId())
+                    .stream()
+                    .map(element -> RepositoryContentLocationUnitDto.of(element.getRoot()))
+                    .toList().getFirst();
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+        }
     }
 
     /**

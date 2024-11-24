@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,21 +47,33 @@ public class ProcessorService {
      */
     public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentRetrievalFailureException {
-        RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+        List<ContentRetrievalCompound> compounds = new ArrayList<>();
 
-        try {
-            repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
-        } catch (ContentLocationsRetrievalFailureException e) {
-            throw new ProcessorContentRetrievalFailureException(e.getMessage());
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+
+            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+
+            try {
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
+            } catch (ContentLocationsRetrievalFailureException e) {
+                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+            }
+
+            List<ContentRetrievalPendingUnit> pending;
+
+            try {
+                pending = repositoryFacade.retrieveTemporateContent();
+            } catch (ContentApplicationRetrievalFailureException e) {
+                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+            }
+
+            compounds.add(
+                    ContentRetrievalCompound.of(repositoryContentLocationUnitDto.getRoot(),
+                            List.of(ContentRetrievalUnits.of(
+                                    pending, null))));
         }
 
-        repositoryFacade.
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(
-//                        contentRetrievalApplication.getProvider(), contentRetrievalApplication.getCredentials());
-//
-        return ContentRetrievalResult.of(repositoryContentLocationUnitDto.getRoot(), null);
+        return ContentRetrievalResult.of(compounds);
     }
 
     /**
@@ -108,7 +121,7 @@ public class ProcessorService {
             RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
             try {
-                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
             } catch (ContentLocationsRetrievalFailureException e) {
                 throw new ProcessorContentApplicationFailureException(e.getMessage());
             }
@@ -198,7 +211,7 @@ public class ProcessorService {
         RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
         try {
-            repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+            repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
         } catch (ContentLocationsRetrievalFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
@@ -254,7 +267,7 @@ public class ProcessorService {
             RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
             try {
-                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
             } catch (ContentLocationsRetrievalFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }
@@ -283,7 +296,6 @@ public class ProcessorService {
         }
     }
 
-
     /**
      * Removes all the content from ObjectStorage Temporate Storage or configured provider.
      *
@@ -304,7 +316,7 @@ public class ProcessorService {
             RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
             try {
-                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
             } catch (ContentLocationsRetrievalFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }

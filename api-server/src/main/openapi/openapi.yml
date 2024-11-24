@@ -27,7 +27,8 @@ paths:
             type: string
       responses:
         204:
-          description: A list of all available content
+          description: A list of all available content. The same object can be seen both in "pending" and "uploaded" sections 
+                       due to data synchronization.
           content:
             application/json:
               schema:
@@ -212,6 +213,14 @@ components:
   schemas:
     ContentRetrievalResult:
       required:
+        - compounds
+      properties:
+        compounds:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalCompound"
+    ContentRetrievalCompound:
+      required:
         - root
         - content
       properties:
@@ -220,8 +229,31 @@ components:
         content:
           type: array
           items:
-            $ref: "#/components/schemas/ContentRetrievalUnit"
-    ContentRetrievalUnit:
+            $ref: "#/components/schemas/ContentRetrievalUnits"
+    ContentRetrievalUnits:
+      required:
+        - pending
+        - uploaded
+      properties:
+        pending:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalPendingUnit"
+        uploaded:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalUploadedUnit"
+    ContentRetrievalPendingUnit:
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+    ContentRetrievalUploadedUnit:
       required:
         - provider
       properties:
