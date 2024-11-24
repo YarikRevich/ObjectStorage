@@ -188,12 +188,57 @@ public class VendorFacade {
     }
 
     /**
+     * Checks if object is present in the bucket with the given name.
+     *
+     * @param provider given external provider name.
+     * @param credentialsFieldExternal given external credentials.
+     * @param bucketName given name of the bucket.
+     * @param fileName given name of the file to be uploaded.
+     * @return result of the check.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws BucketObjectRetrievalFailureException if bucket object existence check fails.
+     */
+    public Boolean isObjectPresentInBucket(
+            Provider provider,
+            CredentialsFieldsExternal credentialsFieldExternal,
+            String bucketName,
+            String fileName) throws SecretsConversionException, BucketObjectRetrievalFailureException {
+        return switch (provider) {
+            case S3 -> {
+                AWSSecretsDto secrets =
+                        SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
+
+                AWSCredentialsProvider awsCredentialsProvider =
+                        s3VendorService.getCredentialsProvider(secrets);
+
+                yield s3VendorService.isObjectPresentInBucket(
+                        awsCredentialsProvider,
+                        bucketName,
+                        credentialsFieldExternal.getRegion(),
+                        fileName);
+            }
+            case GCS -> {
+                Credentials credentials;
+
+                try {
+                    credentials = gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e.getMessage());
+                }
+
+                yield gcsVendorService.isObjectPresentInBucket(credentials, bucketName, fileName);
+            }
+        };
+    }
+
+    /**
      * Retrieves object from the bucket with the given name.
      *
      * @param provider given external provider name.
      * @param credentialsFieldExternal given external credentials.
      * @param bucketName given name of the bucket.
      * @param fileName given name of the file to be uploaded.
+     * @return retrieved object content.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
      * @throws BucketObjectRetrievalFailureException if bucket object retrieval fails.
      */

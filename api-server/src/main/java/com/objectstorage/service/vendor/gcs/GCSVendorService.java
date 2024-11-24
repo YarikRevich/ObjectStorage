@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Service used to represent GCS external service provider operations.
@@ -116,6 +117,28 @@ public class GCSVendorService {
         } catch (IOException e) {
             throw new GCSBucketObjectUploadFailureException(e.getMessage());
         }
+    }
+
+    /**
+     * Checks if object exists in the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     * @param fileName given name of the file to be retrieved.
+     * @return result of the check.
+     */
+    public Boolean isObjectPresentInBucket(
+            Credentials credentials,
+            String bucketName,
+            String fileName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Blob blob = storage.get(BlobId.of(bucketName, fileName));
+
+        return Objects.nonNull(blob) && blob.exists();
     }
 
     /**

@@ -69,7 +69,7 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        repositoryFacade.destroy(validationSecretsApplication);
+        processorService.withdraw(validationSecretsApplication);
     }
 
     /**
@@ -105,7 +105,8 @@ public class ContentResource implements ContentResourceApi {
                 resourceConfigurationHelper.getConfiguredProvider(
                         contentDownload.getProvider(), validationSecretsApplication);
 
-        return processorService.download(contentDownload.getLocation(), validationSecretsUnit);
+        return processorService.download(
+                contentDownload.getLocation(), validationSecretsUnit, validationSecretsApplication);
     }
 
     /**
@@ -119,9 +120,8 @@ public class ContentResource implements ContentResourceApi {
     public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
-//        clusterFacade.removeContent(contentCleanup);
 
-
+        processorService.remove(contentCleanup.getLocation(), validationSecretsApplication);
     }
 
     /**

@@ -135,9 +135,7 @@ public class WorkspaceService {
      * @return result if file exists in the given workspace unit directory.
      */
     public Boolean isFilePresent(String workspaceUnitDirectory, String name) {
-        return Files.exists(
-                Paths.get(
-                        workspaceUnitDirectory, name));
+        return Files.exists(Paths.get(workspaceUnitDirectory, name));
     }
 
     /**

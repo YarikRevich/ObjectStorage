@@ -117,43 +117,67 @@ public class WorkspaceFacade {
             throw new FileCreationFailureException(e.getMessage());
         }
     }
+//
+//    /**
+//     * Retrieves file units in the workspace with the given workspace unit key.
+//     *
+//     * @param workspaceUnitKey given user workspace unit key.
+//     * @return retrieves file units.
+//     * @throws FileUnitsLocationsRetrievalFailureException if file units locations retrieval failed.
+//     */
+//    public List<String> getFileUnits(String workspaceUnitKey) throws
+//            FileUnitsLocationsRetrievalFailureException {
+//        List<String> result = new ArrayList<>();
+//
+//        if (workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
+//            String workspaceUnitDirectory;
+//
+//            try {
+//                workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
+//            } catch (WorkspaceUnitDirectoryNotFoundException e) {
+//                throw new FileUnitsLocationsRetrievalFailureException(e.getMessage());
+//            }
+//
+//            try {
+//                result = workspaceService.getFilesLocations(workspaceUnitDirectory);
+//            } catch (FilesLocationsRetrievalFailureException e) {
+//                throw new FileUnitsLocationsRetrievalFailureException(e.getMessage());
+//            }
+//        }
+//
+//        return result;
+//    }
 
     /**
-     * Retrieves file units in the workspace with the given workspace unit key.
+     * Checks if file with the given name exists in the workspace with the given workspace unit key.
      *
      * @param workspaceUnitKey given user workspace unit key.
-     * @return retrieves file units.
-     * @throws FileUnitsLocationsRetrievalFailureException if file units locations retrieval failed.
+     * @param name given file name.
+     * @return result of the check.
+     * @throws FileExistenceCheckFailureException if file existence check failed.
      */
-    public List<String> getFileUnits(String workspaceUnitKey) throws
-            FileUnitsLocationsRetrievalFailureException {
-        List<String> result = new ArrayList<>();
-
+    public Boolean isFilePresent(String workspaceUnitKey, String name) throws FileExistenceCheckFailureException {
         if (workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
             String workspaceUnitDirectory;
 
             try {
                 workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
             } catch (WorkspaceUnitDirectoryNotFoundException e) {
-                throw new FileUnitsLocationsRetrievalFailureException(e.getMessage());
+                throw new FileExistenceCheckFailureException(e.getMessage());
             }
 
-            try {
-                result = workspaceService.getFilesLocations(workspaceUnitDirectory);
-            } catch (FilesLocationsRetrievalFailureException e) {
-                throw new FileUnitsLocationsRetrievalFailureException(e.getMessage());
-            }
+            return workspaceService.isFilePresent(workspaceUnitDirectory, name);
         }
 
-        return result;
+        return false;
     }
 
     /**
-     * Retrieves file from the workspace with the given workspace unit key as decompressed byte array.
+     * Retrieves file from the workspace with the given workspace unit key as compressed byte array.
      *
      * @param workspaceUnitKey given user workspace unit key.
      * @param name given file name.
-     * @return retrieved file as decompressed byte array.
+     * @return retrieved file as compressed byte array.
      * @throws FileUnitRetrievalFailureException if file unit retrieval fails.
      */
     public byte[] getFile(String workspaceUnitKey, String name) throws FileUnitRetrievalFailureException {
@@ -169,17 +193,9 @@ public class WorkspaceFacade {
             throw new FileUnitRetrievalFailureException(e.getMessage());
         }
 
-        byte[] content;
-
         try {
-            content = workspaceService.getFileContent(workspaceUnitDirectory, name);
+            return workspaceService.getFileContent(workspaceUnitDirectory, name);
         } catch (FileNotFoundException e) {
-            throw new FileUnitRetrievalFailureException(e.getMessage());
-        }
-
-        try {
-            return workspaceService.decompressFile(content);
-        } catch (InputDecompressionFailureException e) {
             throw new FileUnitRetrievalFailureException(e.getMessage());
         }
     }

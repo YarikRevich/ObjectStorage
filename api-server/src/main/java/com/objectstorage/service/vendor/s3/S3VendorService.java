@@ -139,6 +139,29 @@ public class S3VendorService {
     }
 
     /**
+     * Checks if object exists in the S3 bucket with the given name.
+     *
+     * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
+     * @param region given region to be used for client configuration.
+     * @param fileName given name of the file to be retrieved.
+     * @return result of the check.
+     */
+    public Boolean isObjectPresentInBucket(
+            AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
+            String region,
+            String fileName) {
+        AmazonS3 simpleStorage =
+                AmazonS3ClientBuilder.standard()
+                        .withRegion(region)
+                        .withCredentials(awsCredentialsProvider)
+                        .build();
+
+        return simpleStorage.doesObjectExist(bucketName, fileName);
+    }
+
+    /**
      * Retrieves object from the S3 bucket with the given name.
      *
      * @param awsCredentialsProvider given providers to be used for client configuration.

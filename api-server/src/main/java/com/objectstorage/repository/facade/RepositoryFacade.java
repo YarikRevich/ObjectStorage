@@ -49,7 +49,7 @@ public class RepositoryFacade {
      * @return retrieved content for the given configuration properties.
      * @throws ContentLocationsRetrievalFailureException if content retrieval fails.
      */
-    public List<RepositoryContentLocationUnitDto> retrieveContent(ValidationSecretsUnit validationSecretsUnit)
+    public RepositoryContentLocationUnitDto retrieveContent(ValidationSecretsUnit validationSecretsUnit)
             throws ContentLocationsRetrievalFailureException {
         ProviderEntity provider;
 
@@ -82,18 +82,15 @@ public class RepositoryFacade {
             throw new ContentLocationsRetrievalFailureException(e.getMessage());
         }
 
-        List<RepositoryContentLocationUnitDto> result = new ArrayList<>();
-
         try {
-            result = contentRepository
+            return contentRepository
                     .findByProviderAndSecret(provider.getId(), secret.getId())
                     .stream()
                     .map(element -> RepositoryContentLocationUnitDto.of(element.getRoot()))
-                    .toList();
-        } catch (RepositoryOperationFailureException ignored) {
+                    .toList().getFirst();
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentLocationsRetrievalFailureException(e.getMessage());
         }
-
-        return result;
     }
 
     /**
@@ -170,13 +167,12 @@ public class RepositoryFacade {
      * Applies given content application.
      *
      * @param contentApplication given content application used for topology configuration.
-     * @param validationSecretsApplication given validation secrets application.
+     * @param validationSecretsUnit given validation secrets unit.
      * @throws RepositoryContentApplicationFailureException if ObjectStorage repository content application failed.
      */
     public void apply(
-            ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
+            ContentApplication contentApplication, ValidationSecretsUnit validationSecretsUnit)
             throws RepositoryContentApplicationFailureException {
-        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             ProviderEntity provider;
 
             try {
@@ -221,17 +217,15 @@ public class RepositoryFacade {
             } catch (RepositoryOperationFailureException e) {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());
             }
-        }
     }
 
     /**
      * Applies given content withdrawal, removing previous state.
      *
-     * @param validationSecretsApplication given validation secrets application.
+     * @param validationSecretsUnit given validation secrets unit.
      * @throws RepositoryContentDestructionFailureException if repository content destruction failed.
      */
-    public void destroy(ValidationSecretsApplication validationSecretsApplication) throws RepositoryContentDestructionFailureException {
-        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+    public void withdraw(ValidationSecretsUnit validationSecretsUnit) throws RepositoryContentDestructionFailureException {
             String signature = RepositoryConfigurationHelper.getExternalCredentials(
                     validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
             ProviderEntity provider;
@@ -263,7 +257,6 @@ public class RepositoryFacade {
             } catch (RepositoryOperationFailureException e) {
                 throw new RepositoryContentDestructionFailureException(e.getMessage());
             }
-        }
     }
 
     /**

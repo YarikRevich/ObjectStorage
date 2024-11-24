@@ -1,5 +1,6 @@
 package com.objectstorage.service.processor;
 
+import com.objectstorage.dto.RepositoryContentLocationUnitDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
@@ -137,8 +138,7 @@ public class ProcessorService {
     }
 
     /**
-     * Applies given content, adding provided input to ObjectStorage Temporate Storage, which will then be processed and
-     * added to selected provider.
+     * Applies given content application, creating configured providers buckets, if needed.
      *
      * @param contentApplication given content application.
      * @param validationSecretsApplication given content application.
@@ -148,30 +148,64 @@ public class ProcessorService {
             throws ProcessorContentApplicationFailureException {
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             try {
-                if (vendorFacade.isBucketPresent(
+                if (!vendorFacade.isBucketPresent(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
                         contentApplication.getRoot())) {
-                    continue;
+                    vendorFacade.createBucket(
+                            validationSecretsUnit.getProvider(),
+                            validationSecretsUnit.getCredentials().getExternal(),
+                            contentApplication.getRoot());
                 }
             } catch (SecretsConversionException e) {
                 throw new ProcessorContentApplicationFailureException(e.getMessage());
             }
 
             try {
-                vendorFacade.createBucket(
-                        validationSecretsUnit.getProvider(),
-                        validationSecretsUnit.getCredentials().getExternal(),
-                        contentApplication.getRoot());
-            } catch (SecretsConversionException e) {
+                repositoryFacade.apply(contentApplication, validationSecretsUnit);
+            } catch (RepositoryContentApplicationFailureException e) {
                 throw new ProcessorContentApplicationFailureException(e.getMessage());
             }
         }
+    }
 
-        try {
-            repositoryFacade.apply(contentApplication, validationSecretsApplication);
-        } catch (RepositoryContentApplicationFailureException e) {
-            throw new ProcessorContentApplicationFailureException(e.getMessage());
+    /**
+     * Withdraws all the configurations with the given validation secrets application, removing configured providers
+     * buckets, if needed.
+     *
+     * @param validationSecretsApplication given validation secrets application.
+     * @throws ProcessorContentApplicationFailureException if content withdrawal operation fails.
+     */
+    public void withdraw(ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentApplicationFailureException {
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+
+            try {
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+            } catch (ContentLocationsRetrievalFailureException e) {
+                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            }
+
+            try {
+                if (vendorFacade.isBucketPresent(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        repositoryContentLocationUnitDto.getRoot())) {
+                    vendorFacade.removeBucket(
+                            validationSecretsUnit.getProvider(),
+                            validationSecretsUnit.getCredentials().getExternal(),
+                            repositoryContentLocationUnitDto.getRoot());
+                }
+            } catch (SecretsConversionException e) {
+                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            }
+
+            try {
+                repositoryFacade.withdraw(validationSecretsUnit);
+            } catch (RepositoryContentDestructionFailureException e) {
+                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            }
         }
     }
 
@@ -197,9 +231,11 @@ public class ProcessorService {
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
 
+        String fileUnitKey = workspaceFacade.createFileUnitKey(location);
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             try {
-                repositoryFacade.upload(location, "hash", validationSecretsUnit);
+                repositoryFacade.upload(location, fileUnitKey, validationSecretsUnit);
             } catch (RepositoryContentApplicationFailureException e) {
                 throw new ProcessorContentUploadFailureException(e.getMessage());
             }
@@ -207,208 +243,120 @@ public class ProcessorService {
     }
 
     /**
-     * Downloads given content with the help of the given content download application from Temporate Storage or
-     * configured provider.
+     * Downloads given content with the help of the given content download application from ObjectStorage Temporate
+     * Storage or configured provider.
      *
-     * @param contentDownload given content download application.
-     * @param validationSecretsApplication given content application.
+     * @param location given content location.
+     * @param validationSecretsUnit given content secrets unit.
+     * @param validationSecretsApplication given content secrets application.
      * @return downloaded content.
      * @throws ProcessorContentDownloadFailureException if content download operation fails.
      */
-    public byte[] download(String location, ValidationSecretsUnit validationSecretsUnit)
+    public byte[] download(
+            String location,
+            ValidationSecretsUnit validationSecretsUnit,
+            ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentDownloadFailureException {
         logger.info(String.format("Downloading content for '%s' location", location));
 
-        String workspaceUnitKey =
-                workspaceFacade.createWorkspaceUnitKey(validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials());
-
-        Boolean result;
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
         try {
-            result = workspaceFacade.isAnyContentAvailable(workspaceUnitKey, contentDownload.getLocation());
-        } catch (ContentAvailabilityRetrievalFailureException e) {
-            StateService.getTopologyStateGuard().unlock();
-
-            throw new ClusterContentReferenceRetrievalFailureException(
-                    new ClusterContentAvailabilityRetrievalFailureException(e.getMessage()).getMessage());
+            if (workspaceFacade.isFilePresent(workspaceUnitKey, location)) {
+                return workspaceFacade.getFile(workspaceUnitKey, location);
+            }
+        } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
-        if (!result) {
-            StateService.getTopologyStateGuard().unlock();
-
-            throw new ClusterContentReferenceRetrievalFailureException(
-                    new ClusterContentAvailabilityRetrievalFailureException().getMessage());
-        }
-
-        byte[] contentReference;
+        RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
         try {
-            contentReference = workspaceFacade.createContentReference(workspaceUnitKey, contentDownload.getLocation());
-        } catch (ContentReferenceCreationFailureException e) {
-            StateService.getTopologyStateGuard().unlock();
-
-            throw new ClusterContentReferenceRetrievalFailureException(e.getMessage());
+            repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+        } catch (ContentLocationsRetrievalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
-        StateService.getTopologyStateGuard().unlock();
+        try {
+            if (!vendorFacade.isObjectPresentInBucket(
+                    validationSecretsUnit.getProvider(),
+                    validationSecretsUnit.getCredentials().getExternal(),
+                    repositoryContentLocationUnitDto.getRoot(),
+                    location)) {
+                throw new ProcessorContentDownloadFailureException(
+                        new VendorObjectNotPresentException().getMessage());
+            };
+        } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
 
-        return contentReference;
+        try {
+            return vendorFacade.retrieveObjectFromBucket(
+                    validationSecretsUnit.getProvider(),
+                    validationSecretsUnit.getCredentials().getExternal(),
+                    repositoryContentLocationUnitDto.getRoot(),
+                    location);
+        } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
     }
 
+    /**
+     * Removes content with the given location from ObjectStorage Temporate Storage or configured provider.
+     *
+     * @param location given content location.
+     * @param validationSecretsApplication given content secrets application.
+     * @throws ProcessorContentRemovalFailureException if content removal operation fails.
+     */
+    public void remove(
+            String location,
+            ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentRemovalFailureException {
+        logger.info(String.format("Removing content of '%s' location", location));
 
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
+        try {
+            if (workspaceFacade.isFilePresent(workspaceUnitKey, location)) {
+                workspaceFacade.removeFile(workspaceUnitKey, location);
+            }
+        } catch (FileExistenceCheckFailureException | FileRemovalFailureException e) {
+            throw new ProcessorContentRemovalFailureException(e.getMessage());
+        }
 
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
 
-//    /**
-//     * Applies given content withdrawal, removing existing content configuration with the given properties.
-//     *
-//     * @param contentWithdrawal given content application used for topology configuration.
-//     * @throws ClusterWithdrawalFailureException if ObjectStorage Cluster withdrawal failed.
-//     */
-//    public void destroy(ContentWithdrawal contentWithdrawal) throws ClusterWithdrawalFailureException {
-//        StateService.getTopologyStateGuard().lock();
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(
-//                        contentWithdrawal.getProvider(), contentWithdrawal.getCredentials());
-//
-//        logger.info(String.format("Destroying ObjectStorage Cluster topology for: '%s'", workspaceUnitKey));
-//
-//        List<ClusterAllocationDto> clusterAllocations =
-//                StateService.getClusterAllocationsByWorkspaceUnitKey(workspaceUnitKey);
-//
-//        for (ClusterAllocationDto clusterAllocation : clusterAllocations) {
-//            try {
-//                clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-//            } catch (ClusterOperationFailureException e) {
-//                StateService.getTopologyStateGuard().unlock();
-//
-//                throw new ClusterWithdrawalFailureException(e.getMessage());
-//            }
-//
-//            telemetryService.increaseSuspendedClustersAmount();
-//
-//            telemetryService.decreaseServingClustersAmount();
-//
-//            logger.info(
-//                    String.format("Removing ObjectStorage Cluster allocation: '%s'", clusterAllocation.getName()));
-//
-//            try {
-//                clusterService.destroy(clusterAllocation.getPid());
-//            } catch (ClusterDestructionFailureException e) {
-//                StateService.getTopologyStateGuard().unlock();
-//
-//                throw new ClusterWithdrawalFailureException(e.getMessage());
-//            }
-//
-//            telemetryService.decreaseSuspendedClustersAmount();
-//        }
-//
-//        StateService.removeClusterAllocationByNames(
-//                clusterAllocations.stream().
-//                        map(ClusterAllocationDto::getName).
-//                        toList());
-//
-//        StateService.getTopologyStateGuard().unlock();
-//    }
-//
-//    /**
-//     * Destroys all the created ObjectStorage Cluster allocations.
-//     *
-//     * @throws ClusterFullDestructionFailureException if ObjectStorage Cluster full destruction failed.
-//     */
-//    public void destroyAll() throws ClusterFullDestructionFailureException {
-//        StateService.getTopologyStateGuard().lock();
-//
-//        logger.info("Destroying all ObjectStorage Cluster topology");
-//
-//        for (ClusterAllocationDto clusterAllocation : StateService.getClusterAllocations()) {
-//            try {
-//                clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-//            } catch (ClusterOperationFailureException ignored) {
-//                logger.info(
-//                        String.format("ObjectStorage Cluster allocation is not responding on suspend request: '%s'",
-//                                clusterAllocation.getName()));
-//            }
-//
-//            logger.info(
-//                    String.format("Removing ObjectStorage Cluster allocation: '%s'", clusterAllocation.getName()));
-//
-//            try {
-//                clusterService.destroy(clusterAllocation.getPid());
-//            } catch (ClusterDestructionFailureException e) {
-//                throw new ClusterFullDestructionFailureException(e.getMessage());
-//            }
-//        }
-//    }
-//
-//    /**
-//     * Removes content from the workspace with the help of the given application.
-//     *
-//     * @param contentCleanup given content cleanup application used for content removal.
-//     * @throws ClusterCleanupFailureException if ObjectStorage Cluster cleanup failed.
-//     */
-//    public void removeContent(ContentCleanup contentCleanup) throws ClusterCleanupFailureException {
-//        StateService.getTopologyStateGuard().lock();
-//
-//        logger.info(String.format("Removing content of '%s' location", contentCleanup.getLocation()));
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(contentCleanup.getProvider(), contentCleanup.getCredentials());
-//
-//        ClusterAllocationDto clusterAllocation = StateService
-//                .getClusterAllocationByWorkspaceUnitKeyAndName(workspaceUnitKey, contentCleanup.getLocation());
-//
-//        if (Objects.nonNull(clusterAllocation)) {
-//            logger.info(
-//                    String.format(
-//                            "Setting ObjectStorage Cluster allocation to suspend state: '%s'",
-//                            clusterAllocation.getName()));
-//
-//            try {
-//                clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-//
-//            } catch (ClusterOperationFailureException e) {
-//                logger.fatal(new ClusterCleanupFailureException(e.getMessage()).getMessage());
-//
-//                return;
-//            }
-//
-//            telemetryService.decreaseServingClustersAmount();
-//
-//            telemetryService.increaseSuspendedClustersAmount();
-//        }
-//
-//        try {
-//            workspaceFacade.removeContent(workspaceUnitKey, contentCleanup.getLocation());
-//        } catch (ContentRemovalFailureException e) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            throw new ClusterCleanupFailureException(e.getMessage());
-//        }
-//
-//        if (Objects.nonNull(clusterAllocation)) {
-//            logger.info(
-//                    String.format(
-//                            "Setting ObjectStorage Cluster suspended allocation to serve state: '%s'",
-//                            clusterAllocation.getName()));
-//
-//            try {
-//                clusterCommunicationResource.performServe(clusterAllocation.getName());
-//            } catch (ClusterOperationFailureException e) {
-//                logger.fatal(new ClusterCleanupFailureException(e.getMessage()).getMessage());
-//
-//                return;
-//            }
-//
-//            telemetryService.decreaseSuspendedClustersAmount();
-//
-//            telemetryService.increaseServingClustersAmount();
-//        }
-//
-//        StateService.getTopologyStateGuard().unlock();
-//    }
-//
+            try {
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+            } catch (ContentLocationsRetrievalFailureException e) {
+                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            }
+
+            try {
+                if (!vendorFacade.isObjectPresentInBucket(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        repositoryContentLocationUnitDto.getRoot(),
+                        location)) {
+                    continue;
+                }
+            } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            }
+
+            try {
+                vendorFacade.removeObjectFromBucket(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        repositoryContentLocationUnitDto.getRoot(),
+                        location);
+            } catch (SecretsConversionException e) {
+                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            }
+        }
+    }
+
 //    /**
 //     * Removes all the content from the workspace with the help of the given application.
 //     *
