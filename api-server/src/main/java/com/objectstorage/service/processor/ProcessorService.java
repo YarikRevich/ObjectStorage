@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -51,8 +52,7 @@ public class ProcessorService {
      * @param contentRetrievalApplication given content retrieval application.
      * @return retrieved content.
      */
-    public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication) throws
-            ClusterContentRetrievalFailureException {
+    public ContentRetrievalResult retrieveContent(ValidationSecretsApplication validationSecretsApplication) {
         StateService.getTopologyStateGuard().lock();
 
         String workspaceUnitKey =
@@ -357,71 +357,41 @@ public class ProcessorService {
         }
     }
 
-//    /**
-//     * Removes all the content from the workspace with the help of the given application.
-//     *
-//     * @param contentCleanupAll given content full cleanup application used for content removal.
-//     * @throws ClusterFullCleanupFailureException if ObjectStorage Cluster cleanup failed.
-//     */
-//    public void removeAll(ContentCleanupAll contentCleanupAll) throws ClusterFullCleanupFailureException {
-//        StateService.getTopologyStateGuard().lock();
-//
-//        String workspaceUnitKey =
-//                workspaceFacade.createUnitKey(contentCleanupAll.getProvider(), contentCleanupAll.getCredentials());
-//
-//        List<ClusterAllocationDto> suspends = new ArrayList<>();
-//
-//        for (ClusterAllocationDto clusterAllocation : StateService.
-//                getClusterAllocationsByWorkspaceUnitKey(workspaceUnitKey)) {
-//            logger.info(
-//                    String.format(
-//                            "Setting ObjectStorage Cluster allocation to suspend state: '%s'",
-//                            clusterAllocation.getName()));
-//
-//            try {
-//                clusterCommunicationResource.performSuspend(clusterAllocation.getName());
-//
-//            } catch (ClusterOperationFailureException e) {
-//                logger.fatal(new ClusterFullCleanupFailureException(e.getMessage()).getMessage());
-//
-//                return;
-//            }
-//
-//            suspends.add(clusterAllocation);
-//
-//            telemetryService.decreaseServingClustersAmount();
-//
-//            telemetryService.increaseSuspendedClustersAmount();
-//        }
-//
-//        try {
-//            workspaceFacade.removeAll(workspaceUnitKey);
-//        } catch (ContentRemovalFailureException e) {
-//            StateService.getTopologyStateGuard().unlock();
-//
-//            throw new ClusterFullCleanupFailureException(e.getMessage());
-//        }
-//
-//        for (ClusterAllocationDto suspended : suspends) {
-//            logger.info(
-//                    String.format(
-//                            "Setting ObjectStorage Cluster suspended allocation to serve state: '%s'",
-//                            suspended.getName()));
-//
-//            try {
-//                clusterCommunicationResource.performServe(suspended.getName());
-//            } catch (ClusterOperationFailureException e) {
-//                logger.fatal(new ClusterFullCleanupFailureException(e.getMessage()).getMessage());
-//
-//                return;
-//            }
-//
-//            telemetryService.decreaseSuspendedClustersAmount();
-//
-//            telemetryService.increaseServingClustersAmount();
-//        }
-//
-//        StateService.getTopologyStateGuard().unlock();
-//    }
-//
+
+    /**
+     * Removes all the content from ObjectStorage Temporate Storage or configured provider.
+     *
+     * @param validationSecretsApplication given content secrets application.
+     * @throws ProcessorContentRemovalFailureException if content removal operation fails.
+     */
+    public void removeAll(ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentRemovalFailureException {
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
+        try {
+            workspaceFacade.removeAll(workspaceUnitKey);
+        } catch (FilesRemovalFailureException e) {
+            throw new ProcessorContentRemovalFailureException(e.getMessage());
+        }
+
+        for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            RepositoryContentLocationUnitDto repositoryContentLocationUnitDto;
+
+            try {
+                repositoryContentLocationUnitDto = repositoryFacade.retrieveContent(validationSecretsUnit);
+            } catch (ContentLocationsRetrievalFailureException e) {
+                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            }
+
+            try {
+                vendorFacade.removeAllObjectsFromBucket(
+                        validationSecretsUnit.getProvider(),
+                        validationSecretsUnit.getCredentials().getExternal(),
+                        repositoryContentLocationUnitDto.getRoot()
+                );
+            } catch (SecretsConversionException e) {
+                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            }
+        }
+    }
 }

@@ -322,6 +322,45 @@ public class VendorFacade {
     }
 
     /**
+     * Removes all objects from the bucket with the given name.
+     *
+     * @param provider given external provider name.
+     * @param credentialsFieldExternal given external credentials.
+     * @param bucketName given name of the bucket.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     */
+    public void removeAllObjectsFromBucket(
+            Provider provider,
+            CredentialsFieldsExternal credentialsFieldExternal,
+            String bucketName) throws SecretsConversionException {
+        switch (provider) {
+            case S3 -> {
+                AWSSecretsDto secrets =
+                        SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
+
+                AWSCredentialsProvider awsCredentialsProvider =
+                        s3VendorService.getCredentialsProvider(secrets);
+
+                s3VendorService.removeAllObjectsFromS3Bucket(
+                        awsCredentialsProvider,
+                        bucketName,
+                        credentialsFieldExternal.getRegion());
+            }
+            case GCS -> {
+                Credentials credentials;
+
+                try {
+                    credentials = gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e.getMessage());
+                }
+
+                gcsVendorService.removeAllObjectsFromGCSBucket(credentials, bucketName);
+            }
+        }
+    }
+
+    /**
      * Converts given raw credentials according to the selected provider, according to the given provider name.
      *
      * @param provider                 given external provider name.

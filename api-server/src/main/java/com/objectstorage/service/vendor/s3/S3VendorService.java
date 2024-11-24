@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -214,6 +215,38 @@ public class S3VendorService {
         AmazonS3Waiters simpleStorageWaiter = simpleStorage.waiters();
         simpleStorageWaiter.objectNotExists().run(
                 new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
+    }
+
+    /**
+     * Removes all objects from the S3 bucket with the given name.
+     *
+     * @param awsCredentialsProvider given providers to be used for client configuration.
+     * @param bucketName given name of the S3 bucket.
+     * @param region given region to be used for client configuration.
+     */
+    public void removeAllObjectsFromS3Bucket(
+            AWSCredentialsProvider awsCredentialsProvider,
+            String bucketName,
+            String region) {
+        AmazonS3 simpleStorage =
+                AmazonS3ClientBuilder.standard()
+                        .withRegion(region)
+                        .withCredentials(awsCredentialsProvider)
+                        .build();
+
+
+        ObjectListing objectListing = simpleStorage.listObjects(bucketName);
+        while (true) {
+            for (S3ObjectSummary s3ObjectSummary : objectListing.getObjectSummaries()) {
+                simpleStorage.deleteObject(bucketName, s3ObjectSummary.getKey());
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = simpleStorage.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        }
     }
 
     /**

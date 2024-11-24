@@ -135,6 +135,6 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-//        clusterFacade.removeAll(contentCleanupAll);
+        processorService.removeAll(validationSecretsApplication);
     }
 }

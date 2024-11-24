@@ -1,5 +1,6 @@
 package com.objectstorage.service.vendor.gcs;
 
+import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
@@ -180,6 +181,27 @@ public class GCSVendorService {
                 .getService();
 
         storage.delete(BlobId.of(bucketName, fileName));
+    }
+
+    /**
+     * Removes all objects from the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     */
+    public void removeAllObjectsFromGCSBucket(
+            Credentials credentials,
+            String bucketName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Page<Blob> blobs = storage.list(bucketName);
+
+        for (Blob blob : blobs.iterateAll()) {
+            blob.delete(Blob.BlobSourceOption.generationMatch());
+        }
     }
 
     /**
