@@ -157,15 +157,15 @@ public class ProcessorService {
     }
 
     /**
-     * Uploads given content, adding provided input to ObjectStorage Temporate Storage, which will then be processed and
-     * added to configured providers.
+     * Uploads given object content, adding provided input to ObjectStorage Temporate Storage, which will then be
+     * processed and added to configured providers.
      *
-     * @param location given file location.
-     * @param file given input file stream.
+     * @param location given object file location.
+     * @param file given object input file stream.
      * @param validationSecretsApplication given content application.
      * @throws ProcessorContentUploadFailureException if content upload operation fails.
      */
-    public void upload(String location, InputStream file, ValidationSecretsApplication validationSecretsApplication)
+    public void uploadObject(String location, InputStream file, ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentUploadFailureException {
         logger.info(String.format("Uploading content at '%s' location", location));
 
@@ -173,7 +173,7 @@ public class ProcessorService {
                 workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
         try {
-            workspaceFacade.addFile(workspaceUnitKey, location, file);
+            workspaceFacade.addObjectFile(workspaceUnitKey, location, file);
         } catch (FileCreationFailureException e) {
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
@@ -190,27 +190,27 @@ public class ProcessorService {
     }
 
     /**
-     * Downloads given content with the help of the given content download application from ObjectStorage Temporate
-     * Storage or configured provider.
+     * Downloads given content object with the help of the given content object download application from
+     * ObjectStorage Temporate Storage or configured provider.
      *
-     * @param location given content location.
+     * @param location given content object location.
      * @param validationSecretsUnit given content secrets unit.
      * @param validationSecretsApplication given content secrets application.
-     * @return downloaded content.
-     * @throws ProcessorContentDownloadFailureException if content download operation fails.
+     * @return downloaded content object.
+     * @throws ProcessorContentDownloadFailureException if content object download operation fails.
      */
-    public byte[] download(
+    public byte[] downloadObject(
             String location,
             ValidationSecretsUnit validationSecretsUnit,
             ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentDownloadFailureException {
-        logger.info(String.format("Downloading content for '%s' location", location));
+        logger.info(String.format("Downloading content object for '%s' location", location));
 
         String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
         try {
-            if (workspaceFacade.isFilePresent(workspaceUnitKey, location)) {
-                return workspaceFacade.getFile(workspaceUnitKey, location);
+            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
+                return workspaceFacade.getObjectFile(workspaceUnitKey, location);
             }
         } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
@@ -249,23 +249,55 @@ public class ProcessorService {
     }
 
     /**
-     * Removes content with the given location from ObjectStorage Temporate Storage or configured provider.
+     * Downloads given content backup with the help of the given content backup download application.
+     *
+     * @param contentBackupDownload given content backup download application.
+     * @param validationSecretsApplication given content secrets application.
+     * @return downloaded content backup.
+     * @throws ProcessorContentDownloadFailureException if content backup download operation fails.
+     */
+    public byte[] downloadBackup(
+            ContentBackupDownload contentBackupDownload,
+            ValidationSecretsApplication validationSecretsApplication)
+            throws ProcessorContentDownloadFailureException {
+        logger.info(String.format("Downloading content backup for '%s' location", contentBackupDownload.getLocation()));
+
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
+        try {
+            if (!workspaceFacade.isBackupFilePresent(workspaceUnitKey, contentBackupDownload.getLocation())) {
+                throw new ProcessorContentDownloadFailureException(
+                        new WorkspaceObjectNotPresentException().getMessage());
+            }
+        } catch (FileExistenceCheckFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
+
+        try {
+            return workspaceFacade.getBackupFile(workspaceUnitKey, contentBackupDownload.getLocation());
+        } catch (FileUnitRetrievalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
+    }
+
+    /**
+     * Removes content object with the given location from ObjectStorage Temporate Storage or configured provider.
      *
      * @param location given content location.
      * @param validationSecretsApplication given content secrets application.
      * @throws ProcessorContentRemovalFailureException if content removal operation fails.
      */
-    public void remove(
+    public void removeObject(
             String location,
             ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentRemovalFailureException {
-        logger.info(String.format("Removing content of '%s' location", location));
+        logger.info(String.format("Removing content object of '%s' location", location));
 
         String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
         try {
-            if (workspaceFacade.isFilePresent(workspaceUnitKey, location)) {
-                workspaceFacade.removeFile(workspaceUnitKey, location);
+            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
+                workspaceFacade.removeObjectFile(workspaceUnitKey, location);
             }
         } catch (FileExistenceCheckFailureException | FileRemovalFailureException e) {
             throw new ProcessorContentRemovalFailureException(e.getMessage());

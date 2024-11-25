@@ -72,7 +72,7 @@ paths:
           description: Given content configuration was successfully withdrawn
         400:
           description: Given content configuration was not withdrawn
-  /v1/content/upload:
+  /v1/content/object/upload:
     post:
       tags:
         - ContentResource
@@ -103,7 +103,7 @@ paths:
           description: A content was successfully uploaded
         400:
           description: Content was not uploaded
-  /v1/content/download:
+  /v1/content/object/download:
     post:
       tags:
         - ContentResource
@@ -115,22 +115,49 @@ paths:
             type: string
       requestBody:
         required: true
-        description: Content download application
+        description: Content object download application
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ContentDownload"
+              $ref: "#/components/schemas/ContentObjectDownload"
       responses:
         201:
-          description: A content was successfully retrieved
+          description: A content object was successfully retrieved
           content:
             application/zip:
               schema:
                 type: string
                 format: binary
         400:
-          description: Content was not retrieved
-  /v1/content/clean:
+          description: Content object was not retrieved
+  /v1/content/backup/download:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content backup download application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentBackupDownload"
+      responses:
+        201:
+          description: A content backup was successfully retrieved
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Content backup was not retrieved
+  /v1/content/object/clean:
     delete:
       tags:
         - ContentResource
@@ -149,9 +176,9 @@ paths:
               $ref: "#/components/schemas/ContentCleanup"
       responses:
         201:
-          description: Content with the given configuration was successfully deleted
+          description: Content object with the given configuration was successfully deleted
         400:
-          description: Content with the given configuration was not deleted
+          description: Content object with the given configuration was not deleted
   /v1/content/clean/all:
     delete:
       tags:
@@ -258,7 +285,7 @@ components:
       properties:
         root:
           type: string
-    ContentDownload:
+    ContentObjectDownload:
       required:
         - location
         - provider
@@ -267,6 +294,12 @@ components:
           type: string
         provider:
           $ref: "#/components/schemas/Provider"
+    ContentBackupDownload:
+      required:
+        - location
+      properties:
+        location:
+          type: string
     ContentCleanup:
       required:
         - location

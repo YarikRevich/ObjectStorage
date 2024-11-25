@@ -59,11 +59,11 @@ public class PropertiesEntity {
     @ConfigProperty(name = "workspace.directory")
     String workspaceDirectory;
 
-    @ConfigProperty(name = "workspace.content.temporate.directory")
-    String workspaceContentTemporateDirectory;
+    @ConfigProperty(name = "workspace.content.object.directory")
+    String workspaceContentObjectDirectory;
 
-    @ConfigProperty(name = "workspace.content.backups.directory")
-    String workspaceContentBackupsDirectory;
+    @ConfigProperty(name = "workspace.content.backup.directory")
+    String workspaceContentBackupDirectory;
 
     @ConfigProperty(name = "workspace.compression.file.name")
     String workspaceCompressionFileName;

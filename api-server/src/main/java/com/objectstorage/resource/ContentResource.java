@@ -69,55 +69,71 @@ public class ContentResource implements ContentResourceApi {
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentUploadPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentObjectUploadPost method.
      *
      * @param authorization given authorization header.
-     * @param location given file location.
-     * @param file given input file stream.
+     * @param location given object file location.
+     * @param file given object input file stream.
      */
     @Override
     @SneakyThrows
-    public void v1ContentUploadPost(String authorization, String location, InputStream file) {
+    public void v1ContentObjectUploadPost(String authorization, String location, InputStream file) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        processorService.upload(location, file, validationSecretsApplication);
+        processorService.uploadObject(location, file, validationSecretsApplication);
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentDownloadPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentObjectDownloadPost method.
      *
      * @param authorization given authorization header.
-     * @param contentDownload content download application
-     * @return downloaded content result.
+     * @param contentObjectDownload content object download application.
+     * @return downloaded content object result.
      */
     @Override
     @SneakyThrows
-    public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
+    public byte[] v1ContentObjectDownloadPost(String authorization, ContentObjectDownload contentObjectDownload) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
         ValidationSecretsUnit validationSecretsUnit =
                 resourceConfigurationHelper.getConfiguredProvider(
-                        contentDownload.getProvider(), validationSecretsApplication);
+                        contentObjectDownload.getProvider(), validationSecretsApplication);
 
-        return processorService.download(
-                contentDownload.getLocation(), validationSecretsUnit, validationSecretsApplication);
+        return processorService.downloadObject(
+                contentObjectDownload.getLocation(), validationSecretsUnit, validationSecretsApplication);
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentCleanDelete method.
+     * Implementation for declared in OpenAPI configuration v1ContentBackupDownloadPost method.
+     *
+     * @param authorization given authorization header.
+     * @param contentBackupDownload content backup download application.
+     * @return downloaded content backup result.
+     */
+    @Override
+    @SneakyThrows
+    public byte[] v1ContentBackupDownloadPost(String authorization, ContentBackupDownload contentBackupDownload) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
+
+        return processorService.downloadBackup(contentBackupDownload, validationSecretsApplication);
+    }
+
+    /**
+     * Implementation for declared in OpenAPI configuration v1ContentObjectCleanDelete method.
      *
      * @param authorization given authorization header.
      * @param contentCleanup content cleanup application.
      */
     @Override
     @SneakyThrows
-    public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
+    public void v1ContentObjectCleanDelete(String authorization, ContentCleanup contentCleanup) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        processorService.remove(contentCleanup.getLocation(), validationSecretsApplication);
+        processorService.removeObject(contentCleanup.getLocation(), validationSecretsApplication);
     }
 
     /**
