@@ -40,5 +40,5 @@ public class TemporateEntity {
     /**
      * Represents created at column.
      */
-    private Date createdAt;
+    private Long createdAt;
 }

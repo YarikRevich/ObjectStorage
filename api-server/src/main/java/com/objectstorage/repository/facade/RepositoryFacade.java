@@ -16,6 +16,7 @@ import com.objectstorage.repository.ContentRepository;
 import com.objectstorage.repository.ProviderRepository;
 import com.objectstorage.repository.SecretRepository;
 
+import java.time.Instant;
 import java.util.*;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -135,12 +136,12 @@ public class RepositoryFacade {
     }
 
     /**
-     * Removes temporate content from the temporate repository.
+     * Removes temporate content from the temporate repository with the given location, provider and secret.
      *
      * @param location given temporate content location.
      * @param validationSecretsUnit given validation secrets unit.
      */
-    public void removeTemporateContent(String location, ValidationSecretsUnit validationSecretsUnit)
+    public void removeTemporateContentByLocation(String location, ValidationSecretsUnit validationSecretsUnit)
             throws TemporateContentRemovalFailureException {
         ProviderEntity provider;
 
@@ -176,6 +177,51 @@ public class RepositoryFacade {
 
         try {
             temporateRepository.deleteByLocationProviderAndSecret(location, provider.getId(), secret.getId());
+        } catch (RepositoryOperationFailureException ignored) {
+        }
+    }
+
+    /**
+     * Removes temporate content from the temporate repository with the given provider and secret.
+     *
+     * @param validationSecretsUnit given validation secrets unit.
+     */
+    public void removeTemporateContentByProviderAndSecret(ValidationSecretsUnit validationSecretsUnit)
+            throws TemporateContentRemovalFailureException {
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
+
+        try {
+            if (!secretRepository.isPresentBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                throw new TemporateContentRemovalFailureException(
+                        new RepositoryContentApplicationNotExistsException().getMessage());
+            }
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        try {
+            temporateRepository.deleteByProviderAndSecret(provider.getId(), secret.getId());
         } catch (RepositoryOperationFailureException ignored) {
         }
     }
@@ -318,7 +364,8 @@ public class RepositoryFacade {
             }
 
             try {
-                temporateRepository.insert(provider.getId(), secret.getId(), location, hash);
+                temporateRepository.insert(
+                        provider.getId(), secret.getId(), location, hash, Instant.now().getEpochSecond());
             } catch (RepositoryOperationFailureException e) {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());
             }

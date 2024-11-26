@@ -37,16 +37,19 @@ public class TemporateRepository {
      * @param secret   given secret.
      * @param location given file location.
      * @param hash given file name hash.
+     * @param createdAt given creation timestamp.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
-    public void insert(Integer provider, Integer secret, String location, String hash) throws RepositoryOperationFailureException {
+    public void insert(Integer provider, Integer secret, String location, String hash, Long createdAt)
+            throws RepositoryOperationFailureException {
         String query = String.format(
-                "INSERT INTO %s (provider, secret, location, hash) VALUES (%d, %d, '%s', '%s')",
+                "INSERT INTO %s (provider, secret, location, hash, created_at) VALUES (%d, %d, '%s', '%s', %d)",
                 properties.getDatabaseTemporateTableName(),
                 provider,
                 secret,
                 location,
-                hash);
+                hash,
+                createdAt);
 
         try {
             repositoryExecutor.performQuery(query);
@@ -83,7 +86,7 @@ public class TemporateRepository {
         Integer secret;
         String location;
         String hash;
-        Date createdAt;
+        Long createdAt;
 
         try {
             while (resultSet.next()) {
@@ -92,7 +95,7 @@ public class TemporateRepository {
                 secret = resultSet.getInt("secret");
                 location = resultSet.getString("location");
                 hash = resultSet.getString("hash");
-                createdAt = resultSet.getDate("created_at");
+                createdAt = resultSet.getLong("created_at");
 
                 result.add(TemporateEntity.of(id, provider, secret, location, hash, createdAt));
             }
@@ -143,14 +146,14 @@ public class TemporateRepository {
         Integer id;
         String location;
         String hash;
-        Date createdAt;
+        Long createdAt;
 
         try {
             while (resultSet.next()) {
                 id = resultSet.getInt("id");
                 location = resultSet.getString("location");
                 hash = resultSet.getString("hash");
-                createdAt = resultSet.getDate("created_at");
+                createdAt = resultSet.getLong("created_at");
 
                 result.add(TemporateEntity.of(id, provider, secret, location, hash, createdAt));
             }

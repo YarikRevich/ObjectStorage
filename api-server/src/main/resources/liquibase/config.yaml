@@ -141,11 +141,9 @@ databaseChangeLog:
                     unique: true
               - column:
                   name: created_at
-                  type: timestamp with time zone
-        - addDefaultValue:
-            columnName: created_at
-            defaultValueComputed: now()
-            tableName: temporate
+                  type: LONG
+                  constraints:
+                    nullable: false
         - createIndex:
             columns:
               - column:
