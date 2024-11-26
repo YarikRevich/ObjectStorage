@@ -47,8 +47,8 @@ public class RepositoryFacade {
      * @return retrieved list of filtered temporate content.
      * @throws TemporateContentRetrievalFailureException if filtered temporate content retrieval fails.
      */
-    public List<ContentRetrievalProviderUnit> retrieveFilteredTemporateContent(ValidationSecretsUnit validationSecretsUnit)
-            throws TemporateContentRetrievalFailureException {
+    public List<ContentRetrievalProviderUnit> retrieveFilteredTemporateContent(
+            ValidationSecretsUnit validationSecretsUnit) throws TemporateContentRetrievalFailureException {
         ProviderEntity rawProvider;
 
         try {
@@ -87,16 +87,16 @@ public class RepositoryFacade {
      *
      * @param validationSecretsUnit given validation secret application unit.
      * @return retrieved content application for the given configuration properties.
-     * @throws ContentLocationsRetrievalFailureException if content application retrieval fails.
+     * @throws ContentApplicationRetrievalFailureException if content application retrieval fails.
      */
     public RepositoryContentUnitDto retrieveContentApplication(ValidationSecretsUnit validationSecretsUnit)
-            throws ContentLocationsRetrievalFailureException {
+            throws ContentApplicationRetrievalFailureException {
         ProviderEntity provider;
 
         try {
             provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
         } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
 
         String signature = repositoryConfigurationHelper.getExternalCredentials(
@@ -106,11 +106,11 @@ public class RepositoryFacade {
         try {
             if (!secretRepository.isPresentBySessionAndCredentials(
                     validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
-                throw new ContentLocationsRetrievalFailureException(
+                throw new ContentApplicationRetrievalFailureException(
                         new RepositoryContentApplicationNotExistsException().getMessage());
             }
         } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
 
         SecretEntity secret;
@@ -120,7 +120,7 @@ public class RepositoryFacade {
                     validationSecretsUnit.getCredentials().getInternal().getId(),
                     signature);
         } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
 
         try {
@@ -130,7 +130,53 @@ public class RepositoryFacade {
                     .map(element -> RepositoryContentUnitDto.of(element.getRoot()))
                     .toList().getFirst();
         } catch (RepositoryOperationFailureException e) {
-            throw new ContentLocationsRetrievalFailureException(e.getMessage());
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
+        }
+    }
+
+    /**
+     * Removes temporate content from the temporate repository.
+     *
+     * @param location given temporate content location.
+     * @param validationSecretsUnit given validation secrets unit.
+     */
+    public void removeTemporateContent(String location, ValidationSecretsUnit validationSecretsUnit)
+            throws TemporateContentRemovalFailureException {
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
+
+        try {
+            if (!secretRepository.isPresentBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                throw new TemporateContentRemovalFailureException(
+                        new RepositoryContentApplicationNotExistsException().getMessage());
+            }
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        try {
+            temporateRepository.deleteByLocationProviderAndSecret(location, provider.getId(), secret.getId());
+        } catch (RepositoryOperationFailureException ignored) {
         }
     }
 

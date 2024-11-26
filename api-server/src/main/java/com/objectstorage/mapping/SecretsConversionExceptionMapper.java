@@ -1,6 +1,5 @@
 package com.objectstorage.mapping;
 
-import com.objectstorage.exception.RepositoryContentDestructionFailureException;
 import com.objectstorage.exception.SecretsConversionException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

@@ -1,6 +1,5 @@
 package com.objectstorage.service.vendor.s3;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -17,12 +16,10 @@ import com.objectstorage.exception.S3BucketObjectRetrievalFailureException;
 import com.objectstorage.exception.VendorOperationFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.io.IOUtils;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,7 +56,7 @@ public class S3VendorService {
                     .withCredentials(awsCredentialsProvider)
                     .build()
                     .doesBucketExistV2(name);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -82,7 +79,7 @@ public class S3VendorService {
 
         try {
             simpleStorage.createBucket(name);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -90,7 +87,7 @@ public class S3VendorService {
 
         try {
             simpleStorageWaiter.bucketExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -115,7 +112,7 @@ public class S3VendorService {
 
         try {
             objects = simpleStorage.listObjects(name);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -126,14 +123,14 @@ public class S3VendorService {
 
             try {
                 objects = simpleStorage.listNextBatchOfObjects(objects);
-            } catch (AmazonServiceException e) {
+            } catch (Exception e) {
                 throw new VendorOperationFailureException(e.getMessage());
             }
         } while (objects.isTruncated());
 
         try {
             simpleStorage.deleteBucket(name);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -141,7 +138,7 @@ public class S3VendorService {
 
         try {
             simpleStorageWaiter.bucketNotExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -170,12 +167,17 @@ public class S3VendorService {
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType("text/plain");
+        metadata.setUserMetadata(new HashMap<>() {
+            {
+                put("objectstorage", "true");
+            }
+        });
 
         PutObjectRequest request = new PutObjectRequest(bucketName, fileName, inputStream, metadata);
 
         try {
             simpleStorage.putObject(request);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -184,7 +186,7 @@ public class S3VendorService {
         try {
             simpleStorageWaiter.objectExists().run(
                     new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -212,7 +214,7 @@ public class S3VendorService {
 
         try {
             return simpleStorage.doesObjectExist(bucketName, fileName);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -244,7 +246,7 @@ public class S3VendorService {
 
         try {
             object = simpleStorage.getObject(bucketName, fileName);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -280,7 +282,7 @@ public class S3VendorService {
                     .getObjectSummaries()
                     .stream().map(S3ObjectSummary::getKey)
                     .toList();
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -307,7 +309,7 @@ public class S3VendorService {
 
         try {
             simpleStorage.deleteObject(bucketName, fileName);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -316,7 +318,7 @@ public class S3VendorService {
         try {
             simpleStorageWaiter.objectNotExists().run(
                     new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
     }
@@ -343,7 +345,7 @@ public class S3VendorService {
 
         try {
             objectListing = simpleStorage.listObjects(bucketName);
-        } catch (AmazonServiceException e) {
+        } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());
         }
 
@@ -355,7 +357,7 @@ public class S3VendorService {
             if (objectListing.isTruncated()) {
                 try {
                     objectListing = simpleStorage.listNextBatchOfObjects(objectListing);
-                } catch (AmazonServiceException e) {
+                } catch (Exception e) {
                     throw new VendorOperationFailureException(e.getMessage());
                 }
             } else {

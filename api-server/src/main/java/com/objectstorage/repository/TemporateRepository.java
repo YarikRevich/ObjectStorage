@@ -13,7 +13,9 @@ import jakarta.inject.Inject;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -81,6 +83,7 @@ public class TemporateRepository {
         Integer secret;
         String location;
         String hash;
+        Date createdAt;
 
         try {
             while (resultSet.next()) {
@@ -89,8 +92,9 @@ public class TemporateRepository {
                 secret = resultSet.getInt("secret");
                 location = resultSet.getString("location");
                 hash = resultSet.getString("hash");
+                createdAt = resultSet.getDate("created_at");
 
-                result.add(TemporateEntity.of(id, provider, secret, location, hash));
+                result.add(TemporateEntity.of(id, provider, secret, location, hash, createdAt));
             }
         } catch (SQLException e1) {
             try {
@@ -139,14 +143,16 @@ public class TemporateRepository {
         Integer id;
         String location;
         String hash;
+        Date createdAt;
 
         try {
             while (resultSet.next()) {
                 id = resultSet.getInt("id");
                 location = resultSet.getString("location");
                 hash = resultSet.getString("hash");
+                createdAt = resultSet.getDate("created_at");
 
-                result.add(TemporateEntity.of(id, provider, secret, location, hash));
+                result.add(TemporateEntity.of(id, provider, secret, location, hash, createdAt));
             }
         } catch (SQLException e1) {
             try {
@@ -168,9 +174,33 @@ public class TemporateRepository {
     }
 
     /**
+     * Deletes entity with the given location, provider and secret from temporate table.
+     *
+     * @param location given location.
+     * @param provider given provider.
+     * @param secret given secret.
+     * @throws RepositoryOperationFailureException if operation execution fails.
+     */
+    public void deleteByLocationProviderAndSecret(String location, Integer provider, Integer secret)
+            throws RepositoryOperationFailureException {
+        try {
+            repositoryExecutor.performQuery(
+                    String.format(
+                            "DELETE FROM %s as t WHERE t.location = '%s' AND t.provider = %d AND t.secret = %d",
+                            properties.getDatabaseTemporateTableName(),
+                            location,
+                            provider,
+                            secret));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+    }
+
+    /**
      * Deletes entity with the given hash from temporate table.
      *
-     * @param hash given provider.
+     * @param hash given hash.
      * @throws RepositoryOperationFailureException if operation execution fails.
      */
     public void deleteByHash(String hash) throws RepositoryOperationFailureException {

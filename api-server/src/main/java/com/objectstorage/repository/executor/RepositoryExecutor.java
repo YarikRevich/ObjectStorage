@@ -160,10 +160,16 @@ public class RepositoryExecutor {
         } catch (SQLException e) {
             throw new TransactionCommitFailureException(e.getMessage());
         }
+
+        try {
+            this.connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            throw new TransactionCommitFailureException(e.getMessage());
+        }
     }
 
     /**
-     * Commits previously initialized transaction.
+     * Rollbacks previously initialized transaction.
      *
      * @throws TransactionRollbackFailureException if transaction rollback fails.
      */
@@ -173,8 +179,13 @@ public class RepositoryExecutor {
         } catch (SQLException e) {
             throw new TransactionRollbackFailureException(e.getMessage());
         }
-    }
 
+        try {
+            this.connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            throw new TransactionRollbackFailureException(e.getMessage());
+        }
+    }
 
     /**
      * Closes opened database connection.

@@ -139,6 +139,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     unique: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+        - addDefaultValue:
+            columnName: created_at
+            defaultValueComputed: now()
+            tableName: temporate
         - createIndex:
             columns:
               - column:

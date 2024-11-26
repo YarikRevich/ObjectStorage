@@ -3,6 +3,9 @@ package com.objectstorage.entity.repository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalTime;
+import java.util.Date;
+
 /**
  * Represents entity used to describe files in temporate storage.
  */
@@ -33,4 +36,9 @@ public class TemporateEntity {
      * Represents file hash column.
      */
     private String hash;
+
+    /**
+     * Represents created at column.
+     */
+    private Date createdAt;
 }

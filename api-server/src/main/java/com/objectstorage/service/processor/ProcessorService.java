@@ -56,7 +56,7 @@ public class ProcessorService {
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentLocationsRetrievalFailureException e) {
+            } catch (ContentApplicationRetrievalFailureException e) {
                 throw new ProcessorContentRetrievalFailureException(e.getMessage());
             }
 
@@ -168,7 +168,7 @@ public class ProcessorService {
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentLocationsRetrievalFailureException e1) {
+            } catch (ContentApplicationRetrievalFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
@@ -233,23 +233,47 @@ public class ProcessorService {
             throws ProcessorContentUploadFailureException {
         logger.info(String.format("Uploading content at '%s' location", location));
 
-        String workspaceUnitKey =
-                workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
-
         try {
-            workspaceFacade.addObjectFile(workspaceUnitKey, location, file);
-        } catch (FileCreationFailureException e) {
+            repositoryExecutor.beginTransaction();
+        } catch (TransactionInitializationFailureException e) {
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
+
+        String workspaceUnitKey =
+                workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
         String fileUnitKey = workspaceFacade.createFileUnitKey(location);
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             try {
                 repositoryFacade.upload(location, fileUnitKey, validationSecretsUnit);
-            } catch (RepositoryContentApplicationFailureException e) {
-                throw new ProcessorContentUploadFailureException(e.getMessage());
+            } catch (RepositoryContentApplicationFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentUploadFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentUploadFailureException(e1.getMessage());
             }
+        }
+
+        try {
+            workspaceFacade.addObjectFile(workspaceUnitKey, fileUnitKey, file);
+        } catch (FileCreationFailureException e1) {
+            try {
+                repositoryExecutor.rollbackTransaction();
+            } catch (TransactionRollbackFailureException e2) {
+                throw new ProcessorContentUploadFailureException(e2.getMessage());
+            }
+
+            throw new ProcessorContentUploadFailureException(e1.getMessage());
+        }
+
+        try {
+            repositoryExecutor.commitTransaction();
+        } catch (TransactionCommitFailureException e) {
+            throw new ProcessorContentUploadFailureException(e.getMessage());
         }
     }
 
@@ -284,7 +308,7 @@ public class ProcessorService {
 
         try {
             repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-        } catch (ContentLocationsRetrievalFailureException e) {
+        } catch (ContentApplicationRetrievalFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
@@ -359,23 +383,39 @@ public class ProcessorService {
             throws ProcessorContentRemovalFailureException {
         logger.info(String.format("Removing content object of '%s' location", location));
 
-        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
-
         try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
-                workspaceFacade.removeObjectFile(workspaceUnitKey, location);
-            }
-        } catch (FileExistenceCheckFailureException | FileRemovalFailureException e) {
+            repositoryExecutor.beginTransaction();
+        } catch (TransactionInitializationFailureException e) {
             throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
 
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            try {
+                repositoryFacade.removeTemporateContent(location, validationSecretsUnit);
+            } catch (TemporateContentRemovalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
+            }
+
             RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentLocationsRetrievalFailureException e) {
-                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            } catch (ContentApplicationRetrievalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
 
             try {
@@ -387,8 +427,14 @@ public class ProcessorService {
                         location)) {
                     continue;
                 }
-            } catch (SecretsConversionException | VendorOperationFailureException e) {
-                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            } catch (SecretsConversionException | VendorOperationFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
 
             try {
@@ -398,9 +444,35 @@ public class ProcessorService {
                         VendorConfigurationHelper.createBucketName(
                                 repositoryContentLocationUnitDto.getRoot()),
                         location);
-            } catch (SecretsConversionException | VendorOperationFailureException e) {
-                throw new ProcessorContentRemovalFailureException(e.getMessage());
+            } catch (SecretsConversionException | VendorOperationFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
+        }
+
+        try {
+            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
+                workspaceFacade.removeObjectFile(workspaceUnitKey, location);
+            }
+        } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+            try {
+                repositoryExecutor.rollbackTransaction();
+            } catch (TransactionRollbackFailureException e2) {
+                throw new ProcessorContentRemovalFailureException(e2.getMessage());
+            }
+
+            throw new ProcessorContentRemovalFailureException(e1.getMessage());
+        }
+
+        try {
+            repositoryExecutor.commitTransaction();
+        } catch (TransactionCommitFailureException e) {
+            throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
     }
 
@@ -425,7 +497,7 @@ public class ProcessorService {
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentLocationsRetrievalFailureException e) {
+            } catch (ContentApplicationRetrievalFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }
 

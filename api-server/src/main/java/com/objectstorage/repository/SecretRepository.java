@@ -65,11 +65,19 @@ public class SecretRepository {
                 session,
                 credentials);
 
+        ResultSet resultSet;
+
         try {
-            repositoryExecutor.performQueryWithResult(query);
+            resultSet = repositoryExecutor.performQueryWithResult(query);
         } catch (QueryEmptyResultException e) {
             return false;
         } catch (QueryExecutionFailureException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
