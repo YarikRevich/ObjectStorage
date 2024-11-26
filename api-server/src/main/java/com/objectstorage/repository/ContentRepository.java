@@ -89,8 +89,14 @@ public class ContentRepository {
 
                 result.add(ContentEntity.of(id, provider, secret, root));
             }
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {

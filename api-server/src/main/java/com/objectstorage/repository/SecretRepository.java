@@ -66,13 +66,7 @@ public class SecretRepository {
                 credentials);
 
         try {
-            ResultSet resultSet = repositoryExecutor.performQueryWithResult(query);
-
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new RepositoryOperationFailureException(e.getMessage());
-            }
+            repositoryExecutor.performQueryWithResult(query);
         } catch (QueryEmptyResultException e) {
             return false;
         } catch (QueryExecutionFailureException e) {
@@ -109,8 +103,14 @@ public class SecretRepository {
 
         try {
             id = resultSet.getInt("id");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {
@@ -154,8 +154,14 @@ public class SecretRepository {
 
         try {
             credentials = resultSet.getString("credentials");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {

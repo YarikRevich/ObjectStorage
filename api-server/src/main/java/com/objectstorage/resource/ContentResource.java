@@ -21,14 +21,14 @@ public class ContentResource implements ContentResourceApi {
     ResourceConfigurationHelper resourceConfigurationHelper;
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentGet method.
      *
      * @param authorization given authorization header.
      * @return retrieved content result.
      */
     @Override
     @SneakyThrows
-    public ContentRetrievalResult v1ContentPost(String authorization) {
+    public ContentRetrievalResult v1ContentGet(String authorization) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 

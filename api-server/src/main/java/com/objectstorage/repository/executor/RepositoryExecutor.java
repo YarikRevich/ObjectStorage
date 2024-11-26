@@ -125,6 +125,8 @@ public class RepositoryExecutor {
 
         try {
             if (!resultSet.isBeforeFirst()) {
+                resultSet.close();
+
                 throw new QueryEmptyResultException();
             }
         } catch (SQLException e) {

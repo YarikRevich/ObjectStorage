@@ -52,7 +52,7 @@ public class RepositoryFacade {
         ProviderEntity rawProvider;
 
         try {
-            rawProvider = providerRepository.findByName(validationSecretsUnit.getProvider().name());
+            rawProvider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
         } catch (RepositoryOperationFailureException e) {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
@@ -71,12 +71,11 @@ public class RepositoryFacade {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        List<TemporateEntity> temporateContent;
+        List<TemporateEntity> temporateContent = new ArrayList<>();
 
         try {
             temporateContent = temporateRepository.findByProviderAndSecret(rawProvider.getId(), secret.getId());
-        } catch (RepositoryOperationFailureException e) {
-            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        } catch (RepositoryOperationFailureException ignored) {
         }
 
         return temporateContent.stream().map(
@@ -107,7 +106,8 @@ public class RepositoryFacade {
         try {
             if (!secretRepository.isPresentBySessionAndCredentials(
                     validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
-                throw new ContentLocationsRetrievalFailureException();
+                throw new ContentLocationsRetrievalFailureException(
+                        new RepositoryContentApplicationNotExistsException().getMessage());
             }
         } catch (RepositoryOperationFailureException e) {
             throw new ContentLocationsRetrievalFailureException(e.getMessage());
@@ -254,9 +254,8 @@ public class RepositoryFacade {
             try {
                 if (!secretRepository.isPresentBySessionAndCredentials(
                         validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
-                    secretRepository.insert(
-                            validationSecretsUnit.getCredentials().getInternal().getId(),
-                            signature);
+                    throw new RepositoryContentApplicationFailureException(
+                            new RepositoryContentApplicationNotExistsException().getMessage());
                 }
             } catch (RepositoryOperationFailureException e) {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());

@@ -1,5 +1,6 @@
 package com.objectstorage.service.vendor.s3;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -13,8 +14,11 @@ import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.waiters.WaiterParameters;
 import com.objectstorage.dto.AWSSecretsDto;
 import com.objectstorage.exception.S3BucketObjectRetrievalFailureException;
+import com.objectstorage.exception.VendorOperationFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.io.IOUtils;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,14 +49,19 @@ public class S3VendorService {
      * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @return result of the check.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isS3BucketPresent(
-            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
-        return AmazonS3ClientBuilder.standard()
-                .withRegion(region)
-                .withCredentials(awsCredentialsProvider)
-                .build()
-                .doesBucketExistV2(name);
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) throws VendorOperationFailureException {
+        try {
+            return AmazonS3ClientBuilder.standard()
+                    .withRegion(region)
+                    .withCredentials(awsCredentialsProvider)
+                    .build()
+                    .doesBucketExistV2(name);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -61,19 +70,29 @@ public class S3VendorService {
      * @param awsCredentialsProvider given providers to be used for client configuration.
      * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void createS3Bucket(
-            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        simpleStorage.createBucket(name);
+        try {
+            simpleStorage.createBucket(name);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         AmazonS3Waiters simpleStorageWaiter = simpleStorage.waiters();
-        simpleStorageWaiter.bucketExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
+
+        try {
+            simpleStorageWaiter.bucketExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -82,29 +101,49 @@ public class S3VendorService {
      * @param awsCredentialsProvider given providers to be used for client configuration.
      * @param name given name of the S3 bucket.
      * @param region given region to be used for client configuration.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeS3Bucket(
-            AWSCredentialsProvider awsCredentialsProvider, String name, String region) {
+            AWSCredentialsProvider awsCredentialsProvider, String name, String region) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        ObjectListing objects = simpleStorage.listObjects(name);
+        ObjectListing objects;
+
+        try {
+            objects = simpleStorage.listObjects(name);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         do {
             for (S3ObjectSummary summary : objects.getObjectSummaries()) {
                 simpleStorage.deleteObject(name, summary.getKey());
             }
 
-            objects = simpleStorage.listNextBatchOfObjects(objects);
+            try {
+                objects = simpleStorage.listNextBatchOfObjects(objects);
+            } catch (AmazonServiceException e) {
+                throw new VendorOperationFailureException(e.getMessage());
+            }
         } while (objects.isTruncated());
 
-        simpleStorage.deleteBucket(name);
+        try {
+            simpleStorage.deleteBucket(name);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         AmazonS3Waiters simpleStorageWaiter = simpleStorage.waiters();
-        simpleStorageWaiter.bucketNotExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
+
+        try {
+            simpleStorageWaiter.bucketNotExists().run(new WaiterParameters<>(new HeadBucketRequest(name)));
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -115,13 +154,14 @@ public class S3VendorService {
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be uploaded.
      * @param inputStream given file input stream to be used for object upload.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void uploadObjectToS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region,
             String fileName,
-            InputStream inputStream) {
+            InputStream inputStream) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
@@ -133,11 +173,20 @@ public class S3VendorService {
 
         PutObjectRequest request = new PutObjectRequest(bucketName, fileName, inputStream, metadata);
 
-        simpleStorage.putObject(request);
+        try {
+            simpleStorage.putObject(request);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         AmazonS3Waiters simpleStorageWaiter = simpleStorage.waiters();
-        simpleStorageWaiter.objectExists().run(
-                new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
+
+        try {
+            simpleStorageWaiter.objectExists().run(
+                    new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -148,19 +197,24 @@ public class S3VendorService {
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be retrieved.
      * @return result of the check.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isObjectPresentInBucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region,
-            String fileName) {
+            String fileName) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        return simpleStorage.doesObjectExist(bucketName, fileName);
+        try {
+            return simpleStorage.doesObjectExist(bucketName, fileName);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -172,19 +226,28 @@ public class S3VendorService {
      * @param fileName given name of the file to be retrieved.
      * @return retrieved object content.
      * @throws S3BucketObjectRetrievalFailureException if s3 bucket object retrieval fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public byte[] retrieveObjectFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region,
-            String fileName) throws S3BucketObjectRetrievalFailureException {
+            String fileName)
+            throws S3BucketObjectRetrievalFailureException, VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        S3Object object = simpleStorage.getObject(bucketName, fileName);
+        S3Object object;
+
+        try {
+            object = simpleStorage.getObject(bucketName, fileName);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
+
         try {
             return IOUtils.toByteArray(object.getObjectContent());
         } catch (IOException e) {
@@ -199,22 +262,27 @@ public class S3VendorService {
      * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @return listed objects.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public List<String> listObjectsFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
-            String region) {
+            String region) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        return simpleStorage
-                .listObjects(bucketName)
-                .getObjectSummaries()
-                .stream().map(S3ObjectSummary::getKey)
-                .toList();
+        try {
+            return simpleStorage
+                    .listObjects(bucketName)
+                    .getObjectSummaries()
+                    .stream().map(S3ObjectSummary::getKey)
+                    .toList();
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -224,23 +292,33 @@ public class S3VendorService {
      * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
      * @param fileName given name of the file to be removed.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeObjectFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region,
-            String fileName) {
+            String fileName) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
-        simpleStorage.deleteObject(bucketName, fileName);
+        try {
+            simpleStorage.deleteObject(bucketName, fileName);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         AmazonS3Waiters simpleStorageWaiter = simpleStorage.waiters();
-        simpleStorageWaiter.objectNotExists().run(
-                new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
+
+        try {
+            simpleStorageWaiter.objectNotExists().run(
+                    new WaiterParameters<>(new GetObjectMetadataRequest(bucketName, fileName)));
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -249,26 +327,37 @@ public class S3VendorService {
      * @param awsCredentialsProvider given providers to be used for client configuration.
      * @param bucketName given name of the S3 bucket.
      * @param region given region to be used for client configuration.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeAllObjectsFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
-            String region) {
+            String region) throws VendorOperationFailureException {
         AmazonS3 simpleStorage =
                 AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withCredentials(awsCredentialsProvider)
                         .build();
 
+        ObjectListing objectListing;
 
-        ObjectListing objectListing = simpleStorage.listObjects(bucketName);
+        try {
+            objectListing = simpleStorage.listObjects(bucketName);
+        } catch (AmazonServiceException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
+
         while (true) {
             for (S3ObjectSummary s3ObjectSummary : objectListing.getObjectSummaries()) {
                 simpleStorage.deleteObject(bucketName, s3ObjectSummary.getKey());
             }
 
             if (objectListing.isTruncated()) {
-                objectListing = simpleStorage.listNextBatchOfObjects(objectListing);
+                try {
+                    objectListing = simpleStorage.listNextBatchOfObjects(objectListing);
+                } catch (AmazonServiceException e) {
+                    throw new VendorOperationFailureException(e.getMessage());
+                }
             } else {
                 break;
             }

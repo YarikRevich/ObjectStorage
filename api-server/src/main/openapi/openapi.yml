@@ -16,7 +16,7 @@ tags:
 
 paths:
   /v1/content:
-    post:
+    get:
       tags:
         - ContentResource
       parameters:

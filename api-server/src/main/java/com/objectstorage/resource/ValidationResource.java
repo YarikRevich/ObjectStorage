@@ -47,8 +47,6 @@ public class ValidationResource implements ValidationResourceApi {
             throw new ProvidersAreNotValidException();
         }
 
-        System.out.println(validationSecretsApplication);
-
         return ValidationSecretsApplicationResult.of(
                 resourceConfigurationHelper.createJwtToken(validationSecretsApplication));
     }

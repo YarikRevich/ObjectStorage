@@ -35,11 +35,12 @@ public class VendorFacade {
      * @param name given name of the bucket.
      * @return result of the check.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isBucketPresent(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -49,7 +50,9 @@ public class VendorFacade {
                         s3VendorService.getCredentialsProvider(secrets);
 
                 yield s3VendorService.isS3BucketPresent(
-                        awsCredentialsProvider, name, credentialsFieldExternal.getRegion());
+                        awsCredentialsProvider,
+                        name,
+                        credentialsFieldExternal.getRegion());
             }
             case GCS -> {
                 Credentials credentials;
@@ -72,11 +75,12 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @param name given name of the bucket.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void createBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -109,11 +113,12 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @param name given name of the bucket.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -148,14 +153,15 @@ public class VendorFacade {
      * @param fileName given name of the file to be uploaded.
      * @param inputStream given file input stream to be used for object upload.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
-     * @throws BucketObjectUploadFailureException if bucket object upload fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void uploadObjectToBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
             String fileName,
-            InputStream inputStream) throws SecretsConversionException, BucketObjectUploadFailureException {
+            InputStream inputStream)
+            throws SecretsConversionException, VendorOperationFailureException, BucketObjectUploadFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -198,13 +204,13 @@ public class VendorFacade {
      * @param fileName given name of the file to be uploaded.
      * @return result of the check.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
-     * @throws BucketObjectRetrievalFailureException if bucket object existence check fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isObjectPresentInBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
-            String fileName) throws SecretsConversionException, BucketObjectRetrievalFailureException {
+            String fileName) throws SecretsConversionException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -243,12 +249,14 @@ public class VendorFacade {
      * @return retrieved object content.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
      * @throws BucketObjectRetrievalFailureException if bucket object retrieval fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public byte[] retrieveObjectFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
-            String fileName) throws SecretsConversionException, BucketObjectRetrievalFailureException {
+            String fileName)
+            throws SecretsConversionException, BucketObjectRetrievalFailureException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -290,11 +298,14 @@ public class VendorFacade {
      * @return listed objects.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
      * @throws BucketObjectRetrievalFailureException if bucket object retrieval fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public List<ContentRetrievalProviderUnit> listAllObjectsFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String bucketName) throws SecretsConversionException, BucketObjectRetrievalFailureException {
+            String bucketName)
+            throws SecretsConversionException,
+            BucketObjectRetrievalFailureException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -336,12 +347,13 @@ public class VendorFacade {
      * @param bucketName given name of the bucket.
      * @param fileName given name of the file to be uploaded.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeObjectFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
-            String fileName) throws SecretsConversionException {
+            String fileName) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -377,11 +389,12 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @param bucketName given name of the bucket.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeAllObjectsFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String bucketName) throws SecretsConversionException {
+            String bucketName) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =

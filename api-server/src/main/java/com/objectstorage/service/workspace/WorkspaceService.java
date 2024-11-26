@@ -3,7 +3,6 @@ package com.objectstorage.service.workspace;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.exception.FileNotFoundException;
-import com.objectstorage.service.workspace.common.WorkspaceConfigurationHelper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;

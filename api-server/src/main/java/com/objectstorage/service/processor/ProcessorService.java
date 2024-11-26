@@ -7,6 +7,7 @@ import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.vendor.VendorFacade;
+import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -67,21 +68,22 @@ public class ProcessorService {
                 throw new ProcessorContentRetrievalFailureException(e.getMessage());
             }
 
-            List<ContentRetrievalProviderUnit> uploaded;
+            List<ContentRetrievalProviderUnit> uploaded = new ArrayList<>();
 
             try {
                 uploaded = vendorFacade.listAllObjectsFromBucket(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        repositoryContentLocationUnitDto.getRoot());
-            } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
-                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+                        VendorConfigurationHelper.createBucketName(
+                                repositoryContentLocationUnitDto.getRoot()));
+            } catch (SecretsConversionException | BucketObjectRetrievalFailureException |
+                     VendorOperationFailureException ignored) {
             }
 
             compounds.add(
                     ContentRetrievalCompound.of(
                             repositoryContentLocationUnitDto.getRoot(),
-                            validationSecretsUnit.getProvider().name(),
+                            validationSecretsUnit.getProvider().toString(),
                             List.of(ContentRetrievalUnits.of(pending, uploaded))));
         }
 
@@ -120,13 +122,15 @@ public class ProcessorService {
                 if (!vendorFacade.isBucketPresent(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        contentApplication.getRoot())) {
+                        VendorConfigurationHelper.createBucketName(
+                                contentApplication.getRoot()))) {
                     vendorFacade.createBucket(
                             validationSecretsUnit.getProvider(),
                             validationSecretsUnit.getCredentials().getExternal(),
-                            contentApplication.getRoot());
+                            VendorConfigurationHelper.createBucketName(
+                                    contentApplication.getRoot()));
                 }
-            } catch (SecretsConversionException e1) {
+            } catch (SecretsConversionException | VendorOperationFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
@@ -190,13 +194,15 @@ public class ProcessorService {
                 if (vendorFacade.isBucketPresent(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        repositoryContentLocationUnitDto.getRoot())) {
+                        VendorConfigurationHelper.createBucketName(
+                                repositoryContentLocationUnitDto.getRoot()))) {
                     vendorFacade.removeBucket(
                             validationSecretsUnit.getProvider(),
                             validationSecretsUnit.getCredentials().getExternal(),
-                            repositoryContentLocationUnitDto.getRoot());
+                            VendorConfigurationHelper.createBucketName(
+                                    repositoryContentLocationUnitDto.getRoot()));
                 }
-            } catch (SecretsConversionException e1) {
+            } catch (SecretsConversionException | VendorOperationFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
@@ -286,12 +292,13 @@ public class ProcessorService {
             if (!vendorFacade.isObjectPresentInBucket(
                     validationSecretsUnit.getProvider(),
                     validationSecretsUnit.getCredentials().getExternal(),
-                    repositoryContentLocationUnitDto.getRoot(),
+                    VendorConfigurationHelper.createBucketName(
+                            repositoryContentLocationUnitDto.getRoot()),
                     location)) {
                 throw new ProcessorContentDownloadFailureException(
                         new VendorObjectNotPresentException().getMessage());
             };
-        } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+        } catch (SecretsConversionException | VendorOperationFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
@@ -299,9 +306,10 @@ public class ProcessorService {
             return vendorFacade.retrieveObjectFromBucket(
                     validationSecretsUnit.getProvider(),
                     validationSecretsUnit.getCredentials().getExternal(),
-                    repositoryContentLocationUnitDto.getRoot(),
+                    VendorConfigurationHelper.createBucketName(
+                            repositoryContentLocationUnitDto.getRoot()),
                     location);
-        } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+        } catch (SecretsConversionException | BucketObjectRetrievalFailureException | VendorOperationFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
     }
@@ -374,11 +382,12 @@ public class ProcessorService {
                 if (!vendorFacade.isObjectPresentInBucket(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        repositoryContentLocationUnitDto.getRoot(),
+                        VendorConfigurationHelper.createBucketName(
+                                repositoryContentLocationUnitDto.getRoot()),
                         location)) {
                     continue;
                 }
-            } catch (SecretsConversionException | BucketObjectRetrievalFailureException e) {
+            } catch (SecretsConversionException | VendorOperationFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }
 
@@ -386,9 +395,10 @@ public class ProcessorService {
                 vendorFacade.removeObjectFromBucket(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        repositoryContentLocationUnitDto.getRoot(),
+                        VendorConfigurationHelper.createBucketName(
+                                repositoryContentLocationUnitDto.getRoot()),
                         location);
-            } catch (SecretsConversionException e) {
+            } catch (SecretsConversionException | VendorOperationFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }
         }
@@ -423,9 +433,10 @@ public class ProcessorService {
                 vendorFacade.removeAllObjectsFromBucket(
                         validationSecretsUnit.getProvider(),
                         validationSecretsUnit.getCredentials().getExternal(),
-                        repositoryContentLocationUnitDto.getRoot()
+                        VendorConfigurationHelper.createBucketName(
+                                repositoryContentLocationUnitDto.getRoot())
                 );
-            } catch (SecretsConversionException e) {
+            } catch (SecretsConversionException | VendorOperationFailureException e) {
                 throw new ProcessorContentRemovalFailureException(e.getMessage());
             }
         }

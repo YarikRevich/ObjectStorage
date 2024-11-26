@@ -36,12 +36,12 @@ public class WorkspaceFacade {
         return validationSecretsApplication.getSecrets().stream().map(element ->
             switch (element.getProvider()) {
                 case S3 -> workspaceService.createUnitKey(
-                        element.getProvider().name(),
+                        element.getProvider().toString(),
                         String.valueOf(element.getCredentials().getInternal().getId()),
                         element.getCredentials().getExternal().getFile(),
                         element.getCredentials().getExternal().getRegion());
                 case GCS -> workspaceService.createUnitKey(
-                        element.getProvider().name(),
+                        element.getProvider().toString(),
                         String.valueOf(element.getCredentials().getInternal().getId()),
                         element.getCredentials().getExternal().getFile());
             })

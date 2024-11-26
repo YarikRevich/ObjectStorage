@@ -92,8 +92,14 @@ public class TemporateRepository {
 
                 result.add(TemporateEntity.of(id, provider, secret, location, hash));
             }
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {
@@ -142,8 +148,14 @@ public class TemporateRepository {
 
                 result.add(TemporateEntity.of(id, provider, secret, location, hash));
             }
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {

@@ -60,15 +60,6 @@ public class RepositoryConfigurationHelper {
     }
 
     /**
-     * Creates new transaction savepoint name, which consists of random symbols.
-     *
-     * @return created transaction savepoint name.
-     */
-    public String createTransactionSavepointName() {
-        return RandomStringUtils.randomAlphabetic(32);
-    }
-
-    /**
      * Converts given raw provider to content provider.
      *
      * @param value given raw provider.
