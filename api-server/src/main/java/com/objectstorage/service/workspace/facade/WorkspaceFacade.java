@@ -2,18 +2,14 @@ package com.objectstorage.service.workspace.facade;
 
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
-import com.objectstorage.exception.FileNotFoundException;
-import com.objectstorage.model.CredentialsFieldsFull;
-import com.objectstorage.model.Provider;
 import com.objectstorage.model.ValidationSecretsApplication;
+import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.workspace.WorkspaceService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +19,9 @@ import java.util.stream.Collectors;
 public class WorkspaceFacade {
     @Inject
     PropertiesEntity properties;
+
+    @Inject
+    ConfigService configService;
 
     @Inject
     WorkspaceService workspaceService;
@@ -69,7 +68,7 @@ public class WorkspaceFacade {
      */
     public void addObjectFile(String workspaceUnitKey, String name, InputStream inputStream)
             throws FileCreationFailureException {
-        addFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name, inputStream);
+        workspaceService.addContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name, inputStream);
     }
 
     /**
@@ -82,52 +81,26 @@ public class WorkspaceFacade {
      */
     public void addBackupFile(String workspaceUnitKey, String name, InputStream inputStream)
             throws FileCreationFailureException {
-        addFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name, inputStream);
-    }
+        workspaceService.addContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name, inputStream);
 
-    /**
-     * Adds new file of the given type to the workspace with the given workspace unit key as the compressed input stream.
-     *
-     * @param workspaceUnitKey given user workspace unit key.
-     * @param type given content type.
-     * @param name             given content name.
-     * @param inputStream          given input.
-     * @throws FileCreationFailureException if file creation operation failed.
-     */
-    private void addFile(String workspaceUnitKey, String type, String name, InputStream inputStream)
-            throws FileCreationFailureException {
-        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
+        Integer amount;
+
+        try {
+            amount = workspaceService.getContentFilesAmount(
+                    workspaceUnitKey, properties.getWorkspaceContentBackupDirectory());
+        } catch (FilesAmountRetrievalFailureException e) {
+            throw new FileCreationFailureException(e.getMessage());
+        }
+
+        while (amount > configService.getConfig().getBackup().getMaxVersions() - 1) {
             try {
-                workspaceService.createUnitDirectory(workspaceUnitKey);
-            } catch (WorkspaceUnitDirectoryCreationFailureException e) {
+                workspaceService.removeEarliestContentFile(
+                        workspaceUnitKey, properties.getWorkspaceContentBackupDirectory());
+            } catch (FileRemovalFailureException e) {
                 throw new FileCreationFailureException(e.getMessage());
             }
-        }
 
-        String workspaceUnitDirectory;
-
-        try {
-            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-        } catch (WorkspaceUnitDirectoryNotFoundException e) {
-            throw new FileCreationFailureException(e.getMessage());
-        }
-
-        if (workspaceService.isFilePresent(workspaceUnitDirectory, type, name)) {
-            throw new FileCreationFailureException();
-        }
-
-        byte[] content;
-
-        try {
-            content = workspaceService.compressFile(inputStream);
-        } catch (InputCompressionFailureException e) {
-            throw new FileCreationFailureException(e.getMessage());
-        }
-
-        try {
-            workspaceService.createFile(workspaceUnitDirectory, type, name, content);
-        } catch (FileWriteFailureException e) {
-            throw new FileCreationFailureException(e.getMessage());
+            amount--;
         }
     }
 
@@ -140,7 +113,8 @@ public class WorkspaceFacade {
      * @throws FileExistenceCheckFailureException if file existence check failed.
      */
     public Boolean isObjectFilePresent(String workspaceUnitKey, String name) throws FileExistenceCheckFailureException {
-        return isFilePresent(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
+        return workspaceService.isContentFilePresent(
+                workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
     }
 
     /**
@@ -152,32 +126,8 @@ public class WorkspaceFacade {
      * @throws FileExistenceCheckFailureException if file existence check failed.
      */
     public Boolean isBackupFilePresent(String workspaceUnitKey, String name) throws FileExistenceCheckFailureException {
-        return isFilePresent(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
-    }
-
-    /**
-     * Checks if file with the given name and of the given type exists in the workspace with the given workspace unit key.
-     *
-     * @param workspaceUnitKey given user workspace unit key.
-     * @param type given file type.
-     * @param name given file name.
-     * @return result of the check.
-     * @throws FileExistenceCheckFailureException if file existence check failed.
-     */
-    private Boolean isFilePresent(String workspaceUnitKey, String type, String name) throws FileExistenceCheckFailureException {
-        if (workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-            String workspaceUnitDirectory;
-
-            try {
-                workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-            } catch (WorkspaceUnitDirectoryNotFoundException e) {
-                throw new FileExistenceCheckFailureException(e.getMessage());
-            }
-
-            return workspaceService.isFilePresent(workspaceUnitDirectory, type, name);
-        }
-
-        return false;
+        return workspaceService.isContentFilePresent(
+                workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
     }
 
     /**
@@ -190,7 +140,7 @@ public class WorkspaceFacade {
      * @throws FileUnitRetrievalFailureException if file unit retrieval fails.
      */
     public byte[] getObjectFile(String workspaceUnitKey, String name) throws FileUnitRetrievalFailureException {
-        return getFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
+        return workspaceService.getContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
     }
 
     /**
@@ -203,36 +153,7 @@ public class WorkspaceFacade {
      * @throws FileUnitRetrievalFailureException if file unit retrieval fails.
      */
     public byte[] getBackupFile(String workspaceUnitKey, String name) throws FileUnitRetrievalFailureException {
-        return getFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
-    }
-
-    /**
-     * Retrieves file from the workspace with the given workspace unit key as compressed byte array.
-     *
-     * @param workspaceUnitKey given user workspace unit key.
-     * @param type given file type.
-     * @param name given file name.
-     * @return retrieved file as compressed byte array.
-     * @throws FileUnitRetrievalFailureException if file unit retrieval fails.
-     */
-    private byte[] getFile(String workspaceUnitKey, String type, String name) throws FileUnitRetrievalFailureException {
-        if (!workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-            throw new FileUnitRetrievalFailureException();
-        }
-
-        String workspaceUnitDirectory;
-
-        try {
-            workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-        } catch (WorkspaceUnitDirectoryNotFoundException e) {
-            throw new FileUnitRetrievalFailureException(e.getMessage());
-        }
-
-        try {
-            return workspaceService.getFileContent(workspaceUnitDirectory, type, name);
-        } catch (FileNotFoundException e) {
-            throw new FileUnitRetrievalFailureException(e.getMessage());
-        }
+        return workspaceService.getContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
     }
 
     /**
@@ -242,7 +163,7 @@ public class WorkspaceFacade {
      * @throws FileRemovalFailureException if file removal operation failed.
      */
     public void removeObjectFile(String workspaceUnitKey, String name) throws FileRemovalFailureException {
-        removeFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
+        workspaceService.removeContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
     }
 
     /**
@@ -252,29 +173,7 @@ public class WorkspaceFacade {
      * @throws FileRemovalFailureException if file removal operation failed.
      */
     public void removeBackupFile(String workspaceUnitKey, String name) throws FileRemovalFailureException {
-        removeFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
-    }
-
-    /**
-     * Removes file with the given name and of the given type from the workspace with the help of the given workspace
-     * unit key.
-     *
-     * @param workspaceUnitKey given user workspace unit key.
-     * @param type given file type.
-     * @throws FileRemovalFailureException if file removal operation failed.
-     */
-    private void removeFile(String workspaceUnitKey, String type, String name) throws FileRemovalFailureException {
-        if (workspaceService.isUnitDirectoryExist(workspaceUnitKey)) {
-            String workspaceUnitDirectory;
-
-            try {
-                workspaceUnitDirectory = workspaceService.getUnitDirectory(workspaceUnitKey);
-            } catch (WorkspaceUnitDirectoryNotFoundException e) {
-                throw new FileRemovalFailureException(e.getMessage());
-            }
-
-            workspaceService.removeFile(workspaceUnitDirectory, type, name);
-        }
+        workspaceService.removeContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
     }
 
     /**

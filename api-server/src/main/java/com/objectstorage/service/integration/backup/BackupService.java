@@ -4,6 +4,7 @@ import com.objectstorage.converter.CronExpressionConverter;
 import com.objectstorage.exception.BackupPeriodRetrievalFailureException;
 import com.objectstorage.exception.CronExpressionException;
 import com.objectstorage.service.state.StateService;
+import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 public class BackupService {
     @Inject
     ConfigService configService;
+
+    @Inject
+    WorkspaceFacade workspaceFacade;
 
     private final ScheduledExecutorService scheduledOperationExecutorService =
             Executors.newSingleThreadScheduledExecutor();

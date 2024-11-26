@@ -53,6 +53,9 @@ public class PropertiesEntity {
     @ConfigProperty(name = "database.statement.close-delay")
     Integer databaseStatementCloseDelay;
 
+    @ConfigProperty(name = "database.transaction.savepoint.symbols.count")
+    Integer databaseTransactionSavepointSymbolsCount;
+
     @ConfigProperty(name = "config.location")
     String configLocation;
 

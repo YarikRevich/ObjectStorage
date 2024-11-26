@@ -47,7 +47,7 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        if (resourceConfigurationHelper.isRootDefinitionValid(contentApplication.getRoot())) {
+        if (!resourceConfigurationHelper.isRootDefinitionValid(contentApplication.getRoot())) {
             throw new RootIsNotValidException();
         }
 

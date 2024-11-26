@@ -31,6 +31,9 @@ backup:
   # Represents frequency of backup operation for selected provider.
   frequency: "0 */5 * * * ?"
 
+  # Represents the highest amount of downloaded backup content versions per each workspace.
+  max-versions: 5
+
 # Represents section used for ObjectStorage API Server diagnostics configuration.
 diagnostics:
   # Enables diagnostics functionality.

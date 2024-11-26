@@ -1,6 +1,7 @@
 package com.objectstorage.resource;
 
 import com.objectstorage.exception.ProvidersAreNotValidException;
+import com.objectstorage.exception.SecretsAreEmptyException;
 import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
 import com.objectstorage.api.ValidationResourceApi;
@@ -29,6 +30,10 @@ public class ValidationResource implements ValidationResourceApi {
     @Override
     @SneakyThrows
     public ValidationSecretsApplicationResult v1SecretsAcquirePost(ValidationSecretsApplication validationSecretsApplication) {
+        if (resourceConfigurationHelper.areSecretsEmpty(validationSecretsApplication.getSecrets())) {
+            throw new SecretsAreEmptyException();
+        }
+
         if (resourceConfigurationHelper.areProvidersDuplicated(
                 validationSecretsApplication
                         .getSecrets()
@@ -41,6 +46,8 @@ public class ValidationResource implements ValidationResourceApi {
         if (!resourceConfigurationHelper.areSecretsValid(validationSecretsApplication)) {
             throw new ProvidersAreNotValidException();
         }
+
+        System.out.println(validationSecretsApplication);
 
         return ValidationSecretsApplicationResult.of(
                 resourceConfigurationHelper.createJwtToken(validationSecretsApplication));

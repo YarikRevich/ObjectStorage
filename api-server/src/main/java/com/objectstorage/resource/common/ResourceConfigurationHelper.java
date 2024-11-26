@@ -112,13 +112,23 @@ public class ResourceConfigurationHelper {
     }
 
     /**
+     * Checks if the given validation secrets units are empty.
+     *
+     * @param validationSecretsUnits given validation secrets units.
+     * @return result of the check.
+     */
+    public Boolean areSecretsEmpty(List<ValidationSecretsUnit> validationSecretsUnits) {
+        return validationSecretsUnits.isEmpty();
+    }
+
+    /**
      * Checks if the given providers have duplicates.
      *
      * @param providers given providers to be checked.
      * @return result of the check.
      */
     public Boolean areProvidersDuplicated(List<Provider> providers) {
-        return providers.stream().distinct().count() == providers.size();
+        return providers.stream().distinct().count() != providers.size();
     }
 
     /**
@@ -139,7 +149,8 @@ public class ResourceConfigurationHelper {
      * @return retrieved matched provider configuration.
      * @throws ProviderIsNotConfiguredException if given provider is not configured.
      */
-    public ValidationSecretsUnit getConfiguredProvider(Provider provider, ValidationSecretsApplication validationSecretsApplication)
+    public ValidationSecretsUnit getConfiguredProvider(
+            Provider provider, ValidationSecretsApplication validationSecretsApplication)
             throws ProviderIsNotConfiguredException {
         List<ValidationSecretsUnit> validationSecretsUnits = validationSecretsApplication.getSecrets().stream().filter(
             element -> Objects.equals(element.getProvider(), provider)).toList();

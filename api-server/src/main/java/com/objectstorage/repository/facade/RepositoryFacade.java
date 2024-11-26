@@ -26,6 +26,9 @@ import static java.util.stream.Collectors.groupingBy;
 @ApplicationScoped
 public class RepositoryFacade {
     @Inject
+    RepositoryConfigurationHelper repositoryConfigurationHelper;
+
+    @Inject
     ContentRepository contentRepository;
 
     @Inject
@@ -54,7 +57,7 @@ public class RepositoryFacade {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        String signature = RepositoryConfigurationHelper.getExternalCredentials(
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
                 validationSecretsUnit.getProvider(),
                 validationSecretsUnit.getCredentials().getExternal());
 
@@ -97,7 +100,7 @@ public class RepositoryFacade {
             throw new ContentLocationsRetrievalFailureException(e.getMessage());
         }
 
-        String signature = RepositoryConfigurationHelper.getExternalCredentials(
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
                 validationSecretsUnit.getProvider(),
                 validationSecretsUnit.getCredentials().getExternal());
 
@@ -149,7 +152,7 @@ public class RepositoryFacade {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());
             }
 
-            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+            String signature = repositoryConfigurationHelper.getExternalCredentials(
                     validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
 
             try {
@@ -194,7 +197,7 @@ public class RepositoryFacade {
      * @throws RepositoryContentDestructionFailureException if repository content destruction failed.
      */
     public void withdraw(ValidationSecretsUnit validationSecretsUnit) throws RepositoryContentDestructionFailureException {
-            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+            String signature = repositoryConfigurationHelper.getExternalCredentials(
                     validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
             ProviderEntity provider;
 
@@ -245,7 +248,7 @@ public class RepositoryFacade {
                 throw new RepositoryContentApplicationFailureException(e.getMessage());
             }
 
-            String signature = RepositoryConfigurationHelper.getExternalCredentials(
+            String signature = repositoryConfigurationHelper.getExternalCredentials(
                     validationSecretsUnit.getProvider(), validationSecretsUnit.getCredentials().getExternal());
 
             try {

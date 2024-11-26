@@ -107,6 +107,10 @@ public class ConfigEntity {
         @NotNull
         @JsonProperty("frequency")
         public String frequency;
+
+        @NotNull
+        @JsonProperty("max-versions")
+        public Integer maxVersions;
     }
 
     @JsonProperty("backup")

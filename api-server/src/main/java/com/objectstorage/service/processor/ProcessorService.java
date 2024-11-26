@@ -3,6 +3,7 @@ package com.objectstorage.service.processor;
 import com.objectstorage.dto.RepositoryContentUnitDto;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
+import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.vendor.VendorFacade;
@@ -25,6 +26,9 @@ public class ProcessorService {
 
     @Inject
     TelemetryService telemetryService;
+
+    @Inject
+    RepositoryExecutor repositoryExecutor;
 
     @Inject
     RepositoryFacade repositoryFacade;
@@ -93,7 +97,25 @@ public class ProcessorService {
      */
     public void apply(ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentApplicationFailureException {
+        try {
+            repositoryExecutor.beginTransaction();
+        } catch (TransactionInitializationFailureException e) {
+            throw new ProcessorContentApplicationFailureException(e.getMessage());
+        }
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
+            try {
+                repositoryFacade.apply(contentApplication, validationSecretsUnit);
+            } catch (RepositoryContentApplicationFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentApplicationFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentApplicationFailureException(e1.getMessage());
+            }
+
             try {
                 if (!vendorFacade.isBucketPresent(
                         validationSecretsUnit.getProvider(),
@@ -104,15 +126,21 @@ public class ProcessorService {
                             validationSecretsUnit.getCredentials().getExternal(),
                             contentApplication.getRoot());
                 }
-            } catch (SecretsConversionException e) {
-                throw new ProcessorContentApplicationFailureException(e.getMessage());
-            }
+            } catch (SecretsConversionException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentApplicationFailureException(e2.getMessage());
+                }
 
-            try {
-                repositoryFacade.apply(contentApplication, validationSecretsUnit);
-            } catch (RepositoryContentApplicationFailureException e) {
-                throw new ProcessorContentApplicationFailureException(e.getMessage());
+                throw new ProcessorContentApplicationFailureException(e1.getMessage());
             }
+        }
+
+        try {
+            repositoryExecutor.commitTransaction();
+        } catch (TransactionCommitFailureException e) {
+            throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
     }
 
@@ -121,17 +149,41 @@ public class ProcessorService {
      * buckets, if needed.
      *
      * @param validationSecretsApplication given validation secrets application.
-     * @throws ProcessorContentApplicationFailureException if content withdrawal operation fails.
+     * @throws ProcessorContentWithdrawalFailureException if content withdrawal operation fails.
      */
     public void withdraw(ValidationSecretsApplication validationSecretsApplication)
-            throws ProcessorContentApplicationFailureException {
+            throws ProcessorContentWithdrawalFailureException {
+        try {
+            repositoryExecutor.beginTransaction();
+        } catch (TransactionInitializationFailureException e) {
+            throw new ProcessorContentWithdrawalFailureException(e.getMessage());
+        }
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
             try {
                 repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentLocationsRetrievalFailureException e) {
-                throw new ProcessorContentApplicationFailureException(e.getMessage());
+            } catch (ContentLocationsRetrievalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
+            }
+
+            try {
+                repositoryFacade.withdraw(validationSecretsUnit);
+            } catch (RepositoryContentDestructionFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
 
             try {
@@ -144,15 +196,21 @@ public class ProcessorService {
                             validationSecretsUnit.getCredentials().getExternal(),
                             repositoryContentLocationUnitDto.getRoot());
                 }
-            } catch (SecretsConversionException e) {
-                throw new ProcessorContentApplicationFailureException(e.getMessage());
-            }
+            } catch (SecretsConversionException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
+                }
 
-            try {
-                repositoryFacade.withdraw(validationSecretsUnit);
-            } catch (RepositoryContentDestructionFailureException e) {
-                throw new ProcessorContentApplicationFailureException(e.getMessage());
+                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
+        }
+
+        try {
+            repositoryExecutor.commitTransaction();
+        } catch (TransactionCommitFailureException e) {
+            throw new ProcessorContentWithdrawalFailureException(e.getMessage());
         }
     }
 
