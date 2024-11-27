@@ -2,6 +2,7 @@ package com.objectstorage.repository.facade;
 
 import com.objectstorage.dto.RepositoryContentUnitDto;
 import com.objectstorage.dto.RepositoryTemporateUnitDto;
+import com.objectstorage.dto.TemporateContentDto;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
 import com.objectstorage.entity.repository.TemporateEntity;
@@ -81,6 +82,72 @@ public class RepositoryFacade {
 
         return temporateContent.stream().map(
                 element -> ContentRetrievalProviderUnit.of(element.getLocation())).toList();
+    }
+
+    /**
+     * Checks if there are any available temporate content from temporate repository.
+     *
+     * @return result of the check.
+     * @throws TemporateContentRetrievalFailureException if temporate content amount retrieval fails.
+     */
+    public Boolean isTemporateContentPresent() throws TemporateContentRetrievalFailureException {
+        try {
+            return temporateRepository.count() > 0;
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the earliest content from temporate repository.
+     *
+     * @return retrieved earliest temporate content.
+     * @throws TemporateContentRetrievalFailureException if the earliest temporate content retrieval fails.
+     */
+    public TemporateContentDto retrieveEarliestTemporateContent() throws TemporateContentRetrievalFailureException {
+        TemporateEntity temporateContent;
+
+        try {
+            temporateContent = temporateRepository.findEarliest();
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        }
+
+        if (Objects.isNull(temporateContent)) {
+            throw new TemporateContentRetrievalFailureException();
+        }
+
+        ProviderEntity rawProvider;
+
+        try {
+            rawProvider = providerRepository.findById(temporateContent.getProvider());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        }
+
+        Provider provider =
+                repositoryConfigurationHelper.convertRawProviderToContentProvider(rawProvider.getName());
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findById(temporateContent.getId());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRetrievalFailureException(e.getMessage());
+        }
+
+        CredentialsFieldsFull secrets =
+                repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
+                        provider,
+                        secret.getSession(),
+                        secret.getCredentials());
+
+        return TemporateContentDto.of(
+                provider,
+                secrets,
+                temporateContent.getLocation(),
+                temporateContent.getHash(),
+                temporateContent.getCreatedAt());
     }
 
     /**

@@ -1,8 +1,11 @@
 package com.objectstorage.service.integration.temporatestorage;
 
 import com.objectstorage.converter.CronExpressionConverter;
+import com.objectstorage.dto.TemporateContentDto;
 import com.objectstorage.exception.CronExpressionException;
+import com.objectstorage.exception.TemporateContentRetrievalFailureException;
 import com.objectstorage.exception.TemporateStoragePeriodRetrievalFailureException;
+import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.state.StateService;
@@ -14,6 +17,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 @Startup(value = 800)
 @ApplicationScoped
 public class TemporateStorageService {
+    private static final Logger logger = LogManager.getLogger(TemporateStorageService.class);
+
     @Inject
     ConfigService configService;
 
@@ -62,14 +69,39 @@ public class TemporateStorageService {
         scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
             StateService.getTemporateStorageProcessorGuard().lock();
 
+            try {
+                if (!repositoryFacade.isTemporateContentPresent()) {
+                    StateService.getTemporateStorageProcessorGuard().unlock();
 
+                    return;
+                }
+            } catch (TemporateContentRetrievalFailureException e) {
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.fatal(e.getMessage());
+
+                throw new RuntimeException(e);
+            }
+
+            TemporateContentDto temporateContentDto;
+
+            try {
+                temporateContentDto = repositoryFacade.retrieveEarliestTemporateContent();
+            } catch (TemporateContentRetrievalFailureException e) {
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.fatal(e.getMessage());
+
+                throw new RuntimeException(e);
+            }
+
+
+            System.out.println(temporateContentDto.getHash());
 
             StateService.getTemporateStorageProcessorGuard().unlock();
         }, 0, period, TimeUnit.MILLISECONDS);
 
-        // TODO: make sure bucket is created when application is applied and removed when application is withdrawn.
-        // TODO: run task with some delay
-        // TODO: read temporate entities from the db(would be efficient?)
+        // TODO: check if bucket exists before upload.
         // TODO: perform cleanup of non existing files.
     }
 

@@ -60,26 +60,65 @@ public class TemporateRepository {
     }
 
     /**
-     * Retrieves all the persisted temporate entities.
+     * Retrieves amount of temporate content entities.
      *
-     * @return retrieved temporate entities.
+     * @return retrieved amount of temporate content entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
-    public List<TemporateEntity> findAll() throws RepositoryOperationFailureException {
+    public Integer count() throws RepositoryOperationFailureException {
+        ResultSet resultSet;
+
+        try {
+            resultSet =
+                    repositoryExecutor.performQueryWithResult(
+                            String.format("SELECT COUNT(1) as 'result' FROM %s", properties.getDatabaseTemporateTableName()));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        Integer count;
+
+        try {
+            count = resultSet.getInt("result");
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        return count;
+    }
+
+    /**
+     * Retrieves the earliest temporate content entity.
+     *
+     * @return retrieved temporate entity.
+     * @throws RepositoryOperationFailureException if repository operation fails.
+     */
+    public TemporateEntity findEarliest() throws RepositoryOperationFailureException {
         ResultSet resultSet;
 
         try {
             resultSet =
                     repositoryExecutor.performQueryWithResult(
                             String.format(
-                                    "SELECT t.id, t.provider, t.secret, t.location, t.hash FROM %s as t",
+                                    "SELECT t.id, t.provider, t.secret, t.location, t.hash, t.created_at FROM %s as t ORDER BY t.created_at DESC LIMIT 1",
                                     properties.getDatabaseTemporateTableName()));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
-
-        List<TemporateEntity> result = new ArrayList<>();
 
         Integer id;
         Integer provider;
@@ -89,12 +128,67 @@ public class TemporateRepository {
         Long createdAt;
 
         try {
+            id = resultSet.getInt("id");
+            provider = resultSet.getInt("provider");
+            secret = resultSet.getInt("secret");
+            location = resultSet.getString("location");
+            hash = resultSet.getString("hash");
+            createdAt = resultSet.getLong("created_at");
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+    }
+
+    /**
+     * Retrieves all the persisted temporate entities with the given hash.
+     *
+     * @return retrieved temporate entities.
+     * @throws RepositoryOperationFailureException if repository operation fails.
+     */
+    public List<TemporateEntity> findByHash(String hash) throws
+            RepositoryOperationFailureException {
+        ResultSet resultSet;
+
+        try {
+            resultSet =
+                    repositoryExecutor.performQueryWithResult(
+                            String.format(
+                                    "SELECT t.id, t.location, t.provider, t.secret, t.created_at FROM %s as t WHERE t.hash = '%s'",
+                                    properties.getDatabaseTemporateTableName(),
+                                    hash));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        List<TemporateEntity> result = new ArrayList<>();
+
+        Integer id;
+        String location;
+        Integer provider;
+        Integer secret;
+        Long createdAt;
+
+        try {
             while (resultSet.next()) {
                 id = resultSet.getInt("id");
+                location = resultSet.getString("location");
                 provider = resultSet.getInt("provider");
                 secret = resultSet.getInt("secret");
-                location = resultSet.getString("location");
-                hash = resultSet.getString("hash");
                 createdAt = resultSet.getLong("created_at");
 
                 result.add(TemporateEntity.of(id, provider, secret, location, hash, createdAt));
@@ -132,7 +226,7 @@ public class TemporateRepository {
             resultSet =
                     repositoryExecutor.performQueryWithResult(
                             String.format(
-                                    "SELECT t.id, t.location, t.hash FROM %s as t WHERE t.provider = %d AND t.secret = %d",
+                                    "SELECT t.id, t.location, t.hash, t.created_at FROM %s as t WHERE t.provider = %d AND t.secret = %d",
                                     properties.getDatabaseTemporateTableName(),
                                     provider,
                                     secret));
