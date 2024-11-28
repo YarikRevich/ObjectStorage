@@ -276,9 +276,13 @@ components:
     ContentRetrievalProviderUnit:
       required:
         - location
+        - created_at
       properties:
         location:
           type: string
+        created_at:
+          type: integer
+          format: int64
     ContentApplication:
       required:
         - root

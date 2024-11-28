@@ -172,6 +172,11 @@ public class S3VendorService {
                 put("objectstorage", "true");
             }
         });
+        try {
+            metadata.setContentLength(inputStream.available());
+        } catch (IOException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
 
         PutObjectRequest request = new PutObjectRequest(bucketName, fileName, inputStream, metadata);
 

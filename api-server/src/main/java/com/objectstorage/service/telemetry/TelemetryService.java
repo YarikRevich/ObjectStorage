@@ -67,8 +67,6 @@ public class TelemetryService {
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
-        System.out.println(configService.getConfig().getTemporateStorage().getFrequency());
-
         telemetryBinding.getTemporateStorageFilesAmount().set(10);
     }
 

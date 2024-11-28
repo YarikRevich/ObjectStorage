@@ -12,6 +12,7 @@ import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.state.StateService;
 import com.objectstorage.service.vendor.VendorFacade;
+import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
@@ -156,7 +157,8 @@ public class TemporateStorageService {
                     vendorFacade.uploadObjectToBucket(
                             contentCompoundUnit.getProvider(),
                             contentCompoundUnit.getCredentialsFieldsFull().getExternal(),
-                            contentCompoundUnit.getRepositoryContentUnitDto().getRoot(),
+                            VendorConfigurationHelper.createBucketName(
+                                    contentCompoundUnit.getRepositoryContentUnitDto().getRoot()),
                             temporateContentDto.getLocation(),
                             new ByteArrayInputStream(content));
                 } catch (

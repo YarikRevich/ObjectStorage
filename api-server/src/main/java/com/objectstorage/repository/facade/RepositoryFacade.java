@@ -3,6 +3,7 @@ package com.objectstorage.repository.facade;
 import com.objectstorage.dto.ContentCompoundUnitDto;
 import com.objectstorage.dto.RepositoryContentUnitDto;
 import com.objectstorage.dto.EarliestTemporateContentDto;
+import com.objectstorage.dto.TemporateContentUnitDto;
 import com.objectstorage.entity.repository.ContentEntity;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
@@ -82,7 +83,8 @@ public class RepositoryFacade {
         }
 
         return temporateContent.stream().map(
-                element -> ContentRetrievalProviderUnit.of(element.getLocation())).toList();
+                element -> ContentRetrievalProviderUnit.of(
+                        element.getLocation(), element.getCreatedAt())).toList();
     }
 
     /**
@@ -143,7 +145,7 @@ public class RepositoryFacade {
             SecretEntity secret;
 
             try {
-                secret = secretRepository.findById(temporate.getId());
+                secret = secretRepository.findById(temporate.getSecret());
             } catch (RepositoryOperationFailureException e) {
                 throw new TemporateContentRetrievalFailureException(e.getMessage());
             }
@@ -175,6 +177,64 @@ public class RepositoryFacade {
                 temporateEntity.getLocation(),
                 temporateEntity.getHash(),
                 temporateEntity.getCreatedAt());
+    }
+
+    /**
+     * Retrieves temporate content from the temporate repository with the given location, provider and secret.
+     *
+     * @param location given temporate content location.
+     * @param validationSecretsUnit given validation secrets unit.
+     * @return retrieved temporate content.
+     */
+    public TemporateContentUnitDto retrieveTemporateContentByLocationProviderAndSecret(String location, ValidationSecretsUnit validationSecretsUnit)
+            throws TemporateContentRemovalFailureException {
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
+
+        try {
+            if (!secretRepository.isPresentBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                throw new TemporateContentRemovalFailureException(
+                        new RepositoryContentApplicationNotExistsException().getMessage());
+            }
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        TemporateEntity temporate;
+
+        try {
+            temporate = temporateRepository
+                    .findEarliestByLocationProviderAndSecret(location, provider.getId(), secret.getId());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        return TemporateContentUnitDto.of(
+                temporate.getProvider(),
+                temporate.getSecret(),
+                temporate.getLocation(),
+                temporate.getHash(),
+                temporate.getCreatedAt());
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.objectstorage.service.processor;
 
 import com.objectstorage.dto.RepositoryContentUnitDto;
+import com.objectstorage.dto.TemporateContentUnitDto;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.executor.RepositoryExecutor;
@@ -296,9 +297,19 @@ public class ProcessorService {
 
         String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
+        TemporateContentUnitDto temporateContentUnit;
+
         try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
-                return workspaceFacade.getObjectFile(workspaceUnitKey, location);
+            temporateContentUnit =
+                    repositoryFacade.retrieveTemporateContentByLocationProviderAndSecret(
+                            location, validationSecretsUnit);
+        } catch (TemporateContentRemovalFailureException e) {
+            throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
+
+        try {
+            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                return workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
             }
         } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
@@ -453,20 +464,36 @@ public class ProcessorService {
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
-        }
 
-        try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
-                workspaceFacade.removeObjectFile(workspaceUnitKey, location);
-            }
-        } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+            TemporateContentUnitDto temporateContentUnit;
+
             try {
-                repositoryExecutor.rollbackTransaction();
-            } catch (TransactionRollbackFailureException e2) {
-                throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                temporateContentUnit =
+                        repositoryFacade.retrieveTemporateContentByLocationProviderAndSecret(
+                                location, validationSecretsUnit);
+            } catch (TemporateContentRemovalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
 
-            throw new ProcessorContentRemovalFailureException(e1.getMessage());
+            try {
+                if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                    workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+                }
+            } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
+            }
         }
 
         try {
