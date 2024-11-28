@@ -71,24 +71,14 @@ public class TelemetryService {
     }
 
     /**
-     * Increases current amount of files in ObjectStorage Temporate Storage.
+     * Sets current amount of files in ObjectStorage Temporate Storage.
+     *
+     * @param value given value.
      */
-    public void increaseTemporateStorageFilesAmount() {
+    public void setTemporateStorageFilesAmount(Integer value) {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             temporateStorageFilesAmountQueue.add(
-                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
-                            telemetryBinding.getTemporateStorageFilesAmount().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases current amount of files in ObjectStorage Temporate Storage.
-     */
-    public void decreaseTemporateStorageFilesAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            temporateStorageFilesAmountQueue.add(
-                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
-                            telemetryBinding.getTemporateStorageFilesAmount().get() - 1));
+                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(value));
         }
     }
 

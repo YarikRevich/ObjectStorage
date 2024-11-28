@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides high-level access to ObjectStorage processor operations.
@@ -307,12 +308,14 @@ public class ProcessorService {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
-        try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
-                return workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+        if (Objects.nonNull(temporateContentUnit)) {
+            try {
+                if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                    return workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+                }
+            } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
+                throw new ProcessorContentDownloadFailureException(e.getMessage());
             }
-        } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
-            throw new ProcessorContentDownloadFailureException(e.getMessage());
         }
 
         RepositoryContentUnitDto repositoryContentLocationUnitDto;
@@ -481,18 +484,20 @@ public class ProcessorService {
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
 
-            try {
-                if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
-                    workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
-                }
-            } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+            if (Objects.nonNull(temporateContentUnit)) {
                 try {
-                    repositoryExecutor.rollbackTransaction();
-                } catch (TransactionRollbackFailureException e2) {
-                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
-                }
+                    if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                        workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+                    }
+                } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+                    try {
+                        repositoryExecutor.rollbackTransaction();
+                    } catch (TransactionRollbackFailureException e2) {
+                        throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                    }
 
-                throw new ProcessorContentRemovalFailureException(e1.getMessage());
+                    throw new ProcessorContentRemovalFailureException(e1.getMessage());
+                }
             }
         }
 

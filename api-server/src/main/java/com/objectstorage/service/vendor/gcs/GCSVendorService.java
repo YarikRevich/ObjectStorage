@@ -8,6 +8,7 @@ import com.google.cloud.resourcemanager.ResourceManager;
 import com.google.cloud.resourcemanager.ResourceManagerOptions;
 import com.google.cloud.resourcemanager.Project;
 import com.google.cloud.storage.*;
+import com.objectstorage.dto.VendorObjectListingDto;
 import com.objectstorage.exception.GCPCredentialsInitializationFailureException;
 import com.objectstorage.exception.GCSBucketObjectUploadFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -173,7 +174,7 @@ public class GCSVendorService {
      * @param bucketName given name of the GCS bucket.
      * @return listed objects.
      */
-    public List<String> listObjectsFromGCSBucket(
+    public List<VendorObjectListingDto> listObjectsFromGCSBucket(
             Credentials credentials,
             String bucketName) {
         Storage storage = StorageOptions.newBuilder()
@@ -184,7 +185,9 @@ public class GCSVendorService {
         Page<Blob> blobs = storage.list(bucketName);
 
         return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
-                .map(element -> element.getBlobId().getName())
+                .map(element -> VendorObjectListingDto.of(
+                        element.getBlobId().getName(),
+                        element.getUpdateTimeOffsetDateTime().toEpochSecond()))
                 .toList();
     }
 

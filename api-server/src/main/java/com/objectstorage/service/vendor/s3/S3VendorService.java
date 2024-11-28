@@ -12,6 +12,7 @@ import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceExcepti
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.waiters.WaiterParameters;
 import com.objectstorage.dto.AWSSecretsDto;
+import com.objectstorage.dto.VendorObjectListingDto;
 import com.objectstorage.exception.S3BucketObjectRetrievalFailureException;
 import com.objectstorage.exception.VendorOperationFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -271,7 +272,7 @@ public class S3VendorService {
      * @return listed objects.
      * @throws VendorOperationFailureException if vendor operation fails.
      */
-    public List<String> listObjectsFromS3Bucket(
+    public List<VendorObjectListingDto> listObjectsFromS3Bucket(
             AWSCredentialsProvider awsCredentialsProvider,
             String bucketName,
             String region) throws VendorOperationFailureException {
@@ -285,7 +286,8 @@ public class S3VendorService {
             return simpleStorage
                     .listObjects(bucketName)
                     .getObjectSummaries()
-                    .stream().map(S3ObjectSummary::getKey)
+                    .stream().map(element -> VendorObjectListingDto.of(
+                            element.getKey(), element.getLastModified().getTime()))
                     .toList();
         } catch (Exception e) {
             throw new VendorOperationFailureException(e.getMessage());

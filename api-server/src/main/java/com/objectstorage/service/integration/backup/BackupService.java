@@ -53,14 +53,6 @@ public class BackupService {
             scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
                 StateService.getBackupProcessorGuard().lock();
 
-//                vendorFacade.listAllObjectsFromBucket(
-//
-//                );
-
-//                vendorFacade.listAllObjectsFromBucket().get(0).
-
-//                workspaceFacade.add
-
                 StateService.getBackupProcessorGuard().unlock();
             }, 0, period, TimeUnit.MILLISECONDS);
         }

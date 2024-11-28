@@ -12,6 +12,7 @@ import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.*;
 import com.objectstorage.repository.common.RepositoryConfigurationHelper;
+import com.objectstorage.service.telemetry.TelemetryService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -43,6 +44,9 @@ public class RepositoryFacade {
 
     @Inject
     SecretRepository secretRepository;
+
+    @Inject
+    TelemetryService telemetryService;
 
     /**
      * Retrieves filtered content from temporate repository.
@@ -94,11 +98,17 @@ public class RepositoryFacade {
      * @throws TemporateContentRetrievalFailureException if temporate content amount retrieval fails.
      */
     public Boolean isTemporateContentPresent() throws TemporateContentRetrievalFailureException {
+        Integer amount;
+
         try {
-            return temporateRepository.count() > 0;
+            amount = temporateRepository.count();
         } catch (RepositoryOperationFailureException e) {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
+
+        telemetryService.setTemporateStorageFilesAmount(amount);
+
+        return amount > 0;
     }
 
     /**
@@ -225,8 +235,8 @@ public class RepositoryFacade {
         try {
             temporate = temporateRepository
                     .findEarliestByLocationProviderAndSecret(location, provider.getId(), secret.getId());
-        } catch (RepositoryOperationFailureException e) {
-            throw new TemporateContentRemovalFailureException(e.getMessage());
+        } catch (RepositoryOperationFailureException ignored) {
+            return null;
         }
 
         return TemporateContentUnitDto.of(
