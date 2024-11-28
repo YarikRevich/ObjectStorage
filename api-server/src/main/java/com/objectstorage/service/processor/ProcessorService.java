@@ -393,7 +393,7 @@ public class ProcessorService {
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             try {
-                repositoryFacade.removeTemporateContentByLocation(location, validationSecretsUnit);
+                repositoryFacade.removeTemporateContentByLocationProviderAndSecret(location, validationSecretsUnit);
             } catch (TemporateContentRemovalFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();

@@ -2,24 +2,20 @@ package com.objectstorage.dto;
 
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.Provider;
+import com.objectstorage.model.ValidationSecretsApplication;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Represents dto used to temporate content.
+ * Represents dto used to represent the earliest temporate content.
  */
 @Getter
 @AllArgsConstructor(staticName = "of")
-public class TemporateContentDto {
+public class EarliestTemporateContentDto {
     /**
      * Represents target provider.
      */
-    private Provider provider;
-
-    /**
-     * Represents configured credentials.
-     */
-    private CredentialsFieldsFull secrets;
+    private ValidationSecretsApplication validationSecretsApplication;
 
     /**
      * Represents file location.

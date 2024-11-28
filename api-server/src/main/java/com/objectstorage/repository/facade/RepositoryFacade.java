@@ -1,8 +1,7 @@
 package com.objectstorage.repository.facade;
 
 import com.objectstorage.dto.RepositoryContentUnitDto;
-import com.objectstorage.dto.RepositoryTemporateUnitDto;
-import com.objectstorage.dto.TemporateContentDto;
+import com.objectstorage.dto.EarliestTemporateContentDto;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
 import com.objectstorage.entity.repository.TemporateEntity;
@@ -104,50 +103,63 @@ public class RepositoryFacade {
      * @return retrieved earliest temporate content.
      * @throws TemporateContentRetrievalFailureException if the earliest temporate content retrieval fails.
      */
-    public TemporateContentDto retrieveEarliestTemporateContent() throws TemporateContentRetrievalFailureException {
-        TemporateEntity temporateContent;
+    public EarliestTemporateContentDto retrieveEarliestTemporateContent() throws TemporateContentRetrievalFailureException {
+        TemporateEntity temporateEntity;
 
         try {
-            temporateContent = temporateRepository.findEarliest();
+            temporateEntity = temporateRepository.findEarliest();
         } catch (RepositoryOperationFailureException e) {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        if (Objects.isNull(temporateContent)) {
+        if (Objects.isNull(temporateEntity)) {
             throw new TemporateContentRetrievalFailureException();
         }
 
-        ProviderEntity rawProvider;
+        List<TemporateEntity> temporateEntities;
 
         try {
-            rawProvider = providerRepository.findById(temporateContent.getProvider());
+            temporateEntities = temporateRepository.findByHash(temporateEntity.getHash());
         } catch (RepositoryOperationFailureException e) {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        Provider provider =
-                repositoryConfigurationHelper.convertRawProviderToContentProvider(rawProvider.getName());
+        List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
 
-        SecretEntity secret;
+        for (TemporateEntity temporate : temporateEntities) {
+            ProviderEntity rawProvider;
 
-        try {
-            secret = secretRepository.findById(temporateContent.getId());
-        } catch (RepositoryOperationFailureException e) {
-            throw new TemporateContentRetrievalFailureException(e.getMessage());
+            try {
+                rawProvider = providerRepository.findById(temporate.getProvider());
+            } catch (RepositoryOperationFailureException e) {
+                throw new TemporateContentRetrievalFailureException(e.getMessage());
+            }
+
+            Provider provider =
+                    repositoryConfigurationHelper.convertRawProviderToContentProvider(rawProvider.getName());
+
+            SecretEntity secret;
+
+            try {
+                secret = secretRepository.findById(temporate.getId());
+            } catch (RepositoryOperationFailureException e) {
+                throw new TemporateContentRetrievalFailureException(e.getMessage());
+            }
+
+            CredentialsFieldsFull secrets =
+                    repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
+                            provider,
+                            secret.getSession(),
+                            secret.getCredentials());
+
+            validationSecretsUnits.add(ValidationSecretsUnit.of(provider, secrets));
         }
 
-        CredentialsFieldsFull secrets =
-                repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
-                        provider,
-                        secret.getSession(),
-                        secret.getCredentials());
-
-        return TemporateContentDto.of(
-                provider,
-                secrets,
-                temporateContent.getLocation(),
-                temporateContent.getHash(),
-                temporateContent.getCreatedAt());
+        return EarliestTemporateContentDto.of(
+                ValidationSecretsApplication.of(validationSecretsUnits),
+                temporateEntity.getLocation(),
+                temporateEntity.getHash(),
+                temporateEntity.getCreatedAt());
     }
 
     /**
@@ -203,12 +215,27 @@ public class RepositoryFacade {
     }
 
     /**
+     * Removes temporate content from the temporate repository with the given hash.
+     *
+     * @param hash given temporate content hash.
+     * @throws TemporateContentRemovalFailureException if temporate content removal fails.
+     */
+    public void removeTemporateContentByHash(String hash)
+            throws TemporateContentRemovalFailureException {
+        try {
+            temporateRepository.deleteByHash(hash);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+    }
+
+    /**
      * Removes temporate content from the temporate repository with the given location, provider and secret.
      *
      * @param location given temporate content location.
      * @param validationSecretsUnit given validation secrets unit.
      */
-    public void removeTemporateContentByLocation(String location, ValidationSecretsUnit validationSecretsUnit)
+    public void removeTemporateContentByLocationProviderAndSecret(String location, ValidationSecretsUnit validationSecretsUnit)
             throws TemporateContentRemovalFailureException {
         ProviderEntity provider;
 
@@ -252,6 +279,7 @@ public class RepositoryFacade {
      * Removes temporate content from the temporate repository with the given provider and secret.
      *
      * @param validationSecretsUnit given validation secrets unit.
+     * @throws TemporateContentRemovalFailureException if temporate content removal fails.
      */
     public void removeTemporateContentByProviderAndSecret(ValidationSecretsUnit validationSecretsUnit)
             throws TemporateContentRemovalFailureException {
