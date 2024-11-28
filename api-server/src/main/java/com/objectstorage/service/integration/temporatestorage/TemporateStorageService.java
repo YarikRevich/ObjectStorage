@@ -95,7 +95,7 @@ public class TemporateStorageService {
 
                 logger.error(e1.getMessage());
 
-                throw new RuntimeException(e1);
+                return;
             }
 
             EarliestTemporateContentDto temporateContentDto;
@@ -109,7 +109,7 @@ public class TemporateStorageService {
 
                 logger.error(e.getMessage());
 
-                throw new RuntimeException(e);
+                return;
             }
 
             try {
@@ -121,7 +121,7 @@ public class TemporateStorageService {
 
                 logger.error(e.getMessage());
 
-                throw new RuntimeException(e);
+                return;
             }
 
             try {
@@ -136,14 +136,14 @@ public class TemporateStorageService {
 
                     logger.error(e2.getMessage());
 
-                    throw new RuntimeException(e2);
+                    return;
                 }
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
                 logger.error(e1.getMessage());
 
-                throw new RuntimeException(e1);
+                return;
             }
 
             ValidationSecretsApplication validationSecretsApplication =
@@ -166,14 +166,14 @@ public class TemporateStorageService {
 
                     logger.error(e2.getMessage());
 
-                    throw new RuntimeException(e2);
+                    return;
                 }
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
                 logger.error(e1.getMessage());
 
-                throw new RuntimeException(e1);
+                return;
             }
 
             for (ContentCompoundUnitDto contentCompoundUnit : temporateContentDto.getContentCompoundUnits()) {
@@ -198,7 +198,7 @@ public class TemporateStorageService {
 
                         logger.error(e2.getMessage());
 
-                        throw new RuntimeException(e2);
+                        return;
                     }
 
                     StateService.getTemporateStorageProcessorGuard().unlock();
@@ -221,12 +221,14 @@ public class TemporateStorageService {
 
                     logger.error(e2.getMessage());
 
-                    throw new RuntimeException(e2);
+                    return;
                 }
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
                 logger.error(e1.getMessage());
+
+                return;
             }
 
             try {
@@ -238,7 +240,7 @@ public class TemporateStorageService {
 
                 logger.error(e.getMessage());
 
-                throw new RuntimeException(e);
+                return;
             }
 
             telemetryService.increaseCurrentCloudServiceUploads();
