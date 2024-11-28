@@ -1,4 +1,4 @@
-package com.resourcetracker.converter;
+package com.objectstorage.converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

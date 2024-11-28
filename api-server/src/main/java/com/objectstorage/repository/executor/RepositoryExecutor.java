@@ -1,8 +1,8 @@
 package com.objectstorage.repository.executor;
 
 import com.objectstorage.entity.common.PropertiesEntity;
-import com.objectstorage.exception.QueryEmptyResultException;
-import com.objectstorage.exception.QueryExecutionFailureException;
+import com.objectstorage.exception.*;
+import com.objectstorage.repository.common.RepositoryConfigurationHelper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,10 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -33,6 +30,9 @@ public class RepositoryExecutor {
 
     @Inject
     DataSource dataSource;
+
+    @Inject
+    RepositoryConfigurationHelper repositoryConfigurationHelper;
 
     private Connection connection;
 
@@ -125,6 +125,8 @@ public class RepositoryExecutor {
 
         try {
             if (!resultSet.isBeforeFirst()) {
+                resultSet.close();
+
                 throw new QueryEmptyResultException();
             }
         } catch (SQLException e) {
@@ -132,6 +134,57 @@ public class RepositoryExecutor {
         }
 
         return resultSet;
+    }
+
+    /**
+     * Begins new transaction.
+     *
+     * @throws TransactionInitializationFailureException if transaction initialization fails.
+     */
+    public void beginTransaction() throws TransactionInitializationFailureException {
+        try {
+            this.connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            throw new TransactionInitializationFailureException(e.getMessage());
+        }
+    }
+
+    /**
+     * Commits previously initialized transaction.
+     *
+     * @throws TransactionCommitFailureException if transaction commit fails.
+     */
+    public void commitTransaction() throws TransactionCommitFailureException {
+        try {
+            this.connection.commit();
+        } catch (SQLException e) {
+            throw new TransactionCommitFailureException(e.getMessage());
+        }
+
+        try {
+            this.connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            throw new TransactionCommitFailureException(e.getMessage());
+        }
+    }
+
+    /**
+     * Rollbacks previously initialized transaction.
+     *
+     * @throws TransactionRollbackFailureException if transaction rollback fails.
+     */
+    public void rollbackTransaction() throws TransactionRollbackFailureException {
+        try {
+            this.connection.rollback();
+        } catch (SQLException e) {
+            throw new TransactionRollbackFailureException(e.getMessage());
+        }
+
+        try {
+            this.connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            throw new TransactionRollbackFailureException(e.getMessage());
+        }
     }
 
     /**

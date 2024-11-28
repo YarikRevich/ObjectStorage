@@ -127,20 +127,29 @@ databaseChangeLog:
                     foreignKeyName: secret_fk
                     references: secret(id)
                     nullable: false
-                    unique: true
                     deleteCascade: true
+              - column:
+                  name: location
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
               - column:
                   name: hash
                   type: VARCHAR
                   constraints:
                     nullable: false
                     unique: true
+              - column:
+                  name: created_at
+                  type: LONG
+                  constraints:
+                    nullable: false
         - createIndex:
             columns:
               - column:
-                  name: provider
-            indexName: idx_provider
-            tableName: temporate
+                  name: name
+            indexName: idx_provider_name
+            tableName: provider
         - loadData:
             tableName: provider
             usePreparedStatements: false

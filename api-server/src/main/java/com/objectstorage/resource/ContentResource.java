@@ -3,9 +3,8 @@ package com.objectstorage.resource;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.RootIsNotValidException;
 import com.objectstorage.model.*;
-import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
-import com.objectstorage.service.processor.facade.ProcessorFacade;
+import com.objectstorage.service.processor.ProcessorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.SneakyThrows;
@@ -16,34 +15,30 @@ import java.io.InputStream;
 @ApplicationScoped
 public class ContentResource implements ContentResourceApi {
     @Inject
-    RepositoryFacade repositoryFacade;
-
-    @Inject
-    ProcessorFacade processorFacade;
+    ProcessorService processorService;
 
     @Inject
     ResourceConfigurationHelper resourceConfigurationHelper;
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentGet method.
      *
+     * @param authorization given authorization header.
      * @return retrieved content result.
      */
     @Override
     @SneakyThrows
-    public ContentRetrievalResult v1ContentPost(String authorization) {
+    public ContentRetrievalResult v1ContentGet(String authorization) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-//        secretsCacheDto.getValidationSecretsCompoundDto().getFirst()
-                //        return clusterFacade.retrieveContent(contentRetrievalApplication);
-
-        return null;
+        return processorService.retrieveContent(validationSecretsApplication);
     }
 
     /**
      * Implementation for declared in OpenAPI configuration v1ContentApplyPost method.
      *
+     * @param authorization given authorization header.
      * @param contentApplication content configuration application.
      */
     @Override
@@ -52,16 +47,17 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        if (resourceConfigurationHelper.isRootDefinitionValid(contentApplication.getRoot())) {
+        if (!resourceConfigurationHelper.isRootDefinitionValid(contentApplication.getRoot())) {
             throw new RootIsNotValidException();
         }
-//        clusterFacade.apply(contentApplication);
 
-//        repositoryFacade.apply(contentApplication);
+        processorService.apply(contentApplication, validationSecretsApplication);
     }
 
     /**
      * Implementation for declared in OpenAPI configuration v1ContentWithdrawDelete method.
+     *
+     * @param authorization given authorization header.
      */
     @Override
     @SneakyThrows
@@ -69,57 +65,81 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-//
-//        clusterFacade.destroy(contentWithdrawal);
-//
-//        repositoryFacade.destroy(contentWithdrawal);
+        processorService.withdraw(validationSecretsApplication);
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentUploadPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentObjectUploadPost method.
      *
-     * @param authorization
+     * @param authorization given authorization header.
+     * @param location given object file location.
+     * @param file given object input file stream.
      */
     @Override
     @SneakyThrows
-    public void v1ContentUploadPost(String authorization, InputStream file) {
+    public void v1ContentObjectUploadPost(String authorization, String location, InputStream file) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
+
+        processorService.uploadObject(location, file, validationSecretsApplication);
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentDownloadPost method.
+     * Implementation for declared in OpenAPI configuration v1ContentObjectDownloadPost method.
      *
-     * @param contentDownload content download application
-     * @return downloaded content result.
+     * @param authorization given authorization header.
+     * @param contentObjectDownload content object download application.
+     * @return downloaded content object result.
      */
     @Override
     @SneakyThrows
-    public byte[] v1ContentDownloadPost(String authorization, ContentDownload contentDownload) {
+    public byte[] v1ContentObjectDownloadPost(String authorization, ContentObjectDownload contentObjectDownload) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
-//
-//        return clusterFacade.retrieveContentReference(contentDownload);
 
-        return null;
+        ValidationSecretsUnit validationSecretsUnit =
+                resourceConfigurationHelper.getConfiguredProvider(
+                        contentObjectDownload.getProvider(), validationSecretsApplication);
+
+        return processorService.downloadObject(
+                contentObjectDownload.getLocation(), validationSecretsUnit, validationSecretsApplication);
     }
 
     /**
-     * Implementation for declared in OpenAPI configuration v1ContentCleanDelete method.
+     * Implementation for declared in OpenAPI configuration v1ContentBackupDownloadPost method.
      *
+     * @param authorization given authorization header.
+     * @param contentBackupDownload content backup download application.
+     * @return downloaded content backup result.
+     */
+    @Override
+    @SneakyThrows
+    public byte[] v1ContentBackupDownloadPost(String authorization, ContentBackupDownload contentBackupDownload) {
+        ValidationSecretsApplication validationSecretsApplication =
+                resourceConfigurationHelper.getJwtDetails(authorization);
+
+        return processorService.downloadBackup(contentBackupDownload, validationSecretsApplication);
+    }
+
+    /**
+     * Implementation for declared in OpenAPI configuration v1ContentObjectCleanDelete method.
+     *
+     * @param authorization given authorization header.
      * @param contentCleanup content cleanup application.
      */
     @Override
     @SneakyThrows
-    public void v1ContentCleanDelete(String authorization, ContentCleanup contentCleanup) {
+    public void v1ContentObjectCleanDelete(String authorization, ContentCleanup contentCleanup) {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
-//        clusterFacade.removeContent(contentCleanup);
+
+        processorService.removeObject(contentCleanup.getLocation(), validationSecretsApplication);
     }
 
     /**
      * Implementation for declared in OpenAPI configuration v1ContentCleanAllDelete method.
      *
+     * @param authorization given authorization header.
      */
     @Override
     @SneakyThrows
@@ -127,6 +147,6 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-//        clusterFacade.removeAll(contentCleanupAll);
+        processorService.removeAll(validationSecretsApplication);
     }
 }

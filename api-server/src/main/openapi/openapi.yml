@@ -16,7 +16,7 @@ tags:
 
 paths:
   /v1/content:
-    post:
+    get:
       tags:
         - ContentResource
       parameters:
@@ -27,7 +27,8 @@ paths:
             type: string
       responses:
         204:
-          description: A list of all available content
+          description: A list of all available content. The same object can be seen both in "pending" and "uploaded" sections 
+                       due to data synchronization.
           content:
             application/json:
               schema:
@@ -71,7 +72,7 @@ paths:
           description: Given content configuration was successfully withdrawn
         400:
           description: Given content configuration was not withdrawn
-  /v1/content/upload:
+  /v1/content/object/upload:
     post:
       tags:
         - ContentResource
@@ -89,8 +90,11 @@ paths:
             schema:
               type: object
               required:
+                - location
                 - file
               properties:
+                location:
+                  type: string
                 file:
                   type: string
                   format: binary
@@ -99,7 +103,7 @@ paths:
           description: A content was successfully uploaded
         400:
           description: Content was not uploaded
-  /v1/content/download:
+  /v1/content/object/download:
     post:
       tags:
         - ContentResource
@@ -111,22 +115,49 @@ paths:
             type: string
       requestBody:
         required: true
-        description: Content download application
+        description: Content object download application
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ContentDownload"
+              $ref: "#/components/schemas/ContentObjectDownload"
       responses:
         201:
-          description: A content was successfully retrieved
+          description: A content object was successfully retrieved
           content:
             application/zip:
               schema:
                 type: string
                 format: binary
         400:
-          description: Content was not retrieved
-  /v1/content/clean:
+          description: Content object was not retrieved
+  /v1/content/backup/download:
+    post:
+      tags:
+        - ContentResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Content backup download application
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentBackupDownload"
+      responses:
+        201:
+          description: A content backup was successfully retrieved
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Content backup was not retrieved
+  /v1/content/object/clean:
     delete:
       tags:
         - ContentResource
@@ -145,9 +176,9 @@ paths:
               $ref: "#/components/schemas/ContentCleanup"
       responses:
         201:
-          description: Content with the given configuration was successfully deleted
+          description: Content object with the given configuration was successfully deleted
         400:
-          description: Content with the given configuration was not deleted
+          description: Content object with the given configuration was not deleted
   /v1/content/clean/all:
     delete:
       tags:
@@ -209,28 +240,61 @@ components:
   schemas:
     ContentRetrievalResult:
       required:
-        - objects
+        - compounds
       properties:
-        objects:
+        compounds:
           type: array
           items:
-            $ref: "#/components/schemas/ContentRetrievalUnit"
-    ContentRetrievalUnit:
+            $ref: "#/components/schemas/ContentRetrievalCompound"
+    ContentRetrievalCompound:
       required:
-        - name
-        - size
+        - root
+        - provider
+        - content
       properties:
-        name:
+        root:
           type: string
-        size:
-          type: integer
+        provider:
+          type: string
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalUnits"
+    ContentRetrievalUnits:
+      required:
+        - pending
+        - uploaded
+      properties:
+        pending:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+        uploaded:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+    ContentRetrievalProviderUnit:
+      required:
+        - location
+      properties:
+        location:
+          type: string
     ContentApplication:
       required:
         - root
       properties:
         root:
           type: string
-    ContentDownload:
+    ContentObjectDownload:
+      required:
+        - location
+        - provider
+      properties:
+        location:
+          type: string
+        provider:
+          $ref: "#/components/schemas/Provider"
+    ContentBackupDownload:
       required:
         - location
       properties:

@@ -55,9 +55,9 @@ public class ContentRepository {
     }
 
     /**
-     * Retrieves all the persisted temporate entities with the given provider and secret.
+     * Retrieves all the persisted content entities with the given provider and secret.
      *
-     * @return retrieved temporate entities.
+     * @return retrieved content entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
     public List<ContentEntity> findByProviderAndSecret(Integer provider, Integer secret) throws
@@ -89,57 +89,14 @@ public class ContentRepository {
 
                 result.add(ContentEntity.of(id, provider, secret, root));
             }
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        try {
-            resultSet.close();
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        return result;
-    }
-
-    /**
-     * Retrieves all the persisted content entities.
-     *
-     * @return retrieved content entities.
-     * @throws RepositoryOperationFailureException if repository operation fails.
-     */
-    public List<ContentEntity> findAll() throws RepositoryOperationFailureException {
-        ResultSet resultSet;
-
-        try {
-            resultSet =
-                    repositoryExecutor.performQueryWithResult(
-                            String.format(
-                                    "SELECT t.id, t.provider, t.secret, t.root FROM %s as t",
-                                    properties.getDatabaseContentTableName()));
-
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        List<ContentEntity> result = new ArrayList<>();
-
-        Integer id;
-        Integer provider;
-        Integer secret;
-        String root;
-
-        try {
-            while (resultSet.next()) {
-                id = resultSet.getInt("id");
-                provider = resultSet.getInt("provider");
-                secret = resultSet.getInt("secret");
-                root = resultSet.getString("root");
-
-                result.add(ContentEntity.of(id, provider, secret, root));
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
             }
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {

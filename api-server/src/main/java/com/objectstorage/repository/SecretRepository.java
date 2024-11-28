@@ -65,17 +65,19 @@ public class SecretRepository {
                 session,
                 credentials);
 
-        try {
-            ResultSet resultSet = repositoryExecutor.performQueryWithResult(query);
+        ResultSet resultSet;
 
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new RepositoryOperationFailureException(e.getMessage());
-            }
+        try {
+            resultSet = repositoryExecutor.performQueryWithResult(query);
         } catch (QueryEmptyResultException e) {
             return false;
         } catch (QueryExecutionFailureException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
@@ -109,8 +111,14 @@ public class SecretRepository {
 
         try {
             id = resultSet.getInt("id");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {
@@ -154,8 +162,14 @@ public class SecretRepository {
 
         try {
             credentials = resultSet.getString("credentials");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {
@@ -165,5 +179,24 @@ public class SecretRepository {
         }
 
         return SecretEntity.of(id, session, credentials);
+    }
+
+    /**
+     * Deletes entity with the given identificator from secret table.
+     *
+     * @param id given identificator of the secrets set.
+     * @throws RepositoryOperationFailureException if operation execution fails.
+     */
+    public void deleteById(Integer id) throws RepositoryOperationFailureException {
+        try {
+            repositoryExecutor.performQuery(
+                    String.format(
+                            "DELETE FROM %s as t WHERE t.id = %d",
+                            properties.getDatabaseSecretTableName(),
+                            id));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
     }
 }

@@ -104,36 +104,13 @@ public class ConfigEntity {
         @JsonProperty("enabled")
         public Boolean enabled;
 
-        /**
-         * Represents all supported content formats, which can be used by ObjectStorage backup service.
-         */
-        @Getter
-        public enum Format {
-            @JsonProperty("zip")
-            ZIP("zip"),
-
-            @JsonProperty("tar")
-            TAR("tar");
-
-            private final String value;
-
-            Format(String value) {
-                this.value = value;
-            }
-
-            public String toString() {
-                return value;
-            }
-        }
-
-        @Valid
-        @NotNull
-        @JsonProperty("format")
-        public Format format;
-
         @NotNull
         @JsonProperty("frequency")
         public String frequency;
+
+        @NotNull
+        @JsonProperty("max-versions")
+        public Integer maxVersions;
     }
 
     @JsonProperty("backup")

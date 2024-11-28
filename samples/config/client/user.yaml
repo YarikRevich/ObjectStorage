@@ -1,11 +1,11 @@
 # Represents section used to declare file configurations.
 content:
-  # Represents file system root location.
+  # Represents file system root location, a bucket in the cloud service context.
   root: "/"
 
 # Represents section used for storage provider configuration.
 service:
-    # Represents selected provider for ObjectStorage. Supported provider is "s3" only.
+  # Represents selected provider for ObjectStorage. Supported providers are "s3" and "gcs" only.
   - provider: "s3"
 
     # Represents credentials used for the selected provider.
@@ -18,7 +18,8 @@ service:
       file: "~/.aws/credentials"
 
       # Represents a select region where the deployment of infrastructure will be performed.
-      # Remember that it may influence the availability of the ResourceTracker deployed infrastructure.
+      # Remember that it may influence the availability of the ObjectStorage deployed infrastructure.
+      # This option can be applied to "s3" provider only.
       region: "us-west-2"
 
 # Represents section used for ObjectStorage API Server configuration.

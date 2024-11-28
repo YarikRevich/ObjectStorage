@@ -1,5 +1,6 @@
 package com.objectstorage.service.vendor.gcs;
 
+import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
@@ -15,6 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 /**
  * Service used to represent GCS external service provider operations.
@@ -119,6 +123,28 @@ public class GCSVendorService {
     }
 
     /**
+     * Checks if object exists in the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     * @param fileName given name of the file to be retrieved.
+     * @return result of the check.
+     */
+    public Boolean isObjectPresentInBucket(
+            Credentials credentials,
+            String bucketName,
+            String fileName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Blob blob = storage.get(BlobId.of(bucketName, fileName));
+
+        return Objects.nonNull(blob) && blob.exists();
+    }
+
+    /**
      * Retrieves object from the GCS bucket with the given name.
      *
      * @param credentials given credentials to be used for client configuration.
@@ -141,6 +167,28 @@ public class GCSVendorService {
     }
 
     /**
+     * Lists objects from the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     * @return listed objects.
+     */
+    public List<String> listObjectsFromGCSBucket(
+            Credentials credentials,
+            String bucketName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Page<Blob> blobs = storage.list(bucketName);
+
+        return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
+                .map(element -> element.getBlobId().getName())
+                .toList();
+    }
+
+    /**
      * Removes object from the GCS bucket with the given name.
      *
      * @param credentials given credentials to be used for client configuration.
@@ -157,6 +205,27 @@ public class GCSVendorService {
                 .getService();
 
         storage.delete(BlobId.of(bucketName, fileName));
+    }
+
+    /**
+     * Removes all objects from the GCS bucket with the given name.
+     *
+     * @param credentials given credentials to be used for client configuration.
+     * @param bucketName given name of the GCS bucket.
+     */
+    public void removeAllObjectsFromGCSBucket(
+            Credentials credentials,
+            String bucketName) {
+        Storage storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .getService();
+
+        Page<Blob> blobs = storage.list(bucketName);
+
+        for (Blob blob : blobs.iterateAll()) {
+            blob.delete(Blob.BlobSourceOption.generationMatch());
+        }
     }
 
     /**

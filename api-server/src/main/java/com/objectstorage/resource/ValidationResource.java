@@ -1,6 +1,7 @@
 package com.objectstorage.resource;
 
 import com.objectstorage.exception.ProvidersAreNotValidException;
+import com.objectstorage.exception.SecretsAreEmptyException;
 import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.resource.common.ResourceConfigurationHelper;
 import com.objectstorage.api.ValidationResourceApi;
@@ -23,11 +24,16 @@ public class ValidationResource implements ValidationResourceApi {
     /**
      * Implementation for declared in OpenAPI configuration v1SecretsAcquirePost method.
      *
+     * @param validationSecretsApplication given validation secrets application.
      * @return created jwt token.
      */
     @Override
     @SneakyThrows
     public ValidationSecretsApplicationResult v1SecretsAcquirePost(ValidationSecretsApplication validationSecretsApplication) {
+        if (resourceConfigurationHelper.areSecretsEmpty(validationSecretsApplication.getSecrets())) {
+            throw new SecretsAreEmptyException();
+        }
+
         if (resourceConfigurationHelper.areProvidersDuplicated(
                 validationSecretsApplication
                         .getSecrets()

@@ -4,6 +4,8 @@ import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.CredentialsFieldsInternal;
 import com.objectstorage.model.Provider;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.StringJoiner;
 /**
  * Contains helpful tools used for repository configuration.
  */
+@ApplicationScoped
 public class RepositoryConfigurationHelper {
     /**
      * Packs given external credentials into signature.
@@ -20,7 +23,7 @@ public class RepositoryConfigurationHelper {
      * @param values given any amount of values to be used for signature creation.
      * @return packed external credentials signature.
      */
-    private static String packExternalCredentials(String ...values) {
+    private String packExternalCredentials(String ...values) {
         StringJoiner result = new StringJoiner(":");
 
         for (String value : values) {
@@ -36,7 +39,7 @@ public class RepositoryConfigurationHelper {
      * @param credentials given credentials to be unpacked.
      * @return unpacked external credentials signature.
      */
-    private static List<String> unpackExternalCredentials(String credentials) {
+    private List<String> unpackExternalCredentials(String credentials) {
         return List.of(credentials.split(":"));
     }
 
@@ -47,7 +50,7 @@ public class RepositoryConfigurationHelper {
      * @param credentialsFieldExternal given credentials field.
      * @return extracted external credentials as optional.
      */
-    public static String getExternalCredentials(
+    public String getExternalCredentials(
             Provider provider, CredentialsFieldsExternal credentialsFieldExternal) {
         return switch (provider) {
             case S3 -> packExternalCredentials(
@@ -62,7 +65,7 @@ public class RepositoryConfigurationHelper {
      * @param value given raw provider.
      * @return converted content provider.
      */
-    public static Provider convertRawProviderToContentProvider(String value) {
+    public Provider convertRawProviderToContentProvider(String value) {
         return Provider.fromString(value);
     }
 
@@ -74,7 +77,7 @@ public class RepositoryConfigurationHelper {
      * @param signature given credentials signature.
      * @return converted common credentials.
      */
-    public static CredentialsFieldsFull convertRawSecretsToContentCredentials(
+    public CredentialsFieldsFull convertRawSecretsToContentCredentials(
             Provider provider, Integer session, String signature) {
         List<String> credentials = unpackExternalCredentials(signature);
 

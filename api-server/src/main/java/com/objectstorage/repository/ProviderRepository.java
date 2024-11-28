@@ -28,54 +28,6 @@ public class ProviderRepository {
     RepositoryExecutor repositoryExecutor;
 
     /**
-     * Inserts given values into the provider table.
-     *
-     * @param name given provider name.
-     * @throws RepositoryOperationFailureException if operation execution fails.
-     */
-    public void insert(String name) throws RepositoryOperationFailureException {
-        try {
-            repositoryExecutor.performQuery(
-                    String.format(
-                            "INSERT INTO %s (name) VALUES ('%s')",
-                            properties.getDatabaseProviderTableName(),
-                            name));
-
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-    }
-
-    /**
-     * Checks if provider entity with the given name is present.
-     *
-     * @param name given name of the provider.
-     * @return result of the check.
-     * @throws RepositoryOperationFailureException if repository operation fails.
-     */
-    public Boolean isPresentByName(String name) throws RepositoryOperationFailureException {
-        try {
-            ResultSet resultSet = repositoryExecutor.performQueryWithResult(
-                    String.format(
-                            "SELECT t.id FROM %s as t WHERE t.name = '%s'",
-                            properties.getDatabaseProviderTableName(),
-                            name));
-
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                throw new RepositoryOperationFailureException(e.getMessage());
-            }
-        } catch (QueryEmptyResultException e) {
-            return false;
-        } catch (QueryExecutionFailureException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
-
-        return true;
-    }
-
-    /**
      * Attempts to retrieve provider entity by the given name.
      *
      * @param name given name of the provider.
@@ -101,8 +53,14 @@ public class ProviderRepository {
 
         try {
             id = resultSet.getInt("id");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {
@@ -140,8 +98,14 @@ public class ProviderRepository {
 
         try {
             name = resultSet.getString("name");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
         }
 
         try {

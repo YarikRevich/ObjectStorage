@@ -3,6 +3,7 @@ package com.objectstorage.service.vendor;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.google.auth.Credentials;
 import com.objectstorage.exception.*;
+import com.objectstorage.model.ContentRetrievalProviderUnit;
 import com.objectstorage.model.CredentialsFieldsExternal;
 import com.objectstorage.model.Provider;
 import com.objectstorage.service.vendor.gcs.GCSVendorService;
@@ -13,6 +14,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Provides high-level access to cloud vendor operations.
@@ -33,11 +35,12 @@ public class VendorFacade {
      * @param name given name of the bucket.
      * @return result of the check.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isBucketPresent(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -47,7 +50,9 @@ public class VendorFacade {
                         s3VendorService.getCredentialsProvider(secrets);
 
                 yield s3VendorService.isS3BucketPresent(
-                        awsCredentialsProvider, name, credentialsFieldExternal.getRegion());
+                        awsCredentialsProvider,
+                        name,
+                        credentialsFieldExternal.getRegion());
             }
             case GCS -> {
                 Credentials credentials;
@@ -70,11 +75,12 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @param name given name of the bucket.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void createBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -107,11 +113,12 @@ public class VendorFacade {
      * @param credentialsFieldExternal given external credentials.
      * @param name given name of the bucket.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
-            String name) throws SecretsConversionException {
+            String name) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -146,14 +153,15 @@ public class VendorFacade {
      * @param fileName given name of the file to be uploaded.
      * @param inputStream given file input stream to be used for object upload.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
-     * @throws BucketObjectUploadFailureException if bucket object upload fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void uploadObjectToBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
             String fileName,
-            InputStream inputStream) throws SecretsConversionException, BucketObjectUploadFailureException {
+            InputStream inputStream)
+            throws SecretsConversionException, VendorOperationFailureException, BucketObjectUploadFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -188,20 +196,67 @@ public class VendorFacade {
     }
 
     /**
+     * Checks if object is present in the bucket with the given name.
+     *
+     * @param provider given external provider name.
+     * @param credentialsFieldExternal given external credentials.
+     * @param bucketName given name of the bucket.
+     * @param fileName given name of the file to be uploaded.
+     * @return result of the check.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
+     */
+    public Boolean isObjectPresentInBucket(
+            Provider provider,
+            CredentialsFieldsExternal credentialsFieldExternal,
+            String bucketName,
+            String fileName) throws SecretsConversionException, VendorOperationFailureException {
+        return switch (provider) {
+            case S3 -> {
+                AWSSecretsDto secrets =
+                        SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
+
+                AWSCredentialsProvider awsCredentialsProvider =
+                        s3VendorService.getCredentialsProvider(secrets);
+
+                yield s3VendorService.isObjectPresentInBucket(
+                        awsCredentialsProvider,
+                        bucketName,
+                        credentialsFieldExternal.getRegion(),
+                        fileName);
+            }
+            case GCS -> {
+                Credentials credentials;
+
+                try {
+                    credentials = gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e.getMessage());
+                }
+
+                yield gcsVendorService.isObjectPresentInBucket(credentials, bucketName, fileName);
+            }
+        };
+    }
+
+    /**
      * Retrieves object from the bucket with the given name.
      *
      * @param provider given external provider name.
      * @param credentialsFieldExternal given external credentials.
      * @param bucketName given name of the bucket.
      * @param fileName given name of the file to be uploaded.
+     * @return retrieved object content.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
      * @throws BucketObjectRetrievalFailureException if bucket object retrieval fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public byte[] retrieveObjectFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
-            String fileName) throws SecretsConversionException, BucketObjectRetrievalFailureException {
+            String fileName)
+            throws SecretsConversionException, BucketObjectRetrievalFailureException, VendorOperationFailureException {
         return switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -235,6 +290,56 @@ public class VendorFacade {
     }
 
     /**
+     * Lists all objects from the bucket with the given name.
+     *
+     * @param provider given external provider name.
+     * @param credentialsFieldExternal given external credentials.
+     * @param bucketName given name of the bucket.
+     * @return listed objects.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws BucketObjectRetrievalFailureException if bucket object retrieval fails.
+     * @throws VendorOperationFailureException if vendor operation fails.
+     */
+    public List<ContentRetrievalProviderUnit> listAllObjectsFromBucket(
+            Provider provider,
+            CredentialsFieldsExternal credentialsFieldExternal,
+            String bucketName)
+            throws SecretsConversionException,
+            BucketObjectRetrievalFailureException, VendorOperationFailureException {
+        return switch (provider) {
+            case S3 -> {
+                AWSSecretsDto secrets =
+                        SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
+
+                AWSCredentialsProvider awsCredentialsProvider =
+                        s3VendorService.getCredentialsProvider(secrets);
+
+                yield s3VendorService.listObjectsFromS3Bucket(
+                        awsCredentialsProvider,
+                        bucketName,
+                        credentialsFieldExternal.getRegion())
+                        .stream()
+                        .map(ContentRetrievalProviderUnit::of)
+                        .toList();
+            }
+            case GCS -> {
+                Credentials credentials;
+
+                try {
+                    credentials = gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e.getMessage());
+                }
+
+                yield gcsVendorService.listObjectsFromGCSBucket(credentials, bucketName)
+                        .stream()
+                        .map(ContentRetrievalProviderUnit::of)
+                        .toList();
+            }
+        };
+    }
+
+    /**
      * Removes object from the bucket with the given name.
      *
      * @param provider given external provider name.
@@ -242,12 +347,13 @@ public class VendorFacade {
      * @param bucketName given name of the bucket.
      * @param fileName given name of the file to be uploaded.
      * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeObjectFromBucket(
             Provider provider,
             CredentialsFieldsExternal credentialsFieldExternal,
             String bucketName,
-            String fileName) throws SecretsConversionException {
+            String fileName) throws SecretsConversionException, VendorOperationFailureException {
         switch (provider) {
             case S3 -> {
                 AWSSecretsDto secrets =
@@ -274,6 +380,46 @@ public class VendorFacade {
                 gcsVendorService.removeObjectFromGCSBucket(credentials, bucketName, fileName);
             }
         };
+    }
+
+    /**
+     * Removes all objects from the bucket with the given name.
+     *
+     * @param provider given external provider name.
+     * @param credentialsFieldExternal given external credentials.
+     * @param bucketName given name of the bucket.
+     * @throws SecretsConversionException if secrets conversion fails or secrets are invalid.
+     * @throws VendorOperationFailureException if vendor operation fails.
+     */
+    public void removeAllObjectsFromBucket(
+            Provider provider,
+            CredentialsFieldsExternal credentialsFieldExternal,
+            String bucketName) throws SecretsConversionException, VendorOperationFailureException {
+        switch (provider) {
+            case S3 -> {
+                AWSSecretsDto secrets =
+                        SecretsConverter.convert(AWSSecretsDto.class, credentialsFieldExternal.getFile());
+
+                AWSCredentialsProvider awsCredentialsProvider =
+                        s3VendorService.getCredentialsProvider(secrets);
+
+                s3VendorService.removeAllObjectsFromS3Bucket(
+                        awsCredentialsProvider,
+                        bucketName,
+                        credentialsFieldExternal.getRegion());
+            }
+            case GCS -> {
+                Credentials credentials;
+
+                try {
+                    credentials = gcsVendorService.getCredentials(credentialsFieldExternal.getFile());
+                } catch (GCPCredentialsInitializationFailureException e) {
+                    throw new SecretsConversionException(e.getMessage());
+                }
+
+                gcsVendorService.removeAllObjectsFromGCSBucket(credentials, bucketName);
+            }
+        }
     }
 
     /**
