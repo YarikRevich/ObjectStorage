@@ -1,5 +1,6 @@
 package com.objectstorage.service.telemetry.binding;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Service used to create custom telemetry bindings used to distribute application metrics.
@@ -22,9 +24,9 @@ public class TelemetryBinding implements MeterBinder {
 
     private final AtomicInteger cloudServiceUploadRetries = new AtomicInteger();
 
-    private final AtomicInteger configuredTemporateStorageAwaitTime = new AtomicInteger();
+    private final AtomicLong configuredTemporateStorageAwaitTime = new AtomicLong();
 
-    private final AtomicInteger averageUploadFileSize = new AtomicInteger();
+    private final AtomicDouble averageUploadFileSize = new AtomicDouble();
 
     /**
      * @see MeterBinder
@@ -43,11 +45,11 @@ public class TelemetryBinding implements MeterBinder {
                 .description("Represents cloud service uploads retries from ObjectStorage Temporate Storage")
                 .register(meterRegistry);
 
-        Gauge.builder("general.configured_temporate_storage_await_time", configuredTemporateStorageAwaitTime, AtomicInteger::get)
+        Gauge.builder("general.configured_temporate_storage_await_time", configuredTemporateStorageAwaitTime, AtomicLong::get)
                 .description("Represents configured ObjectStorage Temporate Storage await time")
                 .register(meterRegistry);
 
-        Gauge.builder("general.average_upload_file_size", averageUploadFileSize, AtomicInteger::get)
+        Gauge.builder("general.average_upload_file_size", averageUploadFileSize, AtomicDouble::get)
                 .description("Represents average upload file size in ObjectStorage Temporate Storage")
                 .register(meterRegistry);
     }

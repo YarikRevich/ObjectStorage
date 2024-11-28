@@ -56,34 +56,6 @@ public class ConfigEntity {
      */
     @Getter
     public static class TemporateStorage {
-        /**
-         * Represents all supported content formats, which can be used by ObjectStorage
-         * Temporate Storage.
-         */
-        @Getter
-        public enum Format {
-            @JsonProperty("zip")
-            ZIP("zip"),
-
-            @JsonProperty("tar")
-            TAR("tar");
-
-            private final String value;
-
-            Format(String value) {
-                this.value = value;
-            }
-
-            public String toString() {
-                return value;
-            }
-        }
-
-        @Valid
-        @NotNull
-        @JsonProperty("format")
-        public Format format;
-
         @NotNull
         @JsonProperty("frequency")
         public String frequency;

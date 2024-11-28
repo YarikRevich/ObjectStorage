@@ -11,6 +11,8 @@ import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.state.StateService;
+import com.objectstorage.service.telemetry.TelemetryService;
+import com.objectstorage.service.telemetry.binding.TelemetryBinding;
 import com.objectstorage.service.vendor.VendorFacade;
 import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
@@ -50,6 +52,12 @@ public class TemporateStorageService {
     @Inject
     VendorFacade vendorFacade;
 
+    @Inject
+    TelemetryBinding telemetryBinding;
+
+    @Inject
+    TelemetryService telemetryService;
+
     private final ScheduledExecutorService scheduledOperationExecutorService =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -69,6 +77,8 @@ public class TemporateStorageService {
             throw new TemporateStoragePeriodRetrievalFailureException(e.getMessage());
         }
 
+        telemetryBinding.getConfiguredTemporateStorageAwaitTime().set(period);
+
         scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
             StateService.getTemporateStorageProcessorGuard().lock();
 
@@ -81,7 +91,9 @@ public class TemporateStorageService {
             } catch (TemporateContentRetrievalFailureException e1) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e1.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
+
+                logger.error(e1.getMessage());
 
                 throw new RuntimeException(e1);
             }
@@ -93,7 +105,9 @@ public class TemporateStorageService {
             } catch (TemporateContentRetrievalFailureException e) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
+
+                logger.error(e.getMessage());
 
                 throw new RuntimeException(e);
             }
@@ -103,7 +117,9 @@ public class TemporateStorageService {
             } catch (TransactionInitializationFailureException e) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
+
+                logger.error(e.getMessage());
 
                 throw new RuntimeException(e);
             }
@@ -111,17 +127,21 @@ public class TemporateStorageService {
             try {
                 repositoryFacade.removeTemporateContentByHash(temporateContentDto.getHash());
             } catch (TemporateContentRemovalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
 
                     throw new RuntimeException(e2);
                 }
 
-                logger.fatal(e1.getMessage());
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
 
                 throw new RuntimeException(e1);
             }
@@ -137,17 +157,21 @@ public class TemporateStorageService {
             try {
                 content = workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentDto.getHash());
             } catch (FileUnitRetrievalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
 
                     throw new RuntimeException(e2);
                 }
 
-                logger.fatal(e1.getMessage());
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
 
                 throw new RuntimeException(e1);
             }
@@ -165,15 +189,19 @@ public class TemporateStorageService {
                         SecretsConversionException |
                         VendorOperationFailureException |
                         BucketObjectUploadFailureException  e1) {
-                    StateService.getTemporateStorageProcessorGuard().unlock();
+                    telemetryService.increaseCloudServiceUploadRetries();
 
                     try {
                         repositoryExecutor.rollbackTransaction();
                     } catch (TransactionRollbackFailureException e2) {
-                        logger.fatal(e2.getMessage());
+                        StateService.getTemporateStorageProcessorGuard().unlock();
+
+                        logger.error(e2.getMessage());
 
                         throw new RuntimeException(e2);
                     }
+
+                    StateService.getTemporateStorageProcessorGuard().unlock();
 
                     logger.info(e1.getMessage());
 
@@ -184,17 +212,21 @@ public class TemporateStorageService {
             try {
                 workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentDto.getHash());
             } catch (FileRemovalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
 
                     throw new RuntimeException(e2);
                 }
 
-                logger.info(e1.getMessage());
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
             }
 
             try {
@@ -202,10 +234,14 @@ public class TemporateStorageService {
             } catch (TransactionCommitFailureException e) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
+
+                logger.error(e.getMessage());
 
                 throw new RuntimeException(e);
             }
+
+            telemetryService.increaseCurrentCloudServiceUploads();
 
             StateService.getTemporateStorageProcessorGuard().unlock();
         }, 0, period, TimeUnit.MILLISECONDS);

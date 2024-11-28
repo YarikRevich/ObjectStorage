@@ -20,7 +20,6 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 179,
   "graphTooltip": 1,
-  "id": 1,
   "links": [],
   "panels": [
     {
@@ -30,120 +29,6 @@
         "w": 24,
         "x": 0,
         "y": 0
-      },
-      "id": 30,
-      "panels": [],
-      "title": "ObjectStorage Cluster",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P21B111CBFE6E8FCA"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "id": 38,
-      "interval": "500ms",
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P21B111CBFE6E8FCA"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "general_cluster_download_amount",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A",
-          "useBackend": false
-        }
-      ],
-      "title": "ObjectStorage Cluster content download ongoing requests",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
       },
       "id": 29,
       "panels": [],
@@ -214,7 +99,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 1
       },
       "id": 36,
       "interval": "500ms",
@@ -238,7 +123,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "general_raw_content_upload_amount",
+          "expr": "general_temporate_storage_files_amount",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -248,7 +133,7 @@
           "useBackend": false
         }
       ],
-      "title": "ObjectStorage API Server raw content upload ongoing requests",
+      "title": "ObjectStorage API Server Temporate Storage current files amount",
       "type": "timeseries"
     },
     {
@@ -315,7 +200,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 1
       },
       "id": 37,
       "interval": "500ms",
@@ -339,7 +224,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "general_additional_content_upload_amount",
+          "expr": "general_current_cloud_service_uploads_amount",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -349,7 +234,7 @@
           "useBackend": false
         }
       ],
-      "title": "ObjectStorage API Server additional content upload ongoing requests",
+      "title": "ObjectStorage API Server current cloud service uploads amount",
       "type": "timeseries"
     },
     {
@@ -416,7 +301,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 9
       },
       "id": 33,
       "interval": "0.1",
@@ -440,7 +325,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "general_api_server_health_check_amount",
+          "expr": "general_cloud_service_upload_retries",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -450,7 +335,7 @@
           "useBackend": false
         }
       ],
-      "title": "ObjectStorage API Server healthcheck ongoing requests",
+      "title": "ObjectStorage API Server cloud service upload retries",
       "type": "timeseries"
     },
     {
@@ -517,7 +402,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 9
       },
       "id": 34,
       "interval": "0.1",
@@ -541,7 +426,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "general_cluster_health_check_amount",
+          "expr": "general_average_upload_file_size",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -551,7 +436,7 @@
           "useBackend": false
         }
       ],
-      "title": "ObjectStorage Cluster healthcheck requests",
+      "title": "ObjectStorage API Server average upload file size",
       "type": "timeseries"
     },
     {
@@ -561,41 +446,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 1,
-            "pointSize": 6,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
           "decimals": 0,
           "fieldMinMax": false,
           "mappings": [],
@@ -605,13 +455,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
-          }
+          },
+          "unit": "none"
         },
         "overrides": []
       },
@@ -619,123 +466,27 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
-      },
-      "id": 31,
-      "interval": "0.1",
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P21B111CBFE6E8FCA"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "general_serving_cluster_amount",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A",
-          "useBackend": false
-        }
-      ],
-      "title": "Serving ObjectStorage Cluster allocations",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P21B111CBFE6E8FCA"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 26
+        "y": 17
       },
       "id": 32,
       "interval": "0.1",
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
+      "pluginVersion": "10.4.2",
       "targets": [
         {
           "datasource": {
@@ -744,7 +495,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "general_suspended_cluster_amount",
+          "expr": "general_configured_temporate_storage_await_time",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -754,8 +505,8 @@
           "useBackend": false
         }
       ],
-      "title": "Suspended ObjectStorage Cluster allocations",
-      "type": "timeseries"
+      "title": "ObjectStorage API Server Temporate Storage confiugred await time(milliseconds)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -786,8 +537,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 34
+        "x": 12,
+        "y": 17
       },
       "id": 35,
       "options": {
@@ -835,7 +586,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 25
       },
       "id": 28,
       "panels": [],
@@ -884,7 +635,7 @@
         "h": 7,
         "w": 3,
         "x": 0,
-        "y": 43
+        "y": 26
       },
       "id": 15,
       "maxDataPoints": 100,
@@ -969,7 +720,7 @@
         "h": 6,
         "w": 6,
         "x": 3,
-        "y": 43
+        "y": 26
       },
       "id": 6,
       "maxDataPoints": 100,
@@ -1055,7 +806,7 @@
         "h": 6,
         "w": 6,
         "x": 9,
-        "y": 43
+        "y": 26
       },
       "id": 4,
       "maxDataPoints": 100,
@@ -1300,6 +1051,6 @@
   "timezone": "browser",
   "title": "ObjectStorage Diagnostics",
   "uid": "64nrElFmk",
-  "version": 10,
+  "version": 3,
   "weekStart": ""
 }
