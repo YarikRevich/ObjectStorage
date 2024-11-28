@@ -4,6 +4,7 @@ import com.objectstorage.converter.CronExpressionConverter;
 import com.objectstorage.exception.BackupPeriodRetrievalFailureException;
 import com.objectstorage.exception.CronExpressionException;
 import com.objectstorage.service.state.StateService;
+import com.objectstorage.service.vendor.VendorFacade;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -27,6 +28,9 @@ public class BackupService {
     @Inject
     WorkspaceFacade workspaceFacade;
 
+    @Inject
+    VendorFacade vendorFacade;
+
     private final ScheduledExecutorService scheduledOperationExecutorService =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -49,7 +53,9 @@ public class BackupService {
             scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
                 StateService.getBackupProcessorGuard().lock();
 
+//                vendorFacade.listAllObjectsFromBucket().get(0).
 
+//                workspaceFacade.add
 
                 StateService.getBackupProcessorGuard().unlock();
             }, 0, period, TimeUnit.MILLISECONDS);

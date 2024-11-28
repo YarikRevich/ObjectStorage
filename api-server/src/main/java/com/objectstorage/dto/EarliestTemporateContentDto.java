@@ -6,6 +6,8 @@ import com.objectstorage.model.ValidationSecretsApplication;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 /**
  * Represents dto used to represent the earliest temporate content.
  */
@@ -13,9 +15,9 @@ import lombok.Getter;
 @AllArgsConstructor(staticName = "of")
 public class EarliestTemporateContentDto {
     /**
-     * Represents target provider.
+     * Represents content compound units.
      */
-    private ValidationSecretsApplication validationSecretsApplication;
+    private List<ContentCompoundUnitDto> contentCompoundUnits;
 
     /**
      * Represents file location.

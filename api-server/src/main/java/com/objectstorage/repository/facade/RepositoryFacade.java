@@ -1,7 +1,9 @@
 package com.objectstorage.repository.facade;
 
+import com.objectstorage.dto.ContentCompoundUnitDto;
 import com.objectstorage.dto.RepositoryContentUnitDto;
 import com.objectstorage.dto.EarliestTemporateContentDto;
+import com.objectstorage.entity.repository.ContentEntity;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
 import com.objectstorage.entity.repository.TemporateEntity;
@@ -124,7 +126,7 @@ public class RepositoryFacade {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
+        List<ContentCompoundUnitDto>  contentCompoundUnits = new ArrayList<>();
 
         for (TemporateEntity temporate : temporateEntities) {
             ProviderEntity rawProvider;
@@ -152,11 +154,24 @@ public class RepositoryFacade {
                             secret.getSession(),
                             secret.getCredentials());
 
-            validationSecretsUnits.add(ValidationSecretsUnit.of(provider, secrets));
+            ContentEntity contentEntity;
+
+            try {
+                contentEntity = contentRepository.findByProviderAndSecret(rawProvider.getId(), secret.getId());
+            } catch (RepositoryOperationFailureException e) {
+                throw new TemporateContentRetrievalFailureException(e.getMessage());
+            }
+
+            contentCompoundUnits.add(
+                    ContentCompoundUnitDto.of(
+                            RepositoryContentUnitDto.of(
+                                    contentEntity.getRoot()),
+                            provider,
+                            secrets));
         }
 
         return EarliestTemporateContentDto.of(
-                ValidationSecretsApplication.of(validationSecretsUnits),
+                contentCompoundUnits,
                 temporateEntity.getLocation(),
                 temporateEntity.getHash(),
                 temporateEntity.getCreatedAt());
@@ -203,15 +218,16 @@ public class RepositoryFacade {
             throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
 
+        ContentEntity contentEntity;
+
         try {
-            return contentRepository
-                    .findByProviderAndSecret(provider.getId(), secret.getId())
-                    .stream()
-                    .map(element -> RepositoryContentUnitDto.of(element.getRoot()))
-                    .toList().getFirst();
+             contentEntity = contentRepository
+                    .findByProviderAndSecret(provider.getId(), secret.getId());
         } catch (RepositoryOperationFailureException e) {
             throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
+
+        return RepositoryContentUnitDto.of(contentEntity.getRoot());
     }
 
     /**

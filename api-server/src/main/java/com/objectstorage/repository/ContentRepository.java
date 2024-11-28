@@ -60,7 +60,7 @@ public class ContentRepository {
      * @return retrieved content entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
-    public List<ContentEntity> findByProviderAndSecret(Integer provider, Integer secret) throws
+    public ContentEntity findByProviderAndSecret(Integer provider, Integer secret) throws
             RepositoryOperationFailureException {
         ResultSet resultSet;
 
@@ -77,18 +77,12 @@ public class ContentRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        List<ContentEntity> result = new ArrayList<>();
-
         Integer id;
         String root;
 
         try {
-            while (resultSet.next()) {
-                id = resultSet.getInt("id");
-                root = resultSet.getString("root");
-
-                result.add(ContentEntity.of(id, provider, secret, root));
-            }
+            id = resultSet.getInt("id");
+            root = resultSet.getString("root");
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -105,7 +99,7 @@ public class ContentRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return result;
+        return ContentEntity.of(id, provider, secret, root);
     }
 
     /**

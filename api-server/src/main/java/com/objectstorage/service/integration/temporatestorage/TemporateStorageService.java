@@ -1,8 +1,11 @@
 package com.objectstorage.service.integration.temporatestorage;
 
+import com.objectstorage.converter.ContentCompoundUnitToValidationSecretsApplicationConverter;
 import com.objectstorage.converter.CronExpressionConverter;
+import com.objectstorage.dto.ContentCompoundUnitDto;
 import com.objectstorage.dto.EarliestTemporateContentDto;
 import com.objectstorage.exception.*;
+import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
@@ -122,8 +125,11 @@ public class TemporateStorageService {
                 throw new RuntimeException(e1);
             }
 
-            String workspaceUnitKey =
-                    workspaceFacade.createWorkspaceUnitKey(temporateContentDto.getValidationSecretsApplication());
+            ValidationSecretsApplication validationSecretsApplication =
+                    ContentCompoundUnitToValidationSecretsApplicationConverter.convert(
+                            temporateContentDto.getContentCompoundUnits());
+
+            String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
             byte[] content;
 
@@ -145,13 +151,12 @@ public class TemporateStorageService {
                 throw new RuntimeException(e1);
             }
 
-            for (ValidationSecretsUnit validationSecretsUnit : temporateContentDto.getValidationSecretsApplication()
-                    .getSecrets()) {
+            for (ContentCompoundUnitDto contentCompoundUnit : temporateContentDto.getContentCompoundUnits()) {
                 try {
                     vendorFacade.uploadObjectToBucket(
-                            validationSecretsUnit.getProvider(),
-                            validationSecretsUnit.getCredentials().getExternal(),
-                            "",
+                            contentCompoundUnit.getProvider(),
+                            contentCompoundUnit.getCredentialsFieldsFull().getExternal(),
+                            contentCompoundUnit.getRepositoryContentUnitDto().getRoot(),
                             temporateContentDto.getLocation(),
                             new ByteArrayInputStream(content));
                 } catch (
