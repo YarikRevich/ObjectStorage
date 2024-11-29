@@ -103,6 +103,55 @@ public class ContentRepository {
     }
 
     /**
+     * Retrieves all the persisted content entities.
+     *
+     * @return retrieved content entities.
+     * @throws RepositoryOperationFailureException if repository operation fails.
+     */
+    public List<ContentEntity> findAll() throws RepositoryOperationFailureException {
+        ResultSet resultSet;
+
+        try {
+            resultSet =
+                    repositoryExecutor.performQueryWithResult(
+                            String.format(
+                                    "SELECT t.id, t.root, t.provider, t.secret FROM %s as t",
+                                    properties.getDatabaseContentTableName()));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        List<ContentEntity> result = new ArrayList<>();
+
+        Integer id;
+        String root;
+        Integer provider;
+        Integer secret;
+
+        try {
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+                root = resultSet.getString("root");
+                provider = resultSet.getInt("provider");
+                secret = resultSet.getInt("secret");
+
+                result.add(ContentEntity.of(id, provider, secret, root));
+            }
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * Deletes all entities with the given provider and secret from content table.
      *
      * @param provider given provider.

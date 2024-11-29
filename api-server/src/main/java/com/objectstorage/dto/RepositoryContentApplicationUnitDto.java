@@ -2,20 +2,19 @@ package com.objectstorage.dto;
 
 import com.objectstorage.model.CredentialsFieldsFull;
 import com.objectstorage.model.Provider;
-import com.objectstorage.model.ValidationSecretsUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Represents content compound unit dto.
+ * Represents repository content application unit.
  */
 @Getter
 @AllArgsConstructor(staticName = "of")
-public class ContentCompoundUnitDto {
+public class RepositoryContentApplicationUnitDto {
     /**
      * Represents root location for internal file system.
      */
-    private RepositoryContentUnitDto repositoryContentUnitDto;
+    private String root;
 
     /**
      * Represents provider.

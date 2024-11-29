@@ -188,53 +188,9 @@ public class ProcessorService {
         }
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            RepositoryContentUnitDto repositoryContentLocationUnitDto;
-
-            try {
-                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentApplicationRetrievalFailureException e1) {
-                try {
-                    repositoryExecutor.rollbackTransaction();
-                } catch (TransactionRollbackFailureException e2) {
-                    StateService.getTransactionProcessorGuard().unlock();
-
-                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
-                }
-
-                StateService.getTransactionProcessorGuard().unlock();
-
-                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
-            }
-
             try {
                 repositoryFacade.withdraw(validationSecretsUnit);
             } catch (RepositoryContentDestructionFailureException e1) {
-                try {
-                    repositoryExecutor.rollbackTransaction();
-                } catch (TransactionRollbackFailureException e2) {
-                    StateService.getTransactionProcessorGuard().unlock();
-
-                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
-                }
-
-                StateService.getTransactionProcessorGuard().unlock();
-
-                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
-            }
-
-            try {
-                if (vendorFacade.isBucketPresent(
-                        validationSecretsUnit.getProvider(),
-                        validationSecretsUnit.getCredentials().getExternal(),
-                        VendorConfigurationHelper.createBucketName(
-                                repositoryContentLocationUnitDto.getRoot()))) {
-                    vendorFacade.removeBucket(
-                            validationSecretsUnit.getProvider(),
-                            validationSecretsUnit.getCredentials().getExternal(),
-                            VendorConfigurationHelper.createBucketName(
-                                    repositoryContentLocationUnitDto.getRoot()));
-                }
-            } catch (SecretsConversionException | VendorOperationFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {

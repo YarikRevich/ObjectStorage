@@ -1,8 +1,10 @@
 package com.objectstorage.service.workspace;
 
+import com.objectstorage.dto.FolderContentUnitDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.exception.FileNotFoundException;
+import com.objectstorage.service.workspace.common.WorkspaceConfigurationHelper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -304,6 +307,42 @@ public class WorkspaceService {
             writer.putNextEntry(new ZipEntry(properties.getWorkspaceCompressionFileName()));
 
             writer.write(inputStream.readAllBytes());
+
+            writer.flush();
+
+            writer.finish();
+
+        } catch (IOException e) {
+            throw new InputCompressionFailureException(e.getMessage());
+        }
+
+        return result.toByteArray();
+    }
+
+    /**
+     * Compresses given folder entities of the given type. This will act as a non-compressed folder, which has
+     * previously compressed with zip files.
+     *
+     * @param folderContentUnits         given folder input entities.
+     * @param type                   given folder type.
+     * @return compressed folder input.
+     * @throws InputCompressionFailureException if input compression fails.
+     */
+    public byte[] compressFolder(List<FolderContentUnitDto> folderContentUnits, String type) throws
+            InputCompressionFailureException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+
+        try (ZipOutputStream writer = new ZipOutputStream(result)) {
+            writer.setMethod(ZipOutputStream.DEFLATED);
+            writer.setLevel(Deflater.NO_COMPRESSION);
+
+            writer.putNextEntry(new ZipEntry(WorkspaceConfigurationHelper.getZipFolderDefinition(type)));
+
+            for (FolderContentUnitDto folderContentUnit : folderContentUnits) {
+                writer.putNextEntry(new ZipEntry(folderContentUnit.getLocation()));
+
+                writer.write(folderContentUnit.getContent());
+            }
 
             writer.flush();
 

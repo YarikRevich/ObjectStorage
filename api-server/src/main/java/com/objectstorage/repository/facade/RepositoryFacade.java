@@ -1,9 +1,6 @@
 package com.objectstorage.repository.facade;
 
-import com.objectstorage.dto.ContentCompoundUnitDto;
-import com.objectstorage.dto.RepositoryContentUnitDto;
-import com.objectstorage.dto.EarliestTemporateContentDto;
-import com.objectstorage.dto.TemporateContentUnitDto;
+import com.objectstorage.dto.*;
 import com.objectstorage.entity.repository.ContentEntity;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
@@ -160,7 +157,7 @@ public class RepositoryFacade {
                 throw new TemporateContentRetrievalFailureException(e.getMessage());
             }
 
-            CredentialsFieldsFull secrets =
+            CredentialsFieldsFull credentials =
                     repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
                             provider,
                             secret.getSession(),
@@ -179,7 +176,7 @@ public class RepositoryFacade {
                             RepositoryContentUnitDto.of(
                                     contentEntity.getRoot()),
                             provider,
-                            secrets));
+                            credentials));
         }
 
         return EarliestTemporateContentDto.of(
@@ -298,6 +295,58 @@ public class RepositoryFacade {
         }
 
         return RepositoryContentUnitDto.of(contentEntity.getRoot());
+    }
+
+    /**
+     * Retrieves all content applications from the content repository.
+     *
+     * @return retrieved all content applications.
+     * @throws ContentApplicationRetrievalFailureException if content applications retrieval fails.
+     */
+    public List<RepositoryContentApplicationUnitDto> retrieveAllContentApplications()
+            throws ContentApplicationRetrievalFailureException {
+        List<ContentEntity> contentEntities;
+
+        try {
+            contentEntities = contentRepository.findAll();
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
+        }
+
+        List<RepositoryContentApplicationUnitDto> repositoryContentApplicationUnits = new ArrayList<>();
+
+        for (ContentEntity content : contentEntities) {
+            ProviderEntity rawProvider;
+
+            try {
+                rawProvider = providerRepository.findById(content.getProvider());
+            } catch (RepositoryOperationFailureException e) {
+                throw new ContentApplicationRetrievalFailureException(e.getMessage());
+            }
+
+            Provider provider =
+                    repositoryConfigurationHelper.convertRawProviderToContentProvider(rawProvider.getName());
+
+            SecretEntity secret;
+
+            try {
+                secret = secretRepository.findById(content.getSecret());
+            } catch (RepositoryOperationFailureException e) {
+                throw new ContentApplicationRetrievalFailureException(e.getMessage());
+            }
+
+            CredentialsFieldsFull credentials =
+                    repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
+                            provider,
+                            secret.getSession(),
+                            secret.getCredentials());
+
+            repositoryContentApplicationUnits.add(
+                    RepositoryContentApplicationUnitDto.of(
+                            content.getRoot(), provider, credentials));
+        }
+
+        return repositoryContentApplicationUnits;
     }
 
     /**

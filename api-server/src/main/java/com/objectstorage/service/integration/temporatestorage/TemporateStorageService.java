@@ -1,12 +1,11 @@
 package com.objectstorage.service.integration.temporatestorage;
 
-import com.objectstorage.converter.ContentCompoundUnitToValidationSecretsApplicationConverter;
+import com.objectstorage.converter.ContentCompoundUnitsToValidationSecretsApplicationConverter;
 import com.objectstorage.converter.CronExpressionConverter;
 import com.objectstorage.dto.ContentCompoundUnitDto;
 import com.objectstorage.dto.EarliestTemporateContentDto;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.ValidationSecretsApplication;
-import com.objectstorage.model.ValidationSecretsUnit;
 import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
@@ -155,7 +154,7 @@ public class TemporateStorageService {
             }
 
             ValidationSecretsApplication validationSecretsApplication =
-                    ContentCompoundUnitToValidationSecretsApplicationConverter.convert(
+                    ContentCompoundUnitsToValidationSecretsApplicationConverter.convert(
                             temporateContentDto.getContentCompoundUnits());
 
             String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
@@ -192,7 +191,7 @@ public class TemporateStorageService {
                 try {
                     vendorFacade.uploadObjectToBucket(
                             contentCompoundUnit.getProvider(),
-                            contentCompoundUnit.getCredentialsFieldsFull().getExternal(),
+                            contentCompoundUnit.getCredentials().getExternal(),
                             VendorConfigurationHelper.createBucketName(
                                     contentCompoundUnit.getRepositoryContentUnitDto().getRoot()),
                             temporateContentDto.getLocation(),

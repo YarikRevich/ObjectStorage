@@ -28,6 +28,8 @@ public class TelemetryBinding implements MeterBinder {
 
     private final AtomicDouble averageUploadFileSize = new AtomicDouble();
 
+    private final AtomicInteger currentBackupsAmount = new AtomicInteger();
+
     /**
      * @see MeterBinder
      */
@@ -38,7 +40,7 @@ public class TelemetryBinding implements MeterBinder {
                 .register(meterRegistry);
 
         Gauge.builder("general.current_cloud_service_uploads_amount", currentCloudServiceUploadsAmount, AtomicInteger::get)
-                .description("Represents amount of uploads to different cloud services")
+                .description("Represents amount of uploads to different cloud services in the current session")
                 .register(meterRegistry);
 
         Gauge.builder("general.cloud_service_upload_retries", cloudServiceUploadRetries, AtomicInteger::get)
@@ -51,6 +53,10 @@ public class TelemetryBinding implements MeterBinder {
 
         Gauge.builder("general.average_upload_file_size", averageUploadFileSize, AtomicDouble::get)
                 .description("Represents average upload file size in ObjectStorage Temporate Storage")
+                .register(meterRegistry);
+
+        Gauge.builder("general.current_backups_amount", currentBackupsAmount, AtomicInteger::get)
+                .description("Represents amount of performed cloud service backup operation in the current session")
                 .register(meterRegistry);
     }
 }

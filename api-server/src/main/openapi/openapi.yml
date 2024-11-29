@@ -264,6 +264,7 @@ components:
       required:
         - pending
         - uploaded
+        - backups
       properties:
         pending:
           type: array

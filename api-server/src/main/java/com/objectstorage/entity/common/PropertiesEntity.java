@@ -68,6 +68,9 @@ public class PropertiesEntity {
     @ConfigProperty(name = "workspace.content.backup.directory")
     String workspaceContentBackupDirectory;
 
+    @ConfigProperty(name = "workspace.content.backup.unit")
+    String workspaceContentBackupUnit;
+
     @ConfigProperty(name = "workspace.compression.file.name")
     String workspaceCompressionFileName;
 

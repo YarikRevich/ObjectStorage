@@ -35,6 +35,8 @@ public class TelemetryService {
 
     private final ConcurrentLinkedQueue<Runnable> averageUploadFileSizeQueue = new ConcurrentLinkedQueue<>();
 
+    private final ConcurrentLinkedQueue<Runnable> currentBackupsAmountQueue = new ConcurrentLinkedQueue<>();
+
     private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(0, Thread.ofVirtual().factory());
 
@@ -64,6 +66,12 @@ public class TelemetryService {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (!averageUploadFileSizeQueue.isEmpty()) {
                 averageUploadFileSizeQueue.poll().run();
+            }
+        }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
+
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            if (!currentBackupsAmountQueue.isEmpty()) {
+                currentBackupsAmountQueue.poll().run();
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
     }
@@ -111,6 +119,17 @@ public class TelemetryService {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             averageUploadFileSizeQueue.add(
                     () -> telemetryBinding.getAverageUploadFileSize().set(value));
+        }
+    }
+
+    /**
+     * Increases performed cloud service backup operations.
+     */
+    public void increaseCurrentBackupsAmount() {
+        if (configService.getConfig().getDiagnostics().getEnabled()) {
+            currentBackupsAmountQueue.add(
+                    () -> telemetryBinding.getCurrentBackupsAmount().set(
+                            telemetryBinding.getCurrentBackupsAmount().get() + 1));
         }
     }
 }

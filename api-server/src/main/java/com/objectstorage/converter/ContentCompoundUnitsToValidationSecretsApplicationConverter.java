@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Represents content compounds units to validation secrets application converter;
  */
-public class ContentCompoundUnitToValidationSecretsApplicationConverter {
+public class ContentCompoundUnitsToValidationSecretsApplicationConverter {
 
     /**
      * Converts given content compound units to validation secrets application.
@@ -25,7 +25,7 @@ public class ContentCompoundUnitToValidationSecretsApplicationConverter {
                 element -> validationSecretsUnits.add(
                         ValidationSecretsUnit.of(
                                 element.getProvider(),
-                                element.getCredentialsFieldsFull())));
+                                element.getCredentials())));
 
         return ValidationSecretsApplication.of(validationSecretsUnits);
     }
