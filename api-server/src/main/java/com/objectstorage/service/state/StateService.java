@@ -39,5 +39,5 @@ public class StateService {
      * Represents ObjectStorage watcher service instance.
      */
     @Getter
-    private static WatcherService watcherService;
+    private static final WatcherService watcherService = new WatcherService();
 }

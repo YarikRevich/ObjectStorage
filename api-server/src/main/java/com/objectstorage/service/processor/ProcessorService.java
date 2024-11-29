@@ -16,6 +16,7 @@ import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -282,6 +283,16 @@ public class ProcessorService {
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
 
+        Integer fileSize;
+
+        try {
+            fileSize = file.available();
+        } catch (IOException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
+            throw new ProcessorContentUploadFailureException(e.getMessage());
+        }
+
         String workspaceUnitKey =
                 workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
@@ -329,6 +340,13 @@ public class ProcessorService {
         }
 
         StateService.getTransactionProcessorGuard().unlock();
+
+        StateService.getWatcherService().increaseFilesUploadCounter();
+
+        StateService.getWatcherService().increaseUploadedFilesSize(fileSize);
+
+        telemetryService.setAverageUploadFileSizeQueue(
+                StateService.getWatcherService().getAverageFileSize());
     }
 
     /**
