@@ -274,6 +274,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+        backups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalBackupUnit"
     ContentRetrievalProviderUnit:
       required:
         - location
@@ -284,6 +288,12 @@ components:
         created_at:
           type: integer
           format: int64
+    ContentRetrievalBackupUnit:
+      required:
+        - location
+      properties:
+        location:
+          type: string
     ContentApplication:
       required:
         - root

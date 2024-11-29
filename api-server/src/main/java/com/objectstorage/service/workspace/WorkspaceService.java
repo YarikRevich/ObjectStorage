@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import lombok.SneakyThrows;
@@ -95,7 +94,7 @@ public class WorkspaceService {
      * @param key given workspace unit directory.
      * @return result of the check.
      */
-    public Boolean isUnitDirectoryExist(String key) {
+    private Boolean isUnitDirectoryExist(String key) {
         return Files.exists(Paths.get(properties.getWorkspaceDirectory(), key));
     }
 
@@ -106,7 +105,7 @@ public class WorkspaceService {
      * @param type given content directory type.
      * @return result of the check.
      */
-    public Boolean isContentDirectoryExist(String workspaceUnitDirectory, String type) {
+    private Boolean isContentDirectoryExist(String workspaceUnitDirectory, String type) {
         return Files.exists(Paths.get(workspaceUnitDirectory, type));
     }
 
@@ -339,7 +338,11 @@ public class WorkspaceService {
             writer.putNextEntry(new ZipEntry(WorkspaceConfigurationHelper.getZipFolderDefinition(type)));
 
             for (FolderContentUnitDto folderContentUnit : folderContentUnits) {
-                writer.putNextEntry(new ZipEntry(folderContentUnit.getLocation()));
+                writer.putNextEntry(new ZipEntry(
+                        Path.of(
+                                properties.getWorkspaceContentBackupDirectory(),
+                                WorkspaceConfigurationHelper.getZipFile(
+                                        folderContentUnit.getLocation())).toString()));
 
                 writer.write(folderContentUnit.getContent());
             }
@@ -361,10 +364,10 @@ public class WorkspaceService {
      * @param workspaceUnitKey given user workspace unit key.
      * @param type given content type.
      * @param name             given content name.
-     * @param inputStream          given input.
+     * @param content          given content.
      * @throws FileCreationFailureException if file creation operation failed.
      */
-    public void addContentFile(String workspaceUnitKey, String type, String name, InputStream inputStream)
+    public void addContentFile(String workspaceUnitKey, String type, String name, byte[] content)
             throws FileCreationFailureException {
         if (!isUnitDirectoryExist(workspaceUnitKey)) {
             try {
@@ -392,14 +395,6 @@ public class WorkspaceService {
 
         if (isFilePresent(workspaceUnitDirectory, type, name)) {
             throw new FileCreationFailureException();
-        }
-
-        byte[] content;
-
-        try {
-            content = compressFile(inputStream);
-        } catch (InputCompressionFailureException e) {
-            throw new FileCreationFailureException(e.getMessage());
         }
 
         try {
@@ -433,6 +428,39 @@ public class WorkspaceService {
         }
 
         return false;
+    }
+
+    /**
+     * Retrieves content units in the workspace with the given workspace unit key and of the given type.
+     *
+     * @param workspaceUnitKey given user workspace unit key.
+     * @param type         given file type.
+     * @return retrieves additional content units.
+     * @throws FileUnitsRetrievalFailureException if content units retrieval failed.
+     */
+    public List<String> getContentUnits(String workspaceUnitKey, String type) throws
+            FileUnitsRetrievalFailureException {
+        List<String> result = new ArrayList<>();
+
+        if (isUnitDirectoryExist(workspaceUnitKey)) {
+            String workspaceUnitDirectory;
+
+            try {
+                workspaceUnitDirectory = getUnitDirectory(workspaceUnitKey);
+            } catch (WorkspaceUnitDirectoryNotFoundException e) {
+                throw new FileUnitsRetrievalFailureException(e.getMessage());
+            }
+
+            if (isContentDirectoryExist(workspaceUnitDirectory, type)) {
+                try {
+                    result = getFilesLocations(workspaceUnitDirectory, type);
+                } catch (FilesLocationsRetrievalFailureException e) {
+                    throw new FileUnitsRetrievalFailureException(e.getMessage());
+                }
+            }
+        }
+
+        return result;
     }
 
     /**

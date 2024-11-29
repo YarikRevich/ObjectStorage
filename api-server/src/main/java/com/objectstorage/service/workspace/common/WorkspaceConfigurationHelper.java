@@ -14,4 +14,14 @@ public class WorkspaceConfigurationHelper {
     public static String getZipFolderDefinition(String name) {
         return String.format("%s/", name);
     }
+
+    /**
+     * Creates zip file definition with the help of the given file name.
+     *
+     * @param name given zip file name.
+     * @return wrapped zip file.
+     */
+    public static String getZipFile(String name) {
+        return String.format("%s.zip", name);
+    }
 }

@@ -55,6 +55,8 @@ public class ProcessorService {
             throws ProcessorContentRetrievalFailureException {
         List<ContentRetrievalCompound> compounds = new ArrayList<>();
 
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
@@ -84,11 +86,19 @@ public class ProcessorService {
                      VendorOperationFailureException ignored) {
             }
 
+            List<ContentRetrievalBackupUnit> backups;
+
+            try {
+                backups = workspaceFacade.getBackupUnits(workspaceUnitKey);
+            } catch (FileUnitsRetrievalFailureException e) {
+                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+            }
+
             compounds.add(
                     ContentRetrievalCompound.of(
                             repositoryContentLocationUnitDto.getRoot(),
                             validationSecretsUnit.getProvider().toString(),
-                            List.of(ContentRetrievalUnits.of(pending, uploaded))));
+                            List.of(ContentRetrievalUnits.of(pending, uploaded, backups))));
         }
 
         return ContentRetrievalResult.of(compounds);

@@ -3,6 +3,7 @@ package com.objectstorage.service.workspace.facade;
 import com.objectstorage.dto.FolderContentUnitDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
+import com.objectstorage.model.ContentRetrievalBackupUnit;
 import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.workspace.WorkspaceService;
@@ -75,7 +76,19 @@ public class WorkspaceFacade {
      */
     public void addObjectFile(String workspaceUnitKey, String name, InputStream inputStream)
             throws FileCreationFailureException {
-        workspaceService.addContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name, inputStream);
+        byte[] content;
+
+        try {
+            content = workspaceService.compressFile(inputStream);
+        } catch (InputCompressionFailureException e) {
+            throw new FileCreationFailureException(e.getMessage());
+        }
+
+        workspaceService.addContentFile(
+                workspaceUnitKey,
+                properties.getWorkspaceContentObjectDirectory(),
+                name,
+                content);
     }
 
     /**
@@ -101,7 +114,7 @@ public class WorkspaceFacade {
                 workspaceUnitKey,
                 properties.getWorkspaceContentBackupDirectory(),
                 name,
-                new ByteArrayInputStream(content));
+                content);
 
         Integer amount;
 
@@ -148,6 +161,21 @@ public class WorkspaceFacade {
     public Boolean isBackupFilePresent(String workspaceUnitKey, String name) throws FileExistenceCheckFailureException {
         return workspaceService.isContentFilePresent(
                 workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
+    }
+
+    /**
+     * Retrieves backup units from the workspace with the given workspace unit key.
+     *
+     * @param workspaceUnitKey given user workspace unit key.
+     * @return retrieved backup units.
+     * @throws FileUnitsRetrievalFailureException if file units retrieval fails.
+     */
+    public List<ContentRetrievalBackupUnit> getBackupUnits(String workspaceUnitKey) throws FileUnitsRetrievalFailureException {
+        return workspaceService
+                .getContentUnits(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory())
+                .stream()
+                .map(ContentRetrievalBackupUnit::of)
+                .toList();
     }
 
     /**
