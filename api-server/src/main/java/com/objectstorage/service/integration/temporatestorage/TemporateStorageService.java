@@ -112,9 +112,13 @@ public class TemporateStorageService {
                 return;
             }
 
+            StateService.getTransactionProcessorGuard().lock();
+
             try {
                 repositoryExecutor.beginTransaction();
             } catch (TransactionInitializationFailureException e) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
                 telemetryService.increaseCloudServiceUploadRetries();
@@ -132,12 +136,16 @@ public class TemporateStorageService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     StateService.getTemporateStorageProcessorGuard().unlock();
 
                     logger.error(e2.getMessage());
 
                     return;
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
@@ -162,12 +170,16 @@ public class TemporateStorageService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     StateService.getTemporateStorageProcessorGuard().unlock();
 
                     logger.error(e2.getMessage());
 
                     return;
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
@@ -194,12 +206,16 @@ public class TemporateStorageService {
                     try {
                         repositoryExecutor.rollbackTransaction();
                     } catch (TransactionRollbackFailureException e2) {
+                        StateService.getTransactionProcessorGuard().unlock();
+
                         StateService.getTemporateStorageProcessorGuard().unlock();
 
                         logger.error(e2.getMessage());
 
                         return;
                     }
+
+                    StateService.getTransactionProcessorGuard().unlock();
 
                     StateService.getTemporateStorageProcessorGuard().unlock();
 
@@ -217,12 +233,16 @@ public class TemporateStorageService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     StateService.getTemporateStorageProcessorGuard().unlock();
 
                     logger.error(e2.getMessage());
 
                     return;
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
@@ -234,6 +254,8 @@ public class TemporateStorageService {
             try {
                 repositoryExecutor.commitTransaction();
             } catch (TransactionCommitFailureException e) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
                 telemetryService.increaseCloudServiceUploadRetries();
@@ -242,6 +264,8 @@ public class TemporateStorageService {
 
                 return;
             }
+
+            StateService.getTransactionProcessorGuard().unlock();
 
             telemetryService.increaseCurrentCloudServiceUploads();
 

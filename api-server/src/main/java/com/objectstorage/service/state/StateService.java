@@ -30,6 +30,12 @@ public class StateService {
     private final static ReentrantLock backupProcessorGuard = new ReentrantLock();
 
     /**
+     * Represents ObjectStorage transaction guard.
+     */
+    @Getter
+    private final static ReentrantLock transactionProcessorGuard = new ReentrantLock();
+
+    /**
      * Represents ObjectStorage watcher service instance.
      */
     @Getter

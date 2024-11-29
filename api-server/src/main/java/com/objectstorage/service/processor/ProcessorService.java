@@ -6,6 +6,7 @@ import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
+import com.objectstorage.service.state.StateService;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.vendor.VendorFacade;
 import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
@@ -101,9 +102,13 @@ public class ProcessorService {
      */
     public void apply(ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentApplicationFailureException {
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
 
@@ -114,8 +119,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentApplicationFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentApplicationFailureException(e1.getMessage());
             }
@@ -136,8 +145,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentApplicationFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentApplicationFailureException(e1.getMessage());
             }
@@ -146,8 +159,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
@@ -159,9 +176,13 @@ public class ProcessorService {
      */
     public void withdraw(ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentWithdrawalFailureException {
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentWithdrawalFailureException(e.getMessage());
         }
 
@@ -174,8 +195,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
@@ -186,8 +211,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
@@ -208,8 +237,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
@@ -218,8 +251,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentWithdrawalFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
@@ -235,9 +272,13 @@ public class ProcessorService {
             throws ProcessorContentUploadFailureException {
         logger.info(String.format("Uploading content at '%s' location", location));
 
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
 
@@ -253,8 +294,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentUploadFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentUploadFailureException(e1.getMessage());
             }
@@ -266,8 +311,11 @@ public class ProcessorService {
             try {
                 repositoryExecutor.rollbackTransaction();
             } catch (TransactionRollbackFailureException e2) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 throw new ProcessorContentUploadFailureException(e2.getMessage());
             }
+            StateService.getTransactionProcessorGuard().unlock();
 
             throw new ProcessorContentUploadFailureException(e1.getMessage());
         }
@@ -275,8 +323,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
@@ -397,9 +449,13 @@ public class ProcessorService {
             throws ProcessorContentRemovalFailureException {
         logger.info(String.format("Removing content object of '%s' location", location));
 
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
 
@@ -412,8 +468,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -426,8 +486,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -445,8 +509,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -462,8 +530,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -478,8 +550,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -493,8 +569,12 @@ public class ProcessorService {
                     try {
                         repositoryExecutor.rollbackTransaction();
                     } catch (TransactionRollbackFailureException e2) {
+                        StateService.getTransactionProcessorGuard().unlock();
+
                         throw new ProcessorContentRemovalFailureException(e2.getMessage());
                     }
+
+                    StateService.getTransactionProcessorGuard().unlock();
 
                     throw new ProcessorContentRemovalFailureException(e1.getMessage());
                 }
@@ -504,8 +584,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
