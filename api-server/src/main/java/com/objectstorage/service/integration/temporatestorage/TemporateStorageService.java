@@ -1,14 +1,19 @@
 package com.objectstorage.service.integration.temporatestorage;
 
+import com.objectstorage.converter.ContentCompoundUnitsToValidationSecretsApplicationConverter;
 import com.objectstorage.converter.CronExpressionConverter;
+import com.objectstorage.dto.ContentCompoundUnitDto;
 import com.objectstorage.dto.EarliestTemporateContentDto;
 import com.objectstorage.exception.*;
-import com.objectstorage.model.ValidationSecretsUnit;
+import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.state.StateService;
+import com.objectstorage.service.telemetry.TelemetryService;
+import com.objectstorage.service.telemetry.binding.TelemetryBinding;
 import com.objectstorage.service.vendor.VendorFacade;
+import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
 import com.objectstorage.service.workspace.facade.WorkspaceFacade;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
@@ -46,6 +51,12 @@ public class TemporateStorageService {
     @Inject
     VendorFacade vendorFacade;
 
+    @Inject
+    TelemetryBinding telemetryBinding;
+
+    @Inject
+    TelemetryService telemetryService;
+
     private final ScheduledExecutorService scheduledOperationExecutorService =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -65,6 +76,8 @@ public class TemporateStorageService {
             throw new TemporateStoragePeriodRetrievalFailureException(e.getMessage());
         }
 
+        telemetryBinding.getConfiguredTemporateStorageAwaitTime().set(period);
+
         scheduledOperationExecutorService.scheduleWithFixedDelay(() -> {
             StateService.getTemporateStorageProcessorGuard().lock();
 
@@ -77,9 +90,11 @@ public class TemporateStorageService {
             } catch (TemporateContentRetrievalFailureException e1) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e1.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
 
-                throw new RuntimeException(e1);
+                logger.error(e1.getMessage());
+
+                return;
             }
 
             EarliestTemporateContentDto temporateContentDto;
@@ -89,84 +104,119 @@ public class TemporateStorageService {
             } catch (TemporateContentRetrievalFailureException e) {
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
 
-                throw new RuntimeException(e);
+                logger.error(e.getMessage());
+
+                return;
             }
+
+            StateService.getTransactionProcessorGuard().lock();
 
             try {
                 repositoryExecutor.beginTransaction();
             } catch (TransactionInitializationFailureException e) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
 
-                throw new RuntimeException(e);
+                logger.error(e.getMessage());
+
+                return;
             }
 
             try {
                 repositoryFacade.removeTemporateContentByHash(temporateContentDto.getHash());
             } catch (TemporateContentRemovalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTransactionProcessorGuard().unlock();
 
-                    throw new RuntimeException(e2);
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
+
+                    return;
                 }
 
-                logger.fatal(e1.getMessage());
+                StateService.getTransactionProcessorGuard().unlock();
 
-                throw new RuntimeException(e1);
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
+
+                return;
             }
 
-            String workspaceUnitKey =
-                    workspaceFacade.createWorkspaceUnitKey(temporateContentDto.getValidationSecretsApplication());
+            ValidationSecretsApplication validationSecretsApplication =
+                    ContentCompoundUnitsToValidationSecretsApplicationConverter.convert(
+                            temporateContentDto.getContentCompoundUnits());
+
+            String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
             byte[] content;
 
             try {
                 content = workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentDto.getHash());
             } catch (FileUnitRetrievalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTransactionProcessorGuard().unlock();
 
-                    throw new RuntimeException(e2);
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
+
+                    return;
                 }
 
-                logger.fatal(e1.getMessage());
+                StateService.getTransactionProcessorGuard().unlock();
 
-                throw new RuntimeException(e1);
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
+
+                return;
             }
 
-            for (ValidationSecretsUnit validationSecretsUnit : temporateContentDto.getValidationSecretsApplication()
-                    .getSecrets()) {
+            for (ContentCompoundUnitDto contentCompoundUnit : temporateContentDto.getContentCompoundUnits()) {
                 try {
                     vendorFacade.uploadObjectToBucket(
-                            validationSecretsUnit.getProvider(),
-                            validationSecretsUnit.getCredentials().getExternal(),
-                            "",
+                            contentCompoundUnit.getProvider(),
+                            contentCompoundUnit.getCredentials().getExternal(),
+                            VendorConfigurationHelper.createBucketName(
+                                    contentCompoundUnit.getRepositoryContentUnitDto().getRoot()),
                             temporateContentDto.getLocation(),
                             new ByteArrayInputStream(content));
                 } catch (
                         SecretsConversionException |
                         VendorOperationFailureException |
                         BucketObjectUploadFailureException  e1) {
-                    StateService.getTemporateStorageProcessorGuard().unlock();
+                    telemetryService.increaseCloudServiceUploadRetries();
 
                     try {
                         repositoryExecutor.rollbackTransaction();
                     } catch (TransactionRollbackFailureException e2) {
-                        logger.fatal(e2.getMessage());
+                        StateService.getTransactionProcessorGuard().unlock();
 
-                        throw new RuntimeException(e2);
+                        StateService.getTemporateStorageProcessorGuard().unlock();
+
+                        logger.error(e2.getMessage());
+
+                        return;
                     }
+
+                    StateService.getTransactionProcessorGuard().unlock();
+
+                    StateService.getTemporateStorageProcessorGuard().unlock();
 
                     logger.info(e1.getMessage());
 
@@ -177,28 +227,46 @@ public class TemporateStorageService {
             try {
                 workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentDto.getHash());
             } catch (FileRemovalFailureException e1) {
-                StateService.getTemporateStorageProcessorGuard().unlock();
+                telemetryService.increaseCloudServiceUploadRetries();
 
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
-                    logger.fatal(e2.getMessage());
+                    StateService.getTransactionProcessorGuard().unlock();
 
-                    throw new RuntimeException(e2);
+                    StateService.getTemporateStorageProcessorGuard().unlock();
+
+                    logger.error(e2.getMessage());
+
+                    return;
                 }
 
-                logger.info(e1.getMessage());
+                StateService.getTransactionProcessorGuard().unlock();
+
+                StateService.getTemporateStorageProcessorGuard().unlock();
+
+                logger.error(e1.getMessage());
+
+                return;
             }
 
             try {
                 repositoryExecutor.commitTransaction();
             } catch (TransactionCommitFailureException e) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 StateService.getTemporateStorageProcessorGuard().unlock();
 
-                logger.fatal(e.getMessage());
+                telemetryService.increaseCloudServiceUploadRetries();
 
-                throw new RuntimeException(e);
+                logger.error(e.getMessage());
+
+                return;
             }
+
+            StateService.getTransactionProcessorGuard().unlock();
+
+            telemetryService.increaseCurrentCloudServiceUploads();
 
             StateService.getTemporateStorageProcessorGuard().unlock();
         }, 0, period, TimeUnit.MILLISECONDS);

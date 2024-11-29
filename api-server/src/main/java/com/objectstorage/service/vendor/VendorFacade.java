@@ -319,7 +319,8 @@ public class VendorFacade {
                         bucketName,
                         credentialsFieldExternal.getRegion())
                         .stream()
-                        .map(ContentRetrievalProviderUnit::of)
+                        .map(element -> ContentRetrievalProviderUnit.of(
+                                element.getLocation(), element.getCreatedAt()))
                         .toList();
             }
             case GCS -> {
@@ -333,7 +334,8 @@ public class VendorFacade {
 
                 yield gcsVendorService.listObjectsFromGCSBucket(credentials, bucketName)
                         .stream()
-                        .map(ContentRetrievalProviderUnit::of)
+                        .map(element -> ContentRetrievalProviderUnit.of(
+                                element.getLocation(), element.getCreatedAt()))
                         .toList();
             }
         };

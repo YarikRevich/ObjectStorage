@@ -156,6 +156,7 @@ public class TemporateRepository {
     /**
      * Retrieves all the persisted temporate entities with the given hash.
      *
+     * @param hash given hash.
      * @return retrieved temporate entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */
@@ -213,8 +214,65 @@ public class TemporateRepository {
     }
 
     /**
+     * Retrieves all the persisted temporate entities with the given location, provider and secret.
+     *
+     * @param location given location.
+     * @param provider given provider.
+     * @param secret given secret.
+     * @return retrieved temporate entity.
+     * @throws RepositoryOperationFailureException if repository operation fails.
+     */
+    public TemporateEntity findEarliestByLocationProviderAndSecret(
+            String location, Integer provider, Integer secret) throws RepositoryOperationFailureException {
+        ResultSet resultSet;
+
+        try {
+            resultSet =
+                    repositoryExecutor.performQueryWithResult(
+                            String.format(
+                                    "SELECT t.id, t.hash, t.created_at FROM %s as t WHERE t.location = '%s' AND t.provider = %d AND t.secret = %d ORDER BY created_at DESC LIMIT 1",
+                                    properties.getDatabaseTemporateTableName(),
+                                    location,
+                                    provider,
+                                    secret));
+
+        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        Integer id;
+        String hash;
+        Long createdAt;
+
+        try {
+            id = resultSet.getInt("id");
+            hash = resultSet.getString("hash");
+            createdAt = resultSet.getLong("created_at");
+
+        } catch (SQLException e1) {
+            try {
+                resultSet.close();
+            } catch (SQLException e2) {
+                throw new RepositoryOperationFailureException(e2.getMessage());
+            }
+
+            throw new RepositoryOperationFailureException(e1.getMessage());
+        }
+
+        try {
+            resultSet.close();
+        } catch (SQLException e) {
+            throw new RepositoryOperationFailureException(e.getMessage());
+        }
+
+        return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+    }
+
+    /**
      * Retrieves all the persisted temporate entities with the given provider and secret.
      *
+     * @param provider given provider.
+     * @param secret given secret.
      * @return retrieved temporate entities.
      * @throws RepositoryOperationFailureException if repository operation fails.
      */

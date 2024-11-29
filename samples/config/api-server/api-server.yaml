@@ -17,9 +17,6 @@ connection:
 # Represents section used for ObjectStorage API Server temporate storage configuration. Same compression will be
 # used to upload files to the configured cloud providers.
 temporate-storage:
-  # Represents format used for content to be saved.
-  format: "zip"
-
   # Represents frequency of scheduled operations processing.
   frequency: "*/5 * * * * ?"
 
@@ -37,7 +34,7 @@ backup:
 # Represents section used for ObjectStorage API Server diagnostics configuration.
 diagnostics:
   # Enables diagnostics functionality.
-  enabled: false
+  enabled: true
 
   # Represents section used for ObjectStorage diagnostics metrics configuration.
   metrics:

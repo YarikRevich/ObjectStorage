@@ -1,7 +1,9 @@
 package com.objectstorage.service.workspace.facade;
 
+import com.objectstorage.dto.FolderContentUnitDto;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
+import com.objectstorage.model.ContentRetrievalBackupUnit;
 import com.objectstorage.model.ValidationSecretsApplication;
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.workspace.WorkspaceService;
@@ -10,6 +12,7 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +58,12 @@ public class WorkspaceFacade {
      * @return created file unit key.
      */
     public String createFileUnitKey(String name) {
-        return workspaceService.createUnitKey(name, Instant.now().toString());
+        Instant timestamp = Instant.now();
+
+        String fileUnit =
+                workspaceService.createUnitKey(name, Instant.now().toString());
+
+        return String.format("%s-%s-%d", name, fileUnit, timestamp.toEpochMilli());
     }
 
     /**
@@ -68,20 +76,45 @@ public class WorkspaceFacade {
      */
     public void addObjectFile(String workspaceUnitKey, String name, InputStream inputStream)
             throws FileCreationFailureException {
-        workspaceService.addContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name, inputStream);
+        byte[] content;
+
+        try {
+            content = workspaceService.compressFile(inputStream);
+        } catch (InputCompressionFailureException e) {
+            throw new FileCreationFailureException(e.getMessage());
+        }
+
+        workspaceService.addContentFile(
+                workspaceUnitKey,
+                properties.getWorkspaceContentObjectDirectory(),
+                name,
+                content);
     }
 
     /**
      * Adds new backup file to the workspace with the given workspace unit key as the compressed input stream.
      *
      * @param workspaceUnitKey given user workspace unit key.
-     * @param name             given content name.
-     * @param inputStream          given input.
+     * @param name given file name.
+     * @param folderContentUnits          given folder content units.
      * @throws FileCreationFailureException if file creation operation failed.
      */
-    public void addBackupFile(String workspaceUnitKey, String name, InputStream inputStream)
+    public void addBackupFile(String workspaceUnitKey, String name, List<FolderContentUnitDto> folderContentUnits)
             throws FileCreationFailureException {
-        workspaceService.addContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name, inputStream);
+        byte[] content;
+
+        try {
+            content =
+                    workspaceService.compressFolder(folderContentUnits, properties.getWorkspaceContentBackupDirectory());
+        } catch (InputCompressionFailureException e) {
+            throw new FileCreationFailureException(e.getMessage());
+        }
+
+        workspaceService.addContentFile(
+                workspaceUnitKey,
+                properties.getWorkspaceContentBackupDirectory(),
+                name,
+                content);
 
         Integer amount;
 
@@ -131,6 +164,21 @@ public class WorkspaceFacade {
     }
 
     /**
+     * Retrieves backup units from the workspace with the given workspace unit key.
+     *
+     * @param workspaceUnitKey given user workspace unit key.
+     * @return retrieved backup units.
+     * @throws FileUnitsRetrievalFailureException if file units retrieval fails.
+     */
+    public List<ContentRetrievalBackupUnit> getBackupUnits(String workspaceUnitKey) throws FileUnitsRetrievalFailureException {
+        return workspaceService
+                .getContentUnits(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory())
+                .stream()
+                .map(ContentRetrievalBackupUnit::of)
+                .toList();
+    }
+
+    /**
      * Retrieves object file with the given name and of the given type from the workspace with the given workspace
      * unit key as compressed byte array.
      *
@@ -164,16 +212,6 @@ public class WorkspaceFacade {
      */
     public void removeObjectFile(String workspaceUnitKey, String name) throws FileRemovalFailureException {
         workspaceService.removeContentFile(workspaceUnitKey, properties.getWorkspaceContentObjectDirectory(), name);
-    }
-
-    /**
-     * Removes backup file with the given name from the workspace with the help of the given workspace unit key.
-     *
-     * @param workspaceUnitKey given user workspace unit key.
-     * @throws FileRemovalFailureException if file removal operation failed.
-     */
-    public void removeBackupFile(String workspaceUnitKey, String name) throws FileRemovalFailureException {
-        workspaceService.removeContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
     }
 
     /**

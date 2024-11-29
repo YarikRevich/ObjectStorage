@@ -264,6 +264,7 @@ components:
       required:
         - pending
         - uploaded
+        - backups
       properties:
         pending:
           type: array
@@ -273,7 +274,21 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ContentRetrievalProviderUnit"
+        backups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentRetrievalBackupUnit"
     ContentRetrievalProviderUnit:
+      required:
+        - location
+        - created_at
+      properties:
+        location:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+    ContentRetrievalBackupUnit:
       required:
         - location
       properties:

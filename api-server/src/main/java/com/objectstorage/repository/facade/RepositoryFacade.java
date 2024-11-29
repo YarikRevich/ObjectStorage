@@ -1,7 +1,7 @@
 package com.objectstorage.repository.facade;
 
-import com.objectstorage.dto.RepositoryContentUnitDto;
-import com.objectstorage.dto.EarliestTemporateContentDto;
+import com.objectstorage.dto.*;
+import com.objectstorage.entity.repository.ContentEntity;
 import com.objectstorage.entity.repository.ProviderEntity;
 import com.objectstorage.entity.repository.SecretEntity;
 import com.objectstorage.entity.repository.TemporateEntity;
@@ -9,6 +9,7 @@ import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.*;
 import com.objectstorage.repository.common.RepositoryConfigurationHelper;
+import com.objectstorage.service.telemetry.TelemetryService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -40,6 +41,9 @@ public class RepositoryFacade {
 
     @Inject
     SecretRepository secretRepository;
+
+    @Inject
+    TelemetryService telemetryService;
 
     /**
      * Retrieves filtered content from temporate repository.
@@ -80,7 +84,8 @@ public class RepositoryFacade {
         }
 
         return temporateContent.stream().map(
-                element -> ContentRetrievalProviderUnit.of(element.getLocation())).toList();
+                element -> ContentRetrievalProviderUnit.of(
+                        element.getLocation(), element.getCreatedAt())).toList();
     }
 
     /**
@@ -90,11 +95,17 @@ public class RepositoryFacade {
      * @throws TemporateContentRetrievalFailureException if temporate content amount retrieval fails.
      */
     public Boolean isTemporateContentPresent() throws TemporateContentRetrievalFailureException {
+        Integer amount;
+
         try {
-            return temporateRepository.count() > 0;
+            amount = temporateRepository.count();
         } catch (RepositoryOperationFailureException e) {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
+
+        telemetryService.setTemporateStorageFilesAmount(amount);
+
+        return amount > 0;
     }
 
     /**
@@ -124,7 +135,7 @@ public class RepositoryFacade {
             throw new TemporateContentRetrievalFailureException(e.getMessage());
         }
 
-        List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
+        List<ContentCompoundUnitDto>  contentCompoundUnits = new ArrayList<>();
 
         for (TemporateEntity temporate : temporateEntities) {
             ProviderEntity rawProvider;
@@ -141,25 +152,96 @@ public class RepositoryFacade {
             SecretEntity secret;
 
             try {
-                secret = secretRepository.findById(temporate.getId());
+                secret = secretRepository.findById(temporate.getSecret());
             } catch (RepositoryOperationFailureException e) {
                 throw new TemporateContentRetrievalFailureException(e.getMessage());
             }
 
-            CredentialsFieldsFull secrets =
+            CredentialsFieldsFull credentials =
                     repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
                             provider,
                             secret.getSession(),
                             secret.getCredentials());
 
-            validationSecretsUnits.add(ValidationSecretsUnit.of(provider, secrets));
+            ContentEntity contentEntity;
+
+            try {
+                contentEntity = contentRepository.findByProviderAndSecret(rawProvider.getId(), secret.getId());
+            } catch (RepositoryOperationFailureException e) {
+                throw new TemporateContentRetrievalFailureException(e.getMessage());
+            }
+
+            contentCompoundUnits.add(
+                    ContentCompoundUnitDto.of(
+                            RepositoryContentUnitDto.of(
+                                    contentEntity.getRoot()),
+                            provider,
+                            credentials));
         }
 
         return EarliestTemporateContentDto.of(
-                ValidationSecretsApplication.of(validationSecretsUnits),
+                contentCompoundUnits,
                 temporateEntity.getLocation(),
                 temporateEntity.getHash(),
                 temporateEntity.getCreatedAt());
+    }
+
+    /**
+     * Retrieves temporate content from the temporate repository with the given location, provider and secret.
+     *
+     * @param location given temporate content location.
+     * @param validationSecretsUnit given validation secrets unit.
+     * @return retrieved temporate content.
+     */
+    public TemporateContentUnitDto retrieveTemporateContentByLocationProviderAndSecret(String location, ValidationSecretsUnit validationSecretsUnit)
+            throws TemporateContentRemovalFailureException {
+        ProviderEntity provider;
+
+        try {
+            provider = providerRepository.findByName(validationSecretsUnit.getProvider().toString());
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        String signature = repositoryConfigurationHelper.getExternalCredentials(
+                validationSecretsUnit.getProvider(),
+                validationSecretsUnit.getCredentials().getExternal());
+
+        try {
+            if (!secretRepository.isPresentBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(), signature)) {
+                throw new TemporateContentRemovalFailureException(
+                        new RepositoryContentApplicationNotExistsException().getMessage());
+            }
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        SecretEntity secret;
+
+        try {
+            secret = secretRepository.findBySessionAndCredentials(
+                    validationSecretsUnit.getCredentials().getInternal().getId(),
+                    signature);
+        } catch (RepositoryOperationFailureException e) {
+            throw new TemporateContentRemovalFailureException(e.getMessage());
+        }
+
+        TemporateEntity temporate;
+
+        try {
+            temporate = temporateRepository
+                    .findEarliestByLocationProviderAndSecret(location, provider.getId(), secret.getId());
+        } catch (RepositoryOperationFailureException ignored) {
+            return null;
+        }
+
+        return TemporateContentUnitDto.of(
+                temporate.getProvider(),
+                temporate.getSecret(),
+                temporate.getLocation(),
+                temporate.getHash(),
+                temporate.getCreatedAt());
     }
 
     /**
@@ -203,15 +285,68 @@ public class RepositoryFacade {
             throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
 
+        ContentEntity contentEntity;
+
         try {
-            return contentRepository
-                    .findByProviderAndSecret(provider.getId(), secret.getId())
-                    .stream()
-                    .map(element -> RepositoryContentUnitDto.of(element.getRoot()))
-                    .toList().getFirst();
+             contentEntity = contentRepository
+                    .findByProviderAndSecret(provider.getId(), secret.getId());
         } catch (RepositoryOperationFailureException e) {
             throw new ContentApplicationRetrievalFailureException(e.getMessage());
         }
+
+        return RepositoryContentUnitDto.of(contentEntity.getRoot());
+    }
+
+    /**
+     * Retrieves all content applications from the content repository.
+     *
+     * @return retrieved all content applications.
+     * @throws ContentApplicationRetrievalFailureException if content applications retrieval fails.
+     */
+    public List<RepositoryContentApplicationUnitDto> retrieveAllContentApplications()
+            throws ContentApplicationRetrievalFailureException {
+        List<ContentEntity> contentEntities;
+
+        try {
+            contentEntities = contentRepository.findAll();
+        } catch (RepositoryOperationFailureException e) {
+            throw new ContentApplicationRetrievalFailureException(e.getMessage());
+        }
+
+        List<RepositoryContentApplicationUnitDto> repositoryContentApplicationUnits = new ArrayList<>();
+
+        for (ContentEntity content : contentEntities) {
+            ProviderEntity rawProvider;
+
+            try {
+                rawProvider = providerRepository.findById(content.getProvider());
+            } catch (RepositoryOperationFailureException e) {
+                throw new ContentApplicationRetrievalFailureException(e.getMessage());
+            }
+
+            Provider provider =
+                    repositoryConfigurationHelper.convertRawProviderToContentProvider(rawProvider.getName());
+
+            SecretEntity secret;
+
+            try {
+                secret = secretRepository.findById(content.getSecret());
+            } catch (RepositoryOperationFailureException e) {
+                throw new ContentApplicationRetrievalFailureException(e.getMessage());
+            }
+
+            CredentialsFieldsFull credentials =
+                    repositoryConfigurationHelper.convertRawSecretsToContentCredentials(
+                            provider,
+                            secret.getSession(),
+                            secret.getCredentials());
+
+            repositoryContentApplicationUnits.add(
+                    RepositoryContentApplicationUnitDto.of(
+                            content.getRoot(), provider, credentials));
+        }
+
+        return repositoryContentApplicationUnits;
     }
 
     /**

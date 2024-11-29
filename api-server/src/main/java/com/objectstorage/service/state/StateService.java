@@ -1,5 +1,6 @@
 package com.objectstorage.service.state;
 
+import com.objectstorage.service.state.watcher.WatcherService;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,4 +28,16 @@ public class StateService {
      */
     @Getter
     private final static ReentrantLock backupProcessorGuard = new ReentrantLock();
+
+    /**
+     * Represents ObjectStorage transaction guard.
+     */
+    @Getter
+    private final static ReentrantLock transactionProcessorGuard = new ReentrantLock();
+
+    /**
+     * Represents ObjectStorage watcher service instance.
+     */
+    @Getter
+    private static final WatcherService watcherService = new WatcherService();
 }

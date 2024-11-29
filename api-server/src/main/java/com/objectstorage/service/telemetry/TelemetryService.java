@@ -35,6 +35,8 @@ public class TelemetryService {
 
     private final ConcurrentLinkedQueue<Runnable> averageUploadFileSizeQueue = new ConcurrentLinkedQueue<>();
 
+    private final ConcurrentLinkedQueue<Runnable> currentBackupsAmountQueue = new ConcurrentLinkedQueue<>();
+
     private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(0, Thread.ofVirtual().factory());
 
@@ -67,30 +69,22 @@ public class TelemetryService {
             }
         }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
 
-        System.out.println(configService.getConfig().getTemporateStorage().getFrequency());
-
-        telemetryBinding.getTemporateStorageFilesAmount().set(10);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            if (!currentBackupsAmountQueue.isEmpty()) {
+                currentBackupsAmountQueue.poll().run();
+            }
+        }, 0, properties.getDiagnosticsScrapeDelay(), TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Increases current amount of files in ObjectStorage Temporate Storage.
+     * Sets current amount of files in ObjectStorage Temporate Storage.
+     *
+     * @param value given value.
      */
-    public void increaseTemporateStorageFilesAmount() {
+    public void setTemporateStorageFilesAmount(Integer value) {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
             temporateStorageFilesAmountQueue.add(
-                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
-                            telemetryBinding.getTemporateStorageFilesAmount().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases current amount of files in ObjectStorage Temporate Storage.
-     */
-    public void decreaseTemporateStorageFilesAmount() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            temporateStorageFilesAmountQueue.add(
-                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(
-                            telemetryBinding.getTemporateStorageFilesAmount().get() - 1));
+                    () -> telemetryBinding.getTemporateStorageFilesAmount().set(value));
         }
     }
 
@@ -106,17 +100,6 @@ public class TelemetryService {
     }
 
     /**
-     * Decreases current cloud service uploads from ObjectStorage Temporate Storage.
-     */
-    public void decreaseCurrentCloudServiceUploads() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            currentCloudServiceUploadsQueue.add(
-                    () -> telemetryBinding.getCurrentCloudServiceUploadsAmount().set(
-                            telemetryBinding.getCurrentCloudServiceUploadsAmount().get() - 1));
-        }
-    }
-
-    /**
      * Increases cloud service upload retries form ObjectStorage Temporate Storage.
      */
     public void increaseCloudServiceUploadRetries() {
@@ -128,35 +111,25 @@ public class TelemetryService {
     }
 
     /**
-     * Decreases cloud service upload retries form ObjectStorage Temporate Storage.
+     * Sets average upload file size to ObjectStorage Temporate Storage.
+     *
+     * @param value given value.
      */
-    public void decreaseCloudServiceUploadRetries() {
+    public void setAverageUploadFileSizeQueue(Double value) {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            cloudServiceUploadRetriesQueue.add(
-                    () -> telemetryBinding.getCloudServiceUploadRetries().set(
-                            telemetryBinding.getCloudServiceUploadRetries().get() - 1));
+            averageUploadFileSizeQueue.add(
+                    () -> telemetryBinding.getAverageUploadFileSize().set(value));
         }
     }
 
     /**
-     * Increases average upload file size to ObjectStorage Temporate Storage.
+     * Increases performed cloud service backup operations.
      */
-    public void increaseAverageUploadFileSizeQueue() {
+    public void increaseCurrentBackupsAmount() {
         if (configService.getConfig().getDiagnostics().getEnabled()) {
-            averageUploadFileSizeQueue.add(
-                    () -> telemetryBinding.getAverageUploadFileSize().set(
-                            telemetryBinding.getAverageUploadFileSize().get() + 1));
-        }
-    }
-
-    /**
-     * Decreases average upload file size to ObjectStorage Temporate Storage.
-     */
-    public void decreaseAverageUploadFileSizeQueue() {
-        if (configService.getConfig().getDiagnostics().getEnabled()) {
-            averageUploadFileSizeQueue.add(
-                    () -> telemetryBinding.getAverageUploadFileSize().set(
-                            telemetryBinding.getAverageUploadFileSize().get() - 1));
+            currentBackupsAmountQueue.add(
+                    () -> telemetryBinding.getCurrentBackupsAmount().set(
+                            telemetryBinding.getCurrentBackupsAmount().get() + 1));
         }
     }
 }

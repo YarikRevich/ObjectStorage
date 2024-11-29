@@ -1,10 +1,12 @@
 package com.objectstorage.service.processor;
 
 import com.objectstorage.dto.RepositoryContentUnitDto;
+import com.objectstorage.dto.TemporateContentUnitDto;
 import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
 import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.repository.facade.RepositoryFacade;
+import com.objectstorage.service.state.StateService;
 import com.objectstorage.service.telemetry.TelemetryService;
 import com.objectstorage.service.vendor.VendorFacade;
 import com.objectstorage.service.vendor.common.VendorConfigurationHelper;
@@ -14,9 +16,11 @@ import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides high-level access to ObjectStorage processor operations.
@@ -51,6 +55,8 @@ public class ProcessorService {
             throws ProcessorContentRetrievalFailureException {
         List<ContentRetrievalCompound> compounds = new ArrayList<>();
 
+        String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
+
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
             RepositoryContentUnitDto repositoryContentLocationUnitDto;
 
@@ -80,11 +86,19 @@ public class ProcessorService {
                      VendorOperationFailureException ignored) {
             }
 
+            List<ContentRetrievalBackupUnit> backups;
+
+            try {
+                backups = workspaceFacade.getBackupUnits(workspaceUnitKey);
+            } catch (FileUnitsRetrievalFailureException e) {
+                throw new ProcessorContentRetrievalFailureException(e.getMessage());
+            }
+
             compounds.add(
                     ContentRetrievalCompound.of(
                             repositoryContentLocationUnitDto.getRoot(),
                             validationSecretsUnit.getProvider().toString(),
-                            List.of(ContentRetrievalUnits.of(pending, uploaded))));
+                            List.of(ContentRetrievalUnits.of(pending, uploaded, backups))));
         }
 
         return ContentRetrievalResult.of(compounds);
@@ -99,9 +113,13 @@ public class ProcessorService {
      */
     public void apply(ContentApplication contentApplication, ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentApplicationFailureException {
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
 
@@ -112,8 +130,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentApplicationFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentApplicationFailureException(e1.getMessage());
             }
@@ -134,8 +156,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentApplicationFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentApplicationFailureException(e1.getMessage());
             }
@@ -144,8 +170,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentApplicationFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
@@ -157,57 +187,29 @@ public class ProcessorService {
      */
     public void withdraw(ValidationSecretsApplication validationSecretsApplication)
             throws ProcessorContentWithdrawalFailureException {
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentWithdrawalFailureException(e.getMessage());
         }
 
         for (ValidationSecretsUnit validationSecretsUnit : validationSecretsApplication.getSecrets()) {
-            RepositoryContentUnitDto repositoryContentLocationUnitDto;
-
-            try {
-                repositoryContentLocationUnitDto = repositoryFacade.retrieveContentApplication(validationSecretsUnit);
-            } catch (ContentApplicationRetrievalFailureException e1) {
-                try {
-                    repositoryExecutor.rollbackTransaction();
-                } catch (TransactionRollbackFailureException e2) {
-                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
-                }
-
-                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
-            }
-
             try {
                 repositoryFacade.withdraw(validationSecretsUnit);
             } catch (RepositoryContentDestructionFailureException e1) {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
                 }
 
-                throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
-            }
-
-            try {
-                if (vendorFacade.isBucketPresent(
-                        validationSecretsUnit.getProvider(),
-                        validationSecretsUnit.getCredentials().getExternal(),
-                        VendorConfigurationHelper.createBucketName(
-                                repositoryContentLocationUnitDto.getRoot()))) {
-                    vendorFacade.removeBucket(
-                            validationSecretsUnit.getProvider(),
-                            validationSecretsUnit.getCredentials().getExternal(),
-                            VendorConfigurationHelper.createBucketName(
-                                    repositoryContentLocationUnitDto.getRoot()));
-                }
-            } catch (SecretsConversionException | VendorOperationFailureException e1) {
-                try {
-                    repositoryExecutor.rollbackTransaction();
-                } catch (TransactionRollbackFailureException e2) {
-                    throw new ProcessorContentWithdrawalFailureException(e2.getMessage());
-                }
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentWithdrawalFailureException(e1.getMessage());
             }
@@ -216,8 +218,12 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentWithdrawalFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
@@ -233,9 +239,23 @@ public class ProcessorService {
             throws ProcessorContentUploadFailureException {
         logger.info(String.format("Uploading content at '%s' location", location));
 
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
+            throw new ProcessorContentUploadFailureException(e.getMessage());
+        }
+
+        Integer fileSize;
+
+        try {
+            fileSize = file.available();
+        } catch (IOException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
 
@@ -251,8 +271,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentUploadFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentUploadFailureException(e1.getMessage());
             }
@@ -264,8 +288,11 @@ public class ProcessorService {
             try {
                 repositoryExecutor.rollbackTransaction();
             } catch (TransactionRollbackFailureException e2) {
+                StateService.getTransactionProcessorGuard().unlock();
+
                 throw new ProcessorContentUploadFailureException(e2.getMessage());
             }
+            StateService.getTransactionProcessorGuard().unlock();
 
             throw new ProcessorContentUploadFailureException(e1.getMessage());
         }
@@ -273,8 +300,19 @@ public class ProcessorService {
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentUploadFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
+
+        StateService.getWatcherService().increaseFilesUploadCounter();
+
+        StateService.getWatcherService().increaseUploadedFilesSize(fileSize);
+
+        telemetryService.setAverageUploadFileSizeQueue(
+                StateService.getWatcherService().getAverageFileSize());
     }
 
     /**
@@ -296,12 +334,24 @@ public class ProcessorService {
 
         String workspaceUnitKey = workspaceFacade.createWorkspaceUnitKey(validationSecretsApplication);
 
+        TemporateContentUnitDto temporateContentUnit;
+
         try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
-                return workspaceFacade.getObjectFile(workspaceUnitKey, location);
-            }
-        } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
+            temporateContentUnit =
+                    repositoryFacade.retrieveTemporateContentByLocationProviderAndSecret(
+                            location, validationSecretsUnit);
+        } catch (TemporateContentRemovalFailureException e) {
             throw new ProcessorContentDownloadFailureException(e.getMessage());
+        }
+
+        if (Objects.nonNull(temporateContentUnit)) {
+            try {
+                if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                    return workspaceFacade.getObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+                }
+            } catch (FileExistenceCheckFailureException | FileUnitRetrievalFailureException e) {
+                throw new ProcessorContentDownloadFailureException(e.getMessage());
+            }
         }
 
         RepositoryContentUnitDto repositoryContentLocationUnitDto;
@@ -383,9 +433,13 @@ public class ProcessorService {
             throws ProcessorContentRemovalFailureException {
         logger.info(String.format("Removing content object of '%s' location", location));
 
+        StateService.getTransactionProcessorGuard().lock();
+
         try {
             repositoryExecutor.beginTransaction();
         } catch (TransactionInitializationFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
 
@@ -398,8 +452,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -412,8 +470,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -431,8 +493,12 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
+
+                StateService.getTransactionProcessorGuard().unlock();
 
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
@@ -448,32 +514,66 @@ public class ProcessorService {
                 try {
                     repositoryExecutor.rollbackTransaction();
                 } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
                     throw new ProcessorContentRemovalFailureException(e2.getMessage());
                 }
 
+                StateService.getTransactionProcessorGuard().unlock();
+
                 throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
-        }
 
-        try {
-            if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, location)) {
-                workspaceFacade.removeObjectFile(workspaceUnitKey, location);
-            }
-        } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+            TemporateContentUnitDto temporateContentUnit;
+
             try {
-                repositoryExecutor.rollbackTransaction();
-            } catch (TransactionRollbackFailureException e2) {
-                throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                temporateContentUnit =
+                        repositoryFacade.retrieveTemporateContentByLocationProviderAndSecret(
+                                location, validationSecretsUnit);
+            } catch (TemporateContentRemovalFailureException e1) {
+                try {
+                    repositoryExecutor.rollbackTransaction();
+                } catch (TransactionRollbackFailureException e2) {
+                    StateService.getTransactionProcessorGuard().unlock();
+
+                    throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                }
+
+                StateService.getTransactionProcessorGuard().unlock();
+
+                throw new ProcessorContentRemovalFailureException(e1.getMessage());
             }
 
-            throw new ProcessorContentRemovalFailureException(e1.getMessage());
+            if (Objects.nonNull(temporateContentUnit)) {
+                try {
+                    if (workspaceFacade.isObjectFilePresent(workspaceUnitKey, temporateContentUnit.getHash())) {
+                        workspaceFacade.removeObjectFile(workspaceUnitKey, temporateContentUnit.getHash());
+                    }
+                } catch (FileExistenceCheckFailureException | FileRemovalFailureException e1) {
+                    try {
+                        repositoryExecutor.rollbackTransaction();
+                    } catch (TransactionRollbackFailureException e2) {
+                        StateService.getTransactionProcessorGuard().unlock();
+
+                        throw new ProcessorContentRemovalFailureException(e2.getMessage());
+                    }
+
+                    StateService.getTransactionProcessorGuard().unlock();
+
+                    throw new ProcessorContentRemovalFailureException(e1.getMessage());
+                }
+            }
         }
 
         try {
             repositoryExecutor.commitTransaction();
         } catch (TransactionCommitFailureException e) {
+            StateService.getTransactionProcessorGuard().unlock();
+
             throw new ProcessorContentRemovalFailureException(e.getMessage());
         }
+
+        StateService.getTransactionProcessorGuard().unlock();
     }
 
     /**
