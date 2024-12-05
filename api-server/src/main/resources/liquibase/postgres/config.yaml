@@ -1,0 +1,134 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: YarikRevich
+      changes:
+        - createTable:
+            tableName: secret
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: credentials
+                  type: TEXT
+                  constraints:
+                    nullable: true
+        - createTable:
+            tableName: provider
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: TEXT
+                  constraints:
+                    unique: true
+                    nullable: false
+        - createTable:
+            tableName: content
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: provider
+                  type: INT
+                  constraints:
+                    foreignKeyName: provider_fk
+                    references: provider(id)
+                    nullable: false
+                    deleteCascade: true
+              - column:
+                  name: secret
+                  type: INT
+                  constraints:
+                    foreignKeyName: secret_fk
+                    references: secret(id)
+                    nullable: false
+                    unique: true
+                    deleteCascade: true
+              - column:
+                  name: root
+                  type: TEXT
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: temporate
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: provider
+                  type: INT
+                  constraints:
+                    foreignKeyName: provider_fk
+                    references: provider(id)
+                    nullable: false
+                    deleteCascade: true
+              - column:
+                  name: secret
+                  type: INT
+                  constraints:
+                    foreignKeyName: secret_fk
+                    references: secret(id)
+                    nullable: false
+                    deleteCascade: true
+              - column:
+                  name: location
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: hash
+                  type: TEXT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: created_at
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - createIndex:
+            columns:
+              - column:
+                  name: name
+            indexName: idx_provider_name
+            tableName: provider
+        - loadData:
+            tableName: provider
+            usePreparedStatements: false
+            separator: ;
+            relativeToChangelogFile: true
+            file: data/data.csv
+            encoding: UTF-8
+            quotchar: ''''
+            columns:
+              - column:
+                  header: Name
+                  name: name
+                  type: STRING

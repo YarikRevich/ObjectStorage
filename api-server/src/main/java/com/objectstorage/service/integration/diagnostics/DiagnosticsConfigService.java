@@ -159,20 +159,10 @@ public class DiagnosticsConfigService {
                             configService.getConfig().getDiagnostics().getNodeExporter().getPort(),
                             properties.getDiagnosticsCommonDockerNetworkName());
 
-            CommandExecutorOutputDto nodeExporterDeployCommandOutput;
-
             try {
-                nodeExporterDeployCommandOutput =
-                        commandExecutorService.executeCommand(nodeExporterDeployCommandService);
+                commandExecutorService.executeCommand(nodeExporterDeployCommandService);
             } catch (CommandExecutorException e) {
                 throw new NodeExporterDeploymentFailureException(e.getMessage());
-            }
-
-            String nodeExporterDeployCommandErrorOutput = nodeExporterDeployCommandOutput.getErrorOutput();
-
-            if (Objects.nonNull(nodeExporterDeployCommandErrorOutput) &&
-                    !nodeExporterDeployCommandErrorOutput.isEmpty()) {
-                throw new NodeExporterDeploymentFailureException(nodeExporterDeployCommandErrorOutput);
             }
 
             PrometheusDeployCommandService prometheusDeployCommandService =
@@ -184,20 +174,10 @@ public class DiagnosticsConfigService {
                             properties.getDiagnosticsPrometheusConfigLocation(),
                             properties.getDiagnosticsPrometheusInternalLocation());
 
-            CommandExecutorOutputDto prometheusDeployCommandOutput;
-
             try {
-                prometheusDeployCommandOutput =
-                        commandExecutorService.executeCommand(prometheusDeployCommandService);
+                 commandExecutorService.executeCommand(prometheusDeployCommandService);
             } catch (CommandExecutorException e) {
                 throw new PrometheusDeploymentFailureException(e.getMessage());
-            }
-
-            String prometheusDeployCommandErrorOutput = prometheusDeployCommandOutput.getErrorOutput();
-
-            if (Objects.nonNull(prometheusDeployCommandErrorOutput) &&
-                    !prometheusDeployCommandErrorOutput.isEmpty()) {
-                throw new PrometheusDeploymentFailureException(prometheusDeployCommandErrorOutput);
             }
 
             GrafanaDeployCommandService grafanaDeployCommandService =
@@ -209,20 +189,10 @@ public class DiagnosticsConfigService {
                             properties.getDiagnosticsGrafanaConfigLocation(),
                             properties.getDiagnosticsGrafanaInternalLocation());
 
-            CommandExecutorOutputDto grafanaDeployCommandOutput;
-
             try {
-                grafanaDeployCommandOutput =
-                        commandExecutorService.executeCommand(grafanaDeployCommandService);
+                commandExecutorService.executeCommand(grafanaDeployCommandService);
             } catch (CommandExecutorException e) {
                 throw new GrafanaDeploymentFailureException(e.getMessage());
-            }
-
-            String grafanaDeployCommandErrorOutput = grafanaDeployCommandOutput.getErrorOutput();
-
-            if (Objects.nonNull(grafanaDeployCommandErrorOutput) &&
-                    !grafanaDeployCommandErrorOutput.isEmpty()) {
-                throw new GrafanaDeploymentFailureException(grafanaDeployCommandErrorOutput);
             }
         }
     }

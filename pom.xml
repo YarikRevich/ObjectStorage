@@ -245,6 +245,11 @@
       </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-jdbc-postgresql</artifactId>
+        <version>3.17.2</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkus</groupId>
         <artifactId>quarkus-smallrye-jwt</artifactId>
         <version>3.16.2</version>
       </dependency>

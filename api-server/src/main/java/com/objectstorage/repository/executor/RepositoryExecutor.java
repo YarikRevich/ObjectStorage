@@ -1,8 +1,10 @@
 package com.objectstorage.repository.executor;
 
+import com.objectstorage.entity.common.ConfigEntity;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.repository.common.RepositoryConfigurationHelper;
+import com.objectstorage.service.config.ConfigService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,6 +31,9 @@ public class RepositoryExecutor {
     PropertiesEntity properties;
 
     @Inject
+    ConfigService configService;
+
+    @Inject
     DataSource dataSource;
 
     @Inject
@@ -52,6 +57,16 @@ public class RepositoryExecutor {
             this.connection = dataSource.getConnection();
         } catch (SQLException e) {
             throw new QueryExecutionFailureException(e.getMessage());
+        }
+
+        if (configService.getConfig().getInternalStorage().getProvider() ==
+                ConfigEntity.InternalStorage.Provider.POSTGRES) {
+
+            try {
+                performQuery(String.format("CREATE DATABASE IF NOT EXISTS %s", properties.getDatabaseName()));
+            } catch (QueryEmptyResultException e) {
+                throw new QueryExecutionFailureException(e.getMessage());
+            }
         }
     }
 

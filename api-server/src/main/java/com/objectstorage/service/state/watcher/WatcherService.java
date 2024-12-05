@@ -1,7 +1,5 @@
 package com.objectstorage.service.state.watcher;
 
-import org.apache.commons.io.FileUtils;
-
 /**
  * Service used to track state metrics for the current session in the application.
  */
@@ -39,7 +37,10 @@ public class WatcherService {
      */
     public Double getAverageFileSize() {
         if (filesUploadCounter > 0) {
-            return Double.valueOf(uploadedFilesSize) / Double.valueOf(filesUploadCounter) / 1024 / 1024;
+            return (Double.valueOf(uploadedFilesSize) /
+                    Double.valueOf(filesUploadCounter)) /
+                    (double) 1024 /
+                    (double) 1024;
         }
 
         return (double) 0;

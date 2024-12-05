@@ -7,7 +7,9 @@ Internal storage design of "ObjectStorage"
 end title
 
 * Workspace unit
-** Temporate Storage
+** Objects
+*** N-files
+** Backups
 *** N-files
 @endwbs
 ```

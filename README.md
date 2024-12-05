@@ -144,6 +144,9 @@ diagnostics:
     port: 8121
 ```
 
+In the **~/.objectstorage/internal/database** directory there will be located internal database data, if **sqlite3** 
+option is selected as target database.
+
 ### Diagnostics dashboard
 
 For **ObjectStorage API Server** configuration the following section should be modified:
