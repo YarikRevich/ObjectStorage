@@ -49,10 +49,28 @@ public class ProviderRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer id;
-
         try {
-            id = resultSet.getInt("id");
+            if (resultSet.next()) {
+                try {
+                    Integer id = resultSet.getInt("id");
+
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return ProviderEntity.of(id, name);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -69,7 +87,7 @@ public class ProviderRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return ProviderEntity.of(id, name);
+        return null;
     }
 
     /**
@@ -94,10 +112,28 @@ public class ProviderRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        String name;
-
         try {
-            name = resultSet.getString("name");
+            if (resultSet.next()) {
+                try {
+                    String name = resultSet.getString("name");
+
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return ProviderEntity.of(id, name);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -114,6 +150,6 @@ public class ProviderRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return ProviderEntity.of(id, name);
+        return null;
     }
 }

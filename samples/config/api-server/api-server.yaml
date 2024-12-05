@@ -17,19 +17,16 @@ connection:
 # Represents section used for ObjectStorage API Server internal database configuration.
 internal-storage:
   # Represents provider selected for ObjectStorage internal database. Supported providers are "sqlite3" and "postgres" only.
-#  provider: "sqlite3"
-  provider: "postgres"
+  provider: "sqlite3"
 
   # Represents host for the previously selected ObjectStorage internal database provider, works only for "postgres".
-  host: "localhost:5432"
+  # host: "localhost:5432"
 
   # Represents username for the previously selected ObjectStorage internal database provider.
-#  username: "objectstorage_user"
-  username: "objectstorage"
+  username: "objectstorage_user"
 
   # Represents password for the previously selected ObjectStorage internal database provider.
-#  password: "objectstorage_password"
-  password: "objectstorage"
+  password: "objectstorage_password"
 
 # Represents section used for ObjectStorage API Server temporate storage configuration. Same compression will be
 # used to upload files to the configured cloud providers.

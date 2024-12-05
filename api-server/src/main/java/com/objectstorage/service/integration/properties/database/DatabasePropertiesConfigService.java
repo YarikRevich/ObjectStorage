@@ -1,6 +1,8 @@
 package com.objectstorage.service.integration.properties.database;
 
 import com.objectstorage.exception.ConfigDatabasePropertiesMissingException;
+import com.objectstorage.exception.QueryExecutionFailureException;
+import com.objectstorage.repository.executor.RepositoryExecutor;
 import com.objectstorage.service.config.common.ConfigConfigurationHelper;
 import io.quarkus.runtime.annotations.StaticInitSafe;
 import io.smallrye.config.ConfigSourceContext;
@@ -11,6 +13,8 @@ import lombok.SneakyThrows;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import com.objectstorage.entity.common.ConfigEntity;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.OptionalInt;
@@ -45,6 +49,11 @@ public class DatabasePropertiesConfigService implements ConfigSourceFactory {
             return Collections.emptyList();
         }
 
+        final ConfigValue databaseStatementCloseDelay = context.getValue("database.statement.close-delay");
+        if (Objects.isNull(databaseStatementCloseDelay) || Objects.isNull(databaseStatementCloseDelay.getValue())) {
+            return Collections.emptyList();
+        }
+
         Properties properties = new Properties();
 
         ConfigEntity config = ConfigConfigurationHelper.readConfig(configLocation.getValue(), false);
@@ -66,6 +75,8 @@ public class DatabasePropertiesConfigService implements ConfigSourceFactory {
 
         switch (config.getInternalStorage().getProvider()) {
             case SQLITE3 -> {
+                properties.put("quarkus.liquibase.change-log", liquibaseSqlite3Config.getValue());
+
                 properties.put("quarkus.datasource.jdbc.driver", "org.sqlite.JDBC");
                 properties.put("quarkus.datasource.db-kind", "other");
                 properties.put(
@@ -74,14 +85,31 @@ public class DatabasePropertiesConfigService implements ConfigSourceFactory {
                                 "jdbc:sqlite:%s/.%s/internal/database/data.db",
                                 System.getProperty("user.home"),
                                 databaseName.getValue()));
-                properties.put("quarkus.liquibase.change-log", liquibaseSqlite3Config);
             }
             case POSTGRES -> {
+                properties.put("quarkus.liquibase.change-log", liquibasePostgresConfig.getValue());
+
                 properties.put("quarkus.datasource.db-kind", "postgresql");
                 properties.put(
                         "quarkus.datasource.jdbc.url",
-                        String.format("jdbc:postgresql://%s/postgres", config.getInternalStorage().getHost()));
-                properties.put("quarkus.liquibase.change-log", liquibasePostgresConfig);
+                        String.format("jdbc:postgresql://%s/%s",
+                                config.getInternalStorage().getHost(),
+                                databaseName.getValue()));
+
+                Connection connection = DriverManager.getConnection(
+                        String.format("jdbc:postgresql://%s/postgres", config.getInternalStorage().getHost()),
+                        config.getInternalStorage().getUsername(),
+                        config.getInternalStorage().getPassword());
+
+                try {
+                    RepositoryExecutor.performQuery(
+                            connection,
+                            String.format("CREATE DATABASE %s", databaseName.getValue()),
+                            Integer.valueOf(databaseStatementCloseDelay.getValue()));
+                } catch (QueryExecutionFailureException ignore) {
+                }
+
+                connection.close();
             }
         }
 
