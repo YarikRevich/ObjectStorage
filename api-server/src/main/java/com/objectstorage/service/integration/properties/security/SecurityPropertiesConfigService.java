@@ -24,14 +24,14 @@ public class SecurityPropertiesConfigService implements ConfigSourceFactory {
     @Override
     @SneakyThrows
     public Iterable<ConfigSource> getConfigSources(final ConfigSourceContext context) {
-        final ConfigValue value = context.getValue("config.location");
-        if (value == null || value.getValue() == null) {
+        final ConfigValue configLocation = context.getValue("config.location");
+        if (Objects.isNull(configLocation) || Objects.isNull(configLocation.getValue())) {
             return Collections.emptyList();
         }
 
         Properties properties = new Properties();
 
-        ConfigEntity config = ConfigConfigurationHelper.readConfig(value.getValue(), false);
+        ConfigEntity config = ConfigConfigurationHelper.readConfig(configLocation.getValue(), false);
         if (Objects.isNull(config)) {
             return Collections.emptyList();
         }

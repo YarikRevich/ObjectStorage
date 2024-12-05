@@ -7,6 +7,7 @@ import com.objectstorage.exception.QueryEmptyResultException;
 import com.objectstorage.exception.QueryExecutionFailureException;
 import com.objectstorage.exception.RepositoryOperationFailureException;
 import com.objectstorage.repository.executor.RepositoryExecutor;
+import com.objectstorage.service.config.ConfigService;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,6 +27,9 @@ import java.util.List;
 public class TemporateRepository {
     @Inject
     PropertiesEntity properties;
+
+    @Inject
+    ConfigService configService;
 
     @Inject
     RepositoryExecutor repositoryExecutor;
@@ -54,7 +58,7 @@ public class TemporateRepository {
         try {
             repositoryExecutor.performQuery(query);
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }
@@ -71,16 +75,45 @@ public class TemporateRepository {
         try {
             resultSet =
                     repositoryExecutor.performQueryWithResult(
-                            String.format("SELECT COUNT(1) as 'result' FROM %s", properties.getDatabaseTemporateTableName()));
+                            String.format("SELECT COUNT(1) as result FROM %s", properties.getDatabaseTemporateTableName()));
 
         } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer count;
+        Integer count = 0;
 
         try {
-            count = resultSet.getInt("result");
+            if (resultSet.next()) {
+                switch (configService.getConfig().getInternalStorage().getProvider()) {
+                    case SQLITE3 -> {
+                        try {
+                            count = resultSet.getInt("result");
+                        } catch (SQLException e1) {
+                            try {
+                                resultSet.close();
+                            } catch (SQLException e2) {
+                                throw new RepositoryOperationFailureException(e2.getMessage());
+                            }
+
+                            throw new RepositoryOperationFailureException(e1.getMessage());
+                        }
+                    }
+                    case POSTGRES -> {
+                        try {
+                            count = (int) resultSet.getLong("result");
+                        } catch (SQLException e1) {
+                            try {
+                                resultSet.close();
+                            } catch (SQLException e2) {
+                                throw new RepositoryOperationFailureException(e2.getMessage());
+                            }
+
+                            throw new RepositoryOperationFailureException(e1.getMessage());
+                        }
+                    }
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -120,20 +153,33 @@ public class TemporateRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer id;
-        Integer provider;
-        Integer secret;
-        String location;
-        String hash;
-        Long createdAt;
-
         try {
-            id = resultSet.getInt("id");
-            provider = resultSet.getInt("provider");
-            secret = resultSet.getInt("secret");
-            location = resultSet.getString("location");
-            hash = resultSet.getString("hash");
-            createdAt = resultSet.getLong("created_at");
+            if (resultSet.next()) {
+                try {
+                    Integer id = resultSet.getInt("id");
+                    Integer provider = resultSet.getInt("provider");
+                    Integer secret = resultSet.getInt("secret");
+                    String location = resultSet.getString("location");
+                    String hash = resultSet.getString("hash");
+                    Long createdAt = resultSet.getLong("created_at");
+
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -150,7 +196,7 @@ public class TemporateRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+        return null;
     }
 
     /**
@@ -240,15 +286,30 @@ public class TemporateRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer id;
-        String hash;
-        Long createdAt;
-
         try {
-            id = resultSet.getInt("id");
-            hash = resultSet.getString("hash");
-            createdAt = resultSet.getLong("created_at");
+            if (resultSet.next()) {
+                try {
+                    Integer id = resultSet.getInt("id");
+                    String hash = resultSet.getString("hash");
+                    Long createdAt = resultSet.getLong("created_at");
 
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -265,7 +326,7 @@ public class TemporateRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return TemporateEntity.of(id, provider, secret, location, hash, createdAt);
+        return null;
     }
 
     /**
@@ -347,7 +408,7 @@ public class TemporateRepository {
                             provider,
                             secret));
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }
@@ -366,7 +427,7 @@ public class TemporateRepository {
                             properties.getDatabaseTemporateTableName(),
                             hash));
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }
@@ -387,7 +448,7 @@ public class TemporateRepository {
                             provider,
                             secret));
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }

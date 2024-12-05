@@ -85,8 +85,6 @@ public class BackupService {
                 } catch (ContentApplicationRetrievalFailureException e) {
                     StateService.getBackupProcessorGuard().unlock();
 
-                    logger.error(e.getMessage());
-
                     return;
                 }
 

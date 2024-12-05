@@ -7,14 +7,6 @@ Internal database design of "ObjectStorage"
 
 end title
 
-entity "config" {
-    *id : number <<PK>>
-    *provider : number <<FK>> # provider(id)
-    *secret: number <<FK>> # secret(id)
-    --
-    hash : varchar
-}
-
 entity "secret" {
     *id : number <<PK>>
     --
@@ -44,9 +36,8 @@ entity "temporate" {
     hash : varchar
 }
 
-config ||...|| secret #magenta : attached to
 content ||...|| secret #magenta : attached to
 content }|...|| provider  #magenta : configures
-temporate ||...|| secret #magenta : created with
-temporate }|...|| provider  #magenta : created with
+temporate }|...|| secret #magenta : created with
+temporate }|...|| provider  #magenta : created for
 ```

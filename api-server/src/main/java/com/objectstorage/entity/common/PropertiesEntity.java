@@ -20,6 +20,15 @@ public class PropertiesEntity {
     @ConfigProperty(name = "quarkus.http.port")
     Integer applicationPort;
 
+    @ConfigProperty(name = "database.name")
+    String databaseName;
+
+    @ConfigProperty(name = "liquibase.sqlite3.config")
+    String liquibaseSqlite3Config;
+
+    @ConfigProperty(name = "liquibase.postgres.config")
+    String liquibasePostgresConfig;
+
     @ConfigProperty(name = "content.root.notation")
     String contentRootNotation;
 

@@ -1,8 +1,10 @@
 package com.objectstorage.repository.executor;
 
+import com.objectstorage.entity.common.ConfigEntity;
 import com.objectstorage.entity.common.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.repository.common.RepositoryConfigurationHelper;
+import com.objectstorage.service.config.ConfigService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,16 +31,16 @@ public class RepositoryExecutor {
     PropertiesEntity properties;
 
     @Inject
-    DataSource dataSource;
+    ConfigService configService;
 
     @Inject
-    RepositoryConfigurationHelper repositoryConfigurationHelper;
+    DataSource dataSource;
 
     private Connection connection;
 
-    private final List<Statement> statements = new ArrayList<>();
+    private final static List<Statement> statements = new ArrayList<>();
 
-    private final ScheduledExecutorService scheduledExecutorService =
+    private final static ScheduledExecutorService scheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor();
 
     /**
@@ -56,20 +58,24 @@ public class RepositoryExecutor {
     }
 
     /**
-     * Performs given SQL query without result.
+     * Performs given SQL query via given connection without result.
      *
+     * @param connection given SQL connection.
      * @param query given SQL query to be executed.
+     * @param databaseStatementCloseDelay given database statement close delay.
      * @throws QueryExecutionFailureException if query execution is interrupted by failure.
-     * @throws QueryEmptyResultException if result is empty.
      */
-    public void performQuery(String query) throws QueryExecutionFailureException, QueryEmptyResultException {
+    public static void performQuery(Connection connection, String query, Integer databaseStatementCloseDelay)
+            throws QueryExecutionFailureException {
         Statement statement;
 
         try {
-            statement = this.connection.createStatement();
+            statement = connection.createStatement();
         } catch (SQLException e) {
             throw new QueryExecutionFailureException(e.getMessage());
         }
+
+        statements.add(statement);
 
         try {
             statement.executeUpdate(query);
@@ -77,15 +83,23 @@ public class RepositoryExecutor {
             throw new QueryExecutionFailureException(e.getMessage());
         }
 
-        statements.add(statement);
-
         scheduledExecutorService.schedule(() -> {
             try {
                 statement.close();
             } catch (SQLException e) {
                 logger.fatal(new QueryExecutionFailureException(e.getMessage()).getMessage());
             }
-        }, properties.getDatabaseStatementCloseDelay(), TimeUnit.MILLISECONDS);
+        }, databaseStatementCloseDelay, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Performs given SQL query without result.
+     *
+     * @param query given SQL query to be executed.
+     * @throws QueryExecutionFailureException if query execution is interrupted by failure.
+     */
+    public void performQuery(String query) throws QueryExecutionFailureException {
+        performQuery(this.connection, query, properties.getDatabaseStatementCloseDelay());
     }
 
     /**
@@ -105,6 +119,8 @@ public class RepositoryExecutor {
             throw new QueryExecutionFailureException(e.getMessage());
         }
 
+        statements.add(statement);
+
         ResultSet resultSet;
 
         try {
@@ -112,8 +128,6 @@ public class RepositoryExecutor {
         } catch (SQLException e) {
             throw new QueryExecutionFailureException(e.getMessage());
         }
-
-        statements.add(statement);
 
         scheduledExecutorService.schedule(() -> {
             try {

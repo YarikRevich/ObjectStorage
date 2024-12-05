@@ -49,7 +49,7 @@ public class ContentRepository {
         try {
             repositoryExecutor.performQuery(query);
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }
@@ -77,12 +77,29 @@ public class ContentRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer id;
-        String root;
-
         try {
-            id = resultSet.getInt("id");
-            root = resultSet.getString("root");
+            if (resultSet.next()) {
+                try {
+                    Integer id = resultSet.getInt("id");
+                    String root = resultSet.getString("root");
+
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return ContentEntity.of(id, provider, secret, root);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -99,7 +116,7 @@ public class ContentRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return ContentEntity.of(id, provider, secret, root);
+        return null;
     }
 
     /**
@@ -167,7 +184,7 @@ public class ContentRepository {
                             provider,
                             secret));
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }

@@ -1,1 +1,2 @@
+com.objectstorage.service.integration.properties.database.DatabasePropertiesConfigService
 com.objectstorage.service.integration.properties.security.SecurityPropertiesConfigService

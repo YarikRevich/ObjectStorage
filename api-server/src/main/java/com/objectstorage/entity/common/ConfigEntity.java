@@ -52,6 +52,55 @@ public class ConfigEntity {
     public Connection connection;
 
     /**
+     * Represents ObjectStorage internal storage configuration used for internal database setup.
+     */
+    @Getter
+    public static class InternalStorage {
+        /**
+         * Represents all supported providers, which can be used by ObjectStorage internal storage.
+         */
+        @Getter
+        public enum Provider {
+            @JsonProperty("sqlite3")
+            SQLITE3("sqlite3"),
+
+            @JsonProperty("postgres")
+            POSTGRES("postgres");
+
+            private final String value;
+
+            Provider(String value) {
+                this.value = value;
+            }
+
+            public String toString() {
+                return value;
+            }
+        }
+
+        @Valid
+        @NotNull
+        @JsonProperty("provider")
+        public Provider provider;
+
+        @JsonProperty("host")
+        public String host;
+
+        @NotNull
+        @JsonProperty("username")
+        public String username;
+
+        @NotNull
+        @JsonProperty("password")
+        public String password;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("internal-storage")
+    public InternalStorage internalStorage;
+
+    /**
      * Represents ObjectStorage API Server configuration used for temporate storage setup.
      */
     @Getter

@@ -45,7 +45,7 @@ public class SecretRepository {
 
         try {
             repositoryExecutor.performQuery(query);
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }
@@ -107,10 +107,28 @@ public class SecretRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer id;
-
         try {
-            id = resultSet.getInt("id");
+            if (resultSet.next()) {
+                try {
+                    Integer id = resultSet.getInt("id");
+
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        throw new RepositoryOperationFailureException(e.getMessage());
+                    }
+
+                    return SecretEntity.of(id, session, credentials);
+                } catch (SQLException e1) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e2) {
+                        throw new RepositoryOperationFailureException(e2.getMessage());
+                    }
+
+                    throw new RepositoryOperationFailureException(e1.getMessage());
+                }
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -127,7 +145,7 @@ public class SecretRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return SecretEntity.of(id, session, credentials);
+        return null;
     }
 
     /**
@@ -150,18 +168,19 @@ public class SecretRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        Integer session;
-
         try {
-            session = resultSet.getInt("session");
-        } catch (SQLException e) {
-            throw new RepositoryOperationFailureException(e.getMessage());
-        }
+            if (resultSet.next()) {
+                Integer session = resultSet.getInt("session");
+                String credentials = resultSet.getString("credentials");
 
-        String credentials;
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    throw new RepositoryOperationFailureException(e.getMessage());
+                }
 
-        try {
-            credentials = resultSet.getString("credentials");
+                return SecretEntity.of(id, session, credentials);
+            }
         } catch (SQLException e1) {
             try {
                 resultSet.close();
@@ -178,7 +197,7 @@ public class SecretRepository {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
 
-        return SecretEntity.of(id, session, credentials);
+        return null;
     }
 
     /**
@@ -195,7 +214,7 @@ public class SecretRepository {
                             properties.getDatabaseSecretTableName(),
                             id));
 
-        } catch (QueryExecutionFailureException | QueryEmptyResultException e) {
+        } catch (QueryExecutionFailureException e) {
             throw new RepositoryOperationFailureException(e.getMessage());
         }
     }

@@ -102,11 +102,23 @@ connection:
     # Represents password, which will be used to decode operations.
     password: "test123"
 
-# Represents section used for ObjectStorage API Server temporate storage configuration.
-temporate-storage:
-  # Represents format used for content to be saved.
-  format: "zip"
+# Represents section used for ObjectStorage API Server internal database configuration.
+internal-storage:
+  # Represents provider selected for ObjectStorage internal database. Supported providers are "sqlite3" and "postgres" only.
+  provider: "sqlite3"
 
+  # Represents host for the previously selected ObjectStorage internal database provider, works only for "postgres".
+  # host: "localhost:5432"
+
+  # Represents username for the previously selected ObjectStorage internal database provider.
+  username: "objectstorage_user"
+
+  # Represents password for the previously selected ObjectStorage internal database provider.
+  password: "objectstorage_password"
+
+# Represents section used for ObjectStorage API Server temporate storage configuration. Same compression will be
+# used to upload files to the configured cloud providers.
+temporate-storage:
   # Represents frequency of scheduled operations processing.
   frequency: "*/5 * * * * ?"
 
@@ -118,10 +130,13 @@ backup:
   # Represents frequency of backup operation for selected provider.
   frequency: "0 */5 * * * ?"
 
+  # Represents the highest amount of downloaded backup content versions per each workspace.
+  max-versions: 5
+
 # Represents section used for ObjectStorage API Server diagnostics configuration.
 diagnostics:
   # Enables diagnostics functionality.
-  enabled: false
+  enabled: true
 
   # Represents section used for ObjectStorage diagnostics metrics configuration.
   metrics:
@@ -143,6 +158,9 @@ diagnostics:
     # Represents port used for Prometheus Node Exporter instance deployment.
     port: 8121
 ```
+
+In the **~/.objectstorage/internal/database** directory there will be located internal database data, if **sqlite3** 
+option is selected as target database.
 
 ### Diagnostics dashboard
 
