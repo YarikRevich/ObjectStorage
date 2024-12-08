@@ -3,6 +3,7 @@ package com.objectstorage.dto;
 import com.objectstorage.entity.ConfigEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 /**
  * Represents input for clean external command.
  */

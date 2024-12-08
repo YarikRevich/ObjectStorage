@@ -48,14 +48,7 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
 
         ContentClientService contentClientService = new ContentClientService(config.getApiServer().getHost());
 
-        ContentRetrievalApplication request = ContentRetrievalApplication.of(
-                ConfigProviderToContentProviderConverter.convert(
-                        config.getService().getProvider()),
-                ConfigCredentialsToContentCredentialsConverter.convert(
-                        config.getService().getProvider(),
-                        config.getService().getCredentials()));
-
-        ContentRetrievalResult contentRetrievalResult = contentClientService.process(request);
+        ContentRetrievalResult contentRetrievalResult = contentClientService.process("");
 
         try {
             visualizationState.addResult(OutputToVisualizationConverter.convert(contentRetrievalResult));

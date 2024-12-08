@@ -19,6 +19,7 @@ service:
 
       # Represents a select region where the deployment of infrastructure will be performed.
       # Remember that it may influence the availability of the ObjectStorage deployed infrastructure.
+      #
       # This option can be applied to "s3" provider only.
       region: "us-west-2"
 

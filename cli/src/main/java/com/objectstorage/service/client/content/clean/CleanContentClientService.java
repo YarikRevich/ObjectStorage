@@ -2,6 +2,7 @@ package com.objectstorage.service.client.content.clean;
 
 import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
+import com.objectstorage.dto.ContentCleanupRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
 import com.objectstorage.model.ContentCleanup;
@@ -16,8 +17,8 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
-/** Represents implementation for v1ContentCleanDelete endpoint of ContentResourceApi. */
-public class CleanContentClientService implements IClient<Void, ContentCleanup> {
+/** Represents implementation for v1ContentObjectCleanDelete endpoint of ContentResourceApi. */
+public class CleanContentClientService implements IClient<Void, ContentCleanupRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
     public CleanContentClientService(String host) {
@@ -34,11 +35,13 @@ public class CleanContentClientService implements IClient<Void, ContentCleanup> 
      * @see IClient
      */
     @Override
-    public Void process(ContentCleanup input)
+    public Void process(ContentCleanupRequestDto input)
             throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
-                    .v1ContentCleanDelete(input)
+                    .v1ContentObjectCleanDelete(
+                            input.getAuthorization(),
+                            input.getContentCleanup())
                     .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());

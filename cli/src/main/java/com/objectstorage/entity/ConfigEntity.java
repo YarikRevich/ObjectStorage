@@ -41,7 +41,10 @@ public class ConfigEntity {
          */
         public enum Provider {
             @JsonProperty("s3")
-            S3("s3");
+            S3("s3"),
+
+            @JsonProperty("gcs")
+            GCS("gcs");
 
             private final String value;
 
@@ -54,15 +57,33 @@ public class ConfigEntity {
             }
         }
 
+        @Valid
+        @NotNull
         @JsonProperty("provider")
         public Provider provider;
 
         /**
-         * Represents credentials used for service provider authentication.
+         * Represents credentials used for GCS provider authentication.
          */
         @Getter
         @NoArgsConstructor
-        public static class AWSCredentials {
+        public static class GCSCredentials {
+            @NotNull
+            public Integer id;
+
+            @Pattern(regexp = "^(((./)?)|((~/.)?)|((/?))?)([a-zA-Z/]*)((\\.([a-z]+))?)$")
+            public String file;
+        }
+
+        /**
+         * Represents credentials used for S3 provider authentication.
+         */
+        @Getter
+        @NoArgsConstructor
+        public static class S3Credentials {
+            @NotNull
+            public Integer id;
+
             @Pattern(regexp = "^(((./)?)|((~/.)?)|((/?))?)([a-zA-Z/]*)((\\.([a-z]+))?)$")
             public String file;
 
@@ -70,7 +91,9 @@ public class ConfigEntity {
             public String region;
         }
 
+        @Valid
         @NotNull
+        @JsonProperty("credentials")
         public Object credentials;
     }
 

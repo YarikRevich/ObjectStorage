@@ -1,51 +1,43 @@
-package com.objectstorage.service.client.content.apply;
+package com.objectstorage.service.client.validation;
 
 import com.objectstorage.ApiClient;
-import com.objectstorage.api.ContentResourceApi;
-import com.objectstorage.dto.ContentApplicationRequestDto;
-import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.api.ValidationResourceApi;
 import com.objectstorage.exception.ApiServerNotAvailableException;
+import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.model.ValidationSecretsApplication;
+import com.objectstorage.model.ValidationSecretsApplicationResult;
 import com.objectstorage.service.client.common.IClient;
-import com.objectstorage.service.config.ConfigService;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import com.objectstorage.model.ContentApplication;
 import reactor.netty.http.client.HttpClient;
 
 /**
- * Represents implementation for v1ContentApplyPost endpoint of ContentResourceApi.
+ * Represents implementation for v1SecretsAcquirePost endpoint of ContentResourceApi.
  */
-public class ApplyContentClientService implements IClient<Void, ContentApplicationRequestDto> {
-    private final ContentResourceApi contentResourceApi;
+public class AcquireSecretsClientService implements IClient<
+        ValidationSecretsApplicationResult, ValidationSecretsApplication> {
+    private final ValidationResourceApi validationResourceApi;
 
-    public ApplyContentClientService(String host) {
+    public AcquireSecretsClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().followRedirect(true)))
                 .build())
                 .setBasePath(host);
 
-        this.contentResourceApi = new ContentResourceApi(apiClient);
+        this.validationResourceApi = new ValidationResourceApi(apiClient);
     }
 
     /**
      * @see IClient
      */
     @Override
-    public Void process(ContentApplicationRequestDto input)
+    public ValidationSecretsApplicationResult process(ValidationSecretsApplication validationSecretsApplication)
             throws ApiServerOperationFailureException {
         try {
-            return contentResourceApi
-                    .v1ContentApplyPost(
-                            input.getAuthorization(),
-                            input.getContentApplication())
-                    .block();
+            return validationResourceApi.v1SecretsAcquirePost(validationSecretsApplication).block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {

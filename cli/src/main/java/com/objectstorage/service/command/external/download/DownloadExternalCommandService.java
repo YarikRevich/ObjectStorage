@@ -8,19 +8,16 @@ import com.objectstorage.exception.ApiServerOperationFailureException;
 import com.objectstorage.exception.VersionMismatchException;
 import com.objectstorage.model.ContentDownload;
 import com.objectstorage.model.VersionInfoResult;
-import com.objectstorage.service.client.content.download.DownloadContentClientService;
+import com.objectstorage.service.client.content.download.object.DownloadContentObjectClientService;
 import com.objectstorage.service.client.info.version.VersionInfoClientService;
 import com.objectstorage.service.command.common.ICommand;
 import com.objectstorage.service.visualization.state.VisualizationState;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Represents download external command service.
@@ -53,8 +50,8 @@ public class DownloadExternalCommandService implements ICommand<DownloadExternal
 
         visualizationState.getLabel().pushNext();
 
-        DownloadContentClientService downloadContentClientService =
-                new DownloadContentClientService(downloadExternalCommand.getConfig().getApiServer().getHost());
+        DownloadContentObjectClientService downloadContentClientService =
+                new DownloadContentObjectClientService(downloadExternalCommand.getConfig().getApiServer().getHost());
 
         ContentDownload request = ContentDownload.of(
                 downloadExternalCommand.getLocation(),

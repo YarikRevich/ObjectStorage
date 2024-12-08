@@ -49,14 +49,7 @@ public class CleanAllExternalCommandService implements ICommand<ConfigEntity> {
         CleanAllContentClientService cleanAllContentClientService =
                 new CleanAllContentClientService(config.getApiServer().getHost());
 
-        ContentCleanupAll request = ContentCleanupAll.of(
-                ConfigProviderToContentProviderConverter.convert(
-                        config.getService().getProvider()),
-                ConfigCredentialsToContentCredentialsConverter.convert(
-                        config.getService().getProvider(),
-                        config.getService().getCredentials()));
-
-        cleanAllContentClientService.process(request);
+        cleanAllContentClientService.process("");
 
         visualizationState.getLabel().pushNext();
     }

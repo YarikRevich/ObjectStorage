@@ -1,40 +1,49 @@
-package com.objectstorage.service.client.info.topology;
+package com.objectstorage.service.client.content.download.object;
 
 import com.objectstorage.ApiClient;
-import com.objectstorage.api.InfoResourceApi;
+import com.objectstorage.api.ContentResourceApi;
+import com.objectstorage.dto.ContentDownloadObjectRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.TopologyInfoApplication;
-import com.objectstorage.model.TopologyInfoUnit;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
-import java.util.List;
+/**
+ * Represents implementation for v1ContentObjectDownloadPost endpoint of ContentResourceApi.
+ */
+public class DownloadContentObjectClientService implements IClient<byte[], ContentDownloadObjectRequestDto> {
+    private final ContentResourceApi contentResourceApi;
 
-/** Represents implementation for v1InfoTopologyPost endpoint of InfoResourceApi. */
-public class TopologyInfoClientService implements IClient<List<TopologyInfoUnit>, TopologyInfoApplication> {
-    private final InfoResourceApi infoResourceApi;
-
-    public TopologyInfoClientService(String host) {
+    public DownloadContentObjectClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(codecs -> codecs.defaultCodecs()
+                                .maxInMemorySize(-1))
+                        .build())
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().followRedirect(true)))
                 .build())
                 .setBasePath(host);
 
-        this.infoResourceApi = new InfoResourceApi(apiClient);
+        this.contentResourceApi = new ContentResourceApi(apiClient);
     }
 
     /**
      * @see IClient
      */
-    public List<TopologyInfoUnit> process(TopologyInfoApplication input) throws ApiServerOperationFailureException {
+    @Override
+    public byte[] process(ContentDownloadObjectRequestDto input) throws ApiServerOperationFailureException {
         try {
-            return infoResourceApi.v1InfoTopologyPost(input).collectList().block();
+            return contentResourceApi
+                    .v1ContentObjectDownloadPost(
+                            input.getAuthorization(),
+                            input.getContentObjectDownload())
+                    .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {

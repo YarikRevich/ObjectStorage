@@ -1,15 +1,12 @@
 package com.objectstorage;
 
 import com.objectstorage.entity.PropertiesEntity;
-import com.objectstorage.service.client.content.download.DownloadContentClientService;
-import com.objectstorage.service.client.info.version.VersionInfoClientService;
 import com.objectstorage.service.command.BaseCommandService;
 import com.objectstorage.service.command.external.clean.CleanExternalCommandService;
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
 import com.objectstorage.service.command.external.content.ContentExternalCommandService;
 import com.objectstorage.service.command.external.download.DownloadExternalCommandService;
 import com.objectstorage.service.command.external.apply.ApplyExternalCommandService;
-import com.objectstorage.service.command.external.topology.TopologyExternalCommandService;
 import com.objectstorage.service.command.external.withdraw.WithdrawExternalCommandService;
 import com.objectstorage.service.command.external.version.VersionExternalCommandService;
 import com.objectstorage.service.command.internal.health.HealthCheckInternalCommandService;
@@ -45,7 +42,6 @@ import picocli.CommandLine;
         CleanAllExternalCommandService.class,
         ContentExternalCommandService.class,
         DownloadExternalCommandService.class,
-        TopologyExternalCommandService.class,
         VersionExternalCommandService.class,
         VersionExternalCommandService.class,
         HealthCheckInternalCommandService.class,

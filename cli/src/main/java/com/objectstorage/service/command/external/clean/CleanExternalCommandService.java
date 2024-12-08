@@ -46,13 +46,7 @@ public class CleanExternalCommandService implements ICommand<CleanExternalComman
         CleanContentClientService cleanContentClientService =
                 new CleanContentClientService(cleanExternalCommand.getConfig().getApiServer().getHost());
 
-        ContentCleanup request = ContentCleanup.of(
-                cleanExternalCommand.getLocation(),
-                ConfigProviderToContentProviderConverter.convert(
-                        cleanExternalCommand.getConfig().getService().getProvider()),
-                ConfigCredentialsToContentCredentialsConverter.convert(
-                        cleanExternalCommand.getConfig().getService().getProvider(),
-                        cleanExternalCommand.getConfig().getService().getCredentials()));
+        ContentCleanup request = ContentCleanup.of(cleanExternalCommand.getLocation());
 
         cleanContentClientService.process(request);
 

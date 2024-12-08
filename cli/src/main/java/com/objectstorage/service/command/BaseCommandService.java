@@ -9,7 +9,6 @@ import com.objectstorage.service.command.external.clean.CleanExternalCommandServ
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
 import com.objectstorage.service.command.external.content.ContentExternalCommandService;
 import com.objectstorage.service.command.external.download.DownloadExternalCommandService;
-import com.objectstorage.service.command.external.topology.TopologyExternalCommandService;
 import com.objectstorage.service.command.external.version.VersionExternalCommandService;
 import com.objectstorage.service.command.external.withdraw.WithdrawExternalCommandService;
 import com.objectstorage.service.command.internal.health.HealthCheckInternalCommandService;
@@ -70,9 +69,6 @@ public class BaseCommandService {
     private DownloadExternalCommandService downloadExternalCommandService;
 
     @Autowired
-    private TopologyExternalCommandService topologyExternalCommandService;
-
-    @Autowired
     private VersionExternalCommandService versionExternalCommandService;
 
     @Autowired
@@ -95,9 +91,6 @@ public class BaseCommandService {
 
     @Autowired
     private DownloadCommandVisualizationLabel downloadCommandVisualizationLabel;
-
-    @Autowired
-    private TopologyCommandVisualizationLabel topologyCommandVisualizationLabel;
 
     @Autowired
     private VersionCommandVisualizationLabel versionCommandVisualizationLabel;
@@ -377,51 +370,6 @@ public class BaseCommandService {
 
         try {
             downloadExternalCommandService.process(DownloadExternalCommandDto.of(configService.getConfig(), outputLocation, location));
-        } catch (ApiServerOperationFailureException e) {
-            logger.fatal(e.getMessage());
-
-            return;
-        }
-
-        visualizationService.await();
-    }
-
-    /**
-     * Provides access to topology command service.
-     *
-     * @param configLocation given custom configuration file location.
-     */
-    @Command(description = "Retrieve topology configuration)")
-    private void topology(
-            @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
-            String configLocation) {
-        if (Objects.equals(configLocation, "null")) {
-            configLocation = properties.getConfigDefaultLocation();
-        }
-
-        visualizationState.setLabel(topologyCommandVisualizationLabel);
-
-        visualizationService.process();
-
-        try {
-            configService.configure(configLocation);
-        } catch (ConfigFileNotFoundException | ConfigFileReadingFailureException | ConfigValidationException |
-                 ConfigFileClosureFailureException e) {
-            logger.fatal(new ApiServerOperationFailureException(e.getMessage()).getMessage());
-
-            return;
-        }
-
-        try {
-            healthCheckInternalCommandService.process(configService.getConfig());
-        } catch (ApiServerOperationFailureException e) {
-            logger.fatal(e.getMessage());
-
-            return;
-        }
-
-        try {
-            topologyExternalCommandService.process(configService.getConfig());
         } catch (ApiServerOperationFailureException e) {
             logger.fatal(e.getMessage());
 

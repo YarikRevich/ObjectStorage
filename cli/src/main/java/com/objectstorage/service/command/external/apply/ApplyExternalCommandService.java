@@ -42,14 +42,13 @@ public class ApplyExternalCommandService implements ICommand<ConfigEntity> {
     ApplyContentClientService applyContentClientService =
             new ApplyContentClientService(config.getApiServer().getHost());
 
-    ContentApplication request = ContentApplication.of(
-            ConfigLocationsToContentLocationsConverter.convert(
-                    config.getContent().getLocations()),
-            ConfigProviderToContentProviderConverter.convert(
-                    config.getService().getProvider()),
-            ConfigCredentialsToContentCredentialsConverter.convert(
-                    config.getService().getProvider(),
-                    config.getService().getCredentials()));
+//    ConfigProviderToContentProviderConverter.convert(
+//            config.getService().getProvider()),
+//            ConfigCredentialsToContentCredentialsConverter.convert(
+//                    config.getService().getProvider(),
+//                    config.getService().getCredentials())
+//
+    ContentApplication request = ContentApplication.of(config.getContent().getRoot());
 
     applyContentClientService.process(request);
 
