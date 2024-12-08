@@ -13,11 +13,12 @@ import com.objectstorage.service.command.internal.health.HealthCheckInternalComm
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.visualization.VisualizationService;
 import com.objectstorage.service.visualization.label.apply.ApplyCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.clean.CleanCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.clean.object.CleanObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.cleanall.CleanAllCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.content.ContentCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.download.backup.DownloadBackupCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.download.object.DownloadObjectCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.upload.object.UploadObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.withdraw.WithdrawCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.version.VersionCommandVisualizationLabel;
 import com.objectstorage.service.visualization.state.VisualizationState;
@@ -52,11 +53,12 @@ import picocli.CommandLine;
         ConfigService.class,
         ApplyCommandVisualizationLabel.class,
         WithdrawCommandVisualizationLabel.class,
-        CleanCommandVisualizationLabel.class,
+        CleanObjectCommandVisualizationLabel.class,
         CleanAllCommandVisualizationLabel.class,
         ContentCommandVisualizationLabel.class,
         DownloadObjectCommandVisualizationLabel.class,
         DownloadBackupCommandVisualizationLabel.class,
+        UploadObjectCommandVisualizationLabel.class,
         VersionCommandVisualizationLabel.class,
         VisualizationService.class,
         VisualizationState.class

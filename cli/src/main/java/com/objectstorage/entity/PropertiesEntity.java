@@ -38,11 +38,11 @@ public class PropertiesEntity {
   @Value(value = "${progress.visualization.withdraw-response}")
   private String progressVisualizationWithdrawResponseLabel;
 
-  @Value(value = "${progress.visualization.clean-request}")
-  private String progressVisualizationCleanRequestLabel;
+  @Value(value = "${progress.visualization.clean-object-request}")
+  private String progressVisualizationCleanObjectRequestLabel;
 
-  @Value(value = "${progress.visualization.clean-response}")
-  private String progressVisualizationCleanResponseLabel;
+  @Value(value = "${progress.visualization.clean-object-response}")
+  private String progressVisualizationCleanObjectResponseLabel;
 
   @Value(value = "${progress.visualization.clean-all-request}")
   private String progressVisualizationCleanAllRequestLabel;
@@ -55,12 +55,6 @@ public class PropertiesEntity {
 
   @Value(value = "${progress.visualization.content-response}")
   private String progressVisualizationContentResponseLabel;
-  
-  @Value(value = "${progress.visualization.upload-request}")
-  private String progressVisualizationUploadRequestLabel;
-
-  @Value(value = "${progress.visualization.upload-response}")
-  private String progressVisualizationUploadResponseLabel;
 
   @Value(value = "${progress.visualization.download-object-request}")
   private String progressVisualizationDownloadObjectRequestLabel;
@@ -73,6 +67,12 @@ public class PropertiesEntity {
 
   @Value(value = "${progress.visualization.download-backup-response}")
   private String progressVisualizationDownloadBackupResponseLabel;
+
+  @Value(value = "${progress.visualization.upload-object-request}")
+  private String progressVisualizationUploadObjectRequestLabel;
+
+  @Value(value = "${progress.visualization.upload-object-response}")
+  private String progressVisualizationUploadObjectResponseLabel;
 
   @Value(value = "${progress.visualization.version-request}")
   private String progressVisualizationVersionRequestLabel;

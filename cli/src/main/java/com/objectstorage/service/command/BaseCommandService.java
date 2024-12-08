@@ -19,10 +19,11 @@ import com.objectstorage.service.command.internal.health.HealthCheckInternalComm
 import com.objectstorage.service.config.ConfigService;
 import com.objectstorage.service.visualization.VisualizationService;
 import com.objectstorage.service.visualization.label.apply.ApplyCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.clean.CleanCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.clean.object.CleanObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.cleanall.CleanAllCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.content.ContentCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.download.object.DownloadObjectCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.upload.object.UploadObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.withdraw.WithdrawCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.version.VersionCommandVisualizationLabel;
 import com.objectstorage.service.visualization.state.VisualizationState;
@@ -90,7 +91,7 @@ public class BaseCommandService {
     private WithdrawCommandVisualizationLabel withdrawCommandVisualizationLabel;
 
     @Autowired
-    private CleanCommandVisualizationLabel cleanCommandVisualizationLabel;
+    private CleanObjectCommandVisualizationLabel cleanCommandVisualizationLabel;
 
     @Autowired
     private CleanAllCommandVisualizationLabel cleanAllCommandVisualizationLabel;
@@ -100,6 +101,9 @@ public class BaseCommandService {
 
     @Autowired
     private DownloadObjectCommandVisualizationLabel downloadCommandVisualizationLabel;
+
+    @Autowired
+    private UploadObjectCommandVisualizationLabel uploadObjectCommandVisualizationLabel;
 
     @Autowired
     private VersionCommandVisualizationLabel versionCommandVisualizationLabel;
@@ -204,13 +208,13 @@ public class BaseCommandService {
      * Provides access to clean command service.
      *
      * @param configLocation given custom configuration file location.
-     * @param location given remote content location name.
+     * @param location given uploaded content location name.
      */
-    @Command(description = "Clean remote content")
-    private void clean(
+    @Command(description = "Clean uploaded content object")
+    private void cleanObject(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation,
-            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            @Option(names = {"--location"}, description = "A name of uploaded content location", required = true)
             String location) {
         if (Objects.equals(configLocation, "null")) {
             configLocation = properties.getConfigDefaultLocation();
@@ -253,7 +257,7 @@ public class BaseCommandService {
      *
      * @param configLocation given custom configuration file location.
      */
-    @Command(description = "Clean all remote content")
+    @Command(description = "Clean all object and backup content")
     private void cleanAll(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation) {
@@ -342,14 +346,14 @@ public class BaseCommandService {
      * Provides access to upload object command service.
      *
      * @param configLocation given custom configuration file location.
-     * @param location given remote content object location name.
+     * @param location given object content object location name.
      * @param file given input file location.
      */
     @Command(description = "Upload selected content object")
     private void uploadObject(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation,
-            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            @Option(names = {"--location"}, description = "A name of object content location", required = true)
             String location,
             @Option(names = {"--file"}, description = "A path for the file to be upload", required = true)
             String file) {
@@ -357,7 +361,7 @@ public class BaseCommandService {
             configLocation = properties.getConfigDefaultLocation();
         }
 
-        visualizationState.setLabel(downloadCommandVisualizationLabel);
+        visualizationState.setLabel(uploadObjectCommandVisualizationLabel);
 
         visualizationService.process();
 
@@ -398,7 +402,7 @@ public class BaseCommandService {
      * @param configLocation given custom configuration file location.
      * @param provider given selected provider name.
      * @param outputLocation given output file location.
-     * @param location given remote content object location name.
+     * @param location given object content object location name.
      */
     @Command(description = "Download selected content object")
     private void downloadObject(
@@ -406,7 +410,7 @@ public class BaseCommandService {
             String configLocation,
             @Option(names = {"--provider"}, description = "A name of selected provider", required = true) String provider,
             @Option(names = {"--output"}, description = "A path for the file to be downloaded", required = true) String outputLocation,
-            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            @Option(names = {"--location"}, description = "A name of object content location", required = true)
             String location) {
         if (Objects.equals(configLocation, "null")) {
             configLocation = properties.getConfigDefaultLocation();
@@ -453,14 +457,14 @@ public class BaseCommandService {
      *
      * @param configLocation given custom configuration file location.
      * @param outputLocation given output file location.
-     * @param location given remote content backup location name.
+     * @param location given backup content backup location name.
      */
     @Command(description = "Download selected content backup")
     private void downloadBackup(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation,
             @Option(names = {"--output"}, description = "A path for the file to be downloaded", required = true) String outputLocation,
-            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            @Option(names = {"--location"}, description = "A name of backup content location", required = true)
             String location) {
         if (Objects.equals(configLocation, "null")) {
             configLocation = properties.getConfigDefaultLocation();
