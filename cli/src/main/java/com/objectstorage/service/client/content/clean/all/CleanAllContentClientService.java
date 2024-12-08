@@ -4,21 +4,16 @@ import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.ContentCleanup;
-import com.objectstorage.model.ContentCleanupAll;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
-import com.objectstorage.service.config.ConfigService;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
 /** Represents implementation for v1ContentCleanAllDelete endpoint of ContentResourceApi. */
-public class CleanAllContentClientService implements IClient<Void, ContentCleanupAll> {
+public class CleanAllContentClientService implements IClient<Void, String> {
     private final ContentResourceApi contentResourceApi;
 
     public CleanAllContentClientService(String host) {
@@ -35,11 +30,10 @@ public class CleanAllContentClientService implements IClient<Void, ContentCleanu
      * @see IClient
      */
     @Override
-    public Void process(ContentCleanupAll input)
-            throws ApiServerOperationFailureException {
+    public Void process(String authorization) throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
-                    .v1ContentCleanAllDelete(input)
+                    .v1ContentCleanAllDelete(ClientConfigurationHelper.getWrappedToken(authorization))
                     .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());

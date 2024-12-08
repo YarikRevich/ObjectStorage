@@ -196,7 +196,7 @@
               <auth>false</auth>
               <typeMappings>
                 <typeMapping>binary=byte[]</typeMapping>
-                <typeMapping>file=byte[]</typeMapping>
+                <typeMapping>file=File</typeMapping>
               </typeMappings>
               <configOptions>
                 <additionalModelTypeAnnotations>@lombok.Data @lombok.AllArgsConstructor(staticName = "of")</additionalModelTypeAnnotations>

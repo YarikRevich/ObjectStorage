@@ -127,7 +127,7 @@ paths:
             application/zip:
               schema:
                 type: string
-                format: binary
+                format: byte
         400:
           description: Content object was not retrieved
   /v1/content/backup/download:
@@ -154,7 +154,7 @@ paths:
             application/zip:
               schema:
                 type: string
-                format: binary
+                format: byte
         400:
           description: Content backup was not retrieved
   /v1/content/object/clean:

@@ -4,9 +4,7 @@ import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.ContentRetrievalApplication;
-import com.objectstorage.model.ContentRetrievalResult;
-import com.objectstorage.model.ContentWithdrawal;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,9 +13,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.netty.http.client.HttpClient;
 
 /**
- * Represents implementation for v1ContentPost endpoint of ContentResourceApi.
+ * Represents implementation for v1ContentWithdrawDelete endpoint of ContentResourceApi.
  */
-public class WithdrawContentClientService implements IClient<Void, ContentWithdrawal> {
+public class WithdrawContentClientService implements IClient<Void, String> {
     private final ContentResourceApi contentResourceApi;
 
     public WithdrawContentClientService(String host) {
@@ -34,9 +32,12 @@ public class WithdrawContentClientService implements IClient<Void, ContentWithdr
      * @see IClient
      */
     @Override
-    public Void process(ContentWithdrawal input) throws ApiServerOperationFailureException {
+    public Void process(String authorization) throws ApiServerOperationFailureException {
         try {
-            return contentResourceApi.v1ContentWithdrawDelete(input).block();
+            return contentResourceApi
+                    .v1ContentWithdrawDelete(
+                            ClientConfigurationHelper.getWrappedToken(authorization))
+                    .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {

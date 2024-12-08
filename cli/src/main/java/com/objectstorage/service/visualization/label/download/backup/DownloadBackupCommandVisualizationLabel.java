@@ -1,4 +1,4 @@
-package com.objectstorage.service.visualization.label.clean;
+package com.objectstorage.service.visualization.label.download.backup;
 
 import com.objectstorage.dto.VisualizationLabelDto;
 import com.objectstorage.entity.PropertiesEntity;
@@ -11,30 +11,34 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Represents label set used for clean command service.
+ * Represents label set used for download backup command service.
  */
 @Service
-public class CleanCommandVisualizationLabel implements IVisualizationLabel {
+public class DownloadBackupCommandVisualizationLabel implements IVisualizationLabel {
     private final ArrayDeque<VisualizationLabelDto> stepsQueue = new ArrayDeque<>();
 
     private final ArrayDeque<String> batchQueue = new ArrayDeque<>();
 
     private final ReentrantLock mutex = new ReentrantLock();
 
-    public CleanCommandVisualizationLabel(@Autowired PropertiesEntity properties) {
+    public DownloadBackupCommandVisualizationLabel(@Autowired PropertiesEntity properties) {
         stepsQueue.addAll(
                 List.of(
                         VisualizationLabelDto.of(
                                 properties.getProgressVisualizationHealthCheckRequestLabel(), 10),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationHealthCheckResponseLabel(), 30),
+                                properties.getProgressVisualizationHealthCheckResponseLabel(), 20),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationVersionRequestLabel(), 40),
+                                properties.getProgressVisualizationVersionRequestLabel(), 30),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationVersionResponseLabel(), 60),
-                        VisualizationLabelDto.of(properties.getProgressVisualizationCleanRequestLabel(), 70),
+                                properties.getProgressVisualizationVersionResponseLabel(), 40),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationCleanResponseLabel(), 100)));
+                                properties.getProgressVisualizationSecretsAcquireRequestLabel(), 50),
+                        VisualizationLabelDto.of(
+                                properties.getProgressVisualizationSecretsAcquireResponseLabel(), 60),
+                        VisualizationLabelDto.of(properties.getProgressVisualizationDownloadBackupRequestLabel(), 70),
+                        VisualizationLabelDto.of(
+                                properties.getProgressVisualizationDownloadBackupResponseLabel(), 100)));
     }
 
     /**

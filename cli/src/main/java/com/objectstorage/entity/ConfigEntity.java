@@ -1,6 +1,7 @@
 package com.objectstorage.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -41,7 +42,10 @@ public class ConfigEntity {
          */
         public enum Provider {
             @JsonProperty("s3")
-            S3("s3");
+            S3("s3"),
+
+            @JsonProperty("gcs")
+            GCS("gcs");
 
             private final String value;
 
@@ -54,24 +58,32 @@ public class ConfigEntity {
             }
         }
 
+        @Valid
+        @NotNull
         @JsonProperty("provider")
         public Provider provider;
 
         /**
-         * Represents credentials used for service provider authentication.
+         * Represents credentials used for selected provider authentication.
          */
         @Getter
         @NoArgsConstructor
-        public static class AWSCredentials {
-            @Pattern(regexp = "^(((./)?)|((~/.)?)|((/?))?)([a-zA-Z/]*)((\\.([a-z]+))?)$")
+        public static class Credentials {
+            @NotNull
+            public Integer id;
+
+            @NotNull
+            @Pattern(regexp = "^(~|\\.|\\/)?([a-zA-Z0-9_\\-/\\.]+)?$")
             public String file;
 
-            @NotBlank
+            @Nullable
             public String region;
         }
 
+        @Valid
         @NotNull
-        public Object credentials;
+        @JsonProperty("credentials")
+        public Credentials credentials;
     }
 
     @Valid

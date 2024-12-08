@@ -1,34 +1,24 @@
-package com.objectstorage.service.client.content.download;
+package com.objectstorage.service.client.content.clean.object;
 
 import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
+import com.objectstorage.dto.ContentCleanupRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.ContentDownload;
-import com.objectstorage.model.ContentWithdrawal;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
-import java.io.File;
-
-/**
- * Represents implementation for v1ContentDownloadPost endpoint of ContentResourceApi.
- */
-public class DownloadContentClientService implements IClient<byte[], ContentDownload> {
+/** Represents implementation for v1ContentObjectCleanDelete endpoint of ContentResourceApi. */
+public class CleanContentObjectClientService implements IClient<Void, ContentCleanupRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
-    public DownloadContentClientService(String host) {
+    public CleanContentObjectClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
-                .exchangeStrategies(ExchangeStrategies.builder()
-                        .codecs(codecs -> codecs.defaultCodecs()
-                                .maxInMemorySize(-1))
-                        .build())
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().followRedirect(true)))
                 .build())
@@ -41,10 +31,13 @@ public class DownloadContentClientService implements IClient<byte[], ContentDown
      * @see IClient
      */
     @Override
-    public byte[] process(ContentDownload input) throws ApiServerOperationFailureException {
+    public Void process(ContentCleanupRequestDto input)
+            throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
-                    .v1ContentDownloadPost(input)
+                    .v1ContentObjectCleanDelete(
+                            ClientConfigurationHelper.getWrappedToken(input.getAuthorization()),
+                            input.getContentCleanup())
                     .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());

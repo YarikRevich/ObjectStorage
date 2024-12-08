@@ -8,11 +8,11 @@
 
 ## General Information
 
-An object storage with support of **S3** and without vendor limitations.
+An object storage with support of **S3** and **GCS** without vendor limitations.
 
 Features:
 * Has easy-to-use well-designed API
-* Ignores **S3** limitations(**file size** and **performance**) making interaction with storage vendors seamless
+* Ignores **S3** and **GCS** limitations(**file size** and **performance**) making interaction with storage vendors seamless
 * Provides opportunity to work with different vendors using the same **ObjectStorage** instance
 * Has integrated data processing optimizations and excessive monitoring opportunities
 * Provides configurable data backups per vendor in the same workspace

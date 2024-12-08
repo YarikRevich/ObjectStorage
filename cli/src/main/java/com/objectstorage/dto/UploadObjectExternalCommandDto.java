@@ -5,14 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Represents input for download external command.
+ * Represents input for upload object external command.
  */
 @Getter
 @AllArgsConstructor(staticName = "of")
-public class DownloadExternalCommandDto {
+public class UploadObjectExternalCommandDto {
     private ConfigEntity config;
 
-    private String outputLocation;
-
     private String location;
+
+    private String file;
 }

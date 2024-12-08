@@ -1,11 +1,11 @@
-package com.objectstorage.service.client.info.topology;
+package com.objectstorage.service.client.validation;
 
 import com.objectstorage.ApiClient;
-import com.objectstorage.api.InfoResourceApi;
+import com.objectstorage.api.ValidationResourceApi;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.TopologyInfoApplication;
-import com.objectstorage.model.TopologyInfoUnit;
+import com.objectstorage.model.ValidationSecretsApplication;
+import com.objectstorage.model.ValidationSecretsApplicationResult;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,28 +13,31 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
-import java.util.List;
+/**
+ * Represents implementation for v1SecretsAcquirePost endpoint of ContentResourceApi.
+ */
+public class AcquireSecretsClientService implements IClient<
+        ValidationSecretsApplicationResult, ValidationSecretsApplication> {
+    private final ValidationResourceApi validationResourceApi;
 
-/** Represents implementation for v1InfoTopologyPost endpoint of InfoResourceApi. */
-public class TopologyInfoClientService implements IClient<List<TopologyInfoUnit>, TopologyInfoApplication> {
-    private final InfoResourceApi infoResourceApi;
-
-    public TopologyInfoClientService(String host) {
+    public AcquireSecretsClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().followRedirect(true)))
                 .build())
                 .setBasePath(host);
 
-        this.infoResourceApi = new InfoResourceApi(apiClient);
+        this.validationResourceApi = new ValidationResourceApi(apiClient);
     }
 
     /**
      * @see IClient
      */
-    public List<TopologyInfoUnit> process(TopologyInfoApplication input) throws ApiServerOperationFailureException {
+    @Override
+    public ValidationSecretsApplicationResult process(ValidationSecretsApplication validationSecretsApplication)
+            throws ApiServerOperationFailureException {
         try {
-            return infoResourceApi.v1InfoTopologyPost(input).collectList().block();
+            return validationResourceApi.v1SecretsAcquirePost(validationSecretsApplication).block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {

@@ -26,6 +26,6 @@ public class ConfigProviderToContentProviderConverter {
                         .filter(element -> Objects.equals(element.toString(), configProvider.toString()))
                         .map(Enum::name)
                         .toList()
-                        .get(0));
+                        .getFirst());
     }
 }
