@@ -1,14 +1,18 @@
 package com.objectstorage.service.command;
 
 import com.objectstorage.dto.CleanExternalCommandDto;
-import com.objectstorage.dto.DownloadExternalCommandDto;
+import com.objectstorage.dto.DownloadBackupExternalCommandDto;
+import com.objectstorage.dto.DownloadObjectExternalCommandDto;
+import com.objectstorage.dto.UploadObjectExternalCommandDto;
 import com.objectstorage.entity.PropertiesEntity;
 import com.objectstorage.exception.*;
 import com.objectstorage.service.command.external.apply.ApplyExternalCommandService;
-import com.objectstorage.service.command.external.clean.CleanExternalCommandService;
+import com.objectstorage.service.command.external.clean.object.CleanObjectExternalCommandService;
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
 import com.objectstorage.service.command.external.content.ContentExternalCommandService;
-import com.objectstorage.service.command.external.download.DownloadExternalCommandService;
+import com.objectstorage.service.command.external.download.backup.DownloadBackupExternalCommandService;
+import com.objectstorage.service.command.external.download.object.DownloadObjectExternalCommandService;
+import com.objectstorage.service.command.external.upload.object.UploadObjectExternalCommandService;
 import com.objectstorage.service.command.external.version.VersionExternalCommandService;
 import com.objectstorage.service.command.external.withdraw.WithdrawExternalCommandService;
 import com.objectstorage.service.command.internal.health.HealthCheckInternalCommandService;
@@ -18,8 +22,7 @@ import com.objectstorage.service.visualization.label.apply.ApplyCommandVisualiza
 import com.objectstorage.service.visualization.label.clean.CleanCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.cleanall.CleanAllCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.content.ContentCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.download.DownloadCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.topology.TopologyCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.download.object.DownloadObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.withdraw.WithdrawCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.version.VersionCommandVisualizationLabel;
 import com.objectstorage.service.visualization.state.VisualizationState;
@@ -57,7 +60,7 @@ public class BaseCommandService {
     private WithdrawExternalCommandService withdrawExternalCommandService;
 
     @Autowired
-    private CleanExternalCommandService cleanExternalCommandService;
+    private CleanObjectExternalCommandService cleanExternalCommandService;
 
     @Autowired
     private CleanAllExternalCommandService cleanAllExternalCommandService;
@@ -66,7 +69,13 @@ public class BaseCommandService {
     private ContentExternalCommandService contentExternalCommandService;
 
     @Autowired
-    private DownloadExternalCommandService downloadExternalCommandService;
+    private DownloadObjectExternalCommandService downloadObjectExternalCommandService;
+
+    @Autowired
+    private DownloadBackupExternalCommandService downloadBackupExternalCommandService;
+
+    @Autowired
+    private UploadObjectExternalCommandService uploadObjectExternalCommandService;
 
     @Autowired
     private VersionExternalCommandService versionExternalCommandService;
@@ -90,7 +99,7 @@ public class BaseCommandService {
     private ContentCommandVisualizationLabel contentCommandVisualizationLabel;
 
     @Autowired
-    private DownloadCommandVisualizationLabel downloadCommandVisualizationLabel;
+    private DownloadObjectCommandVisualizationLabel downloadCommandVisualizationLabel;
 
     @Autowired
     private VersionCommandVisualizationLabel versionCommandVisualizationLabel;
@@ -330,17 +339,73 @@ public class BaseCommandService {
     }
 
     /**
-     * Provides access to download command service.
+     * Provides access to upload object command service.
      *
      * @param configLocation given custom configuration file location.
-     * @param location given remote content location name.
-     * @param outputLocation given output file location.
+     * @param location given remote content object location name.
+     * @param file given input file location.
      */
-    @Command(description = "Retrieve remote content state")
-    private void download(
+    @Command(description = "Upload selected content object")
+    private void uploadObject(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation,
-            @Option(names = {"--output"}, description = "", required = true) String outputLocation,
+            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            String location,
+            @Option(names = {"--file"}, description = "A path for the file to be upload", required = true)
+            String file) {
+        if (Objects.equals(configLocation, "null")) {
+            configLocation = properties.getConfigDefaultLocation();
+        }
+
+        visualizationState.setLabel(downloadCommandVisualizationLabel);
+
+        visualizationService.process();
+
+        try {
+            configService.configure(configLocation);
+        } catch (ConfigFileNotFoundException | ConfigFileReadingFailureException | ConfigValidationException |
+                 ConfigFileClosureFailureException e) {
+            logger.fatal(new ApiServerOperationFailureException(e.getMessage()).getMessage());
+
+            return;
+        }
+
+        try {
+            healthCheckInternalCommandService.process(configService.getConfig());
+        } catch (ApiServerOperationFailureException e) {
+            logger.fatal(e.getMessage());
+
+            return;
+        }
+
+        try {
+            uploadObjectExternalCommandService.process(UploadObjectExternalCommandDto.of(
+                    configService.getConfig(),
+                    location,
+                    file));
+        } catch (ApiServerOperationFailureException e) {
+            logger.fatal(e.getMessage());
+
+            return;
+        }
+
+        visualizationService.await();
+    }
+
+    /**
+     * Provides access to download object command service.
+     *
+     * @param configLocation given custom configuration file location.
+     * @param provider given selected provider name.
+     * @param outputLocation given output file location.
+     * @param location given remote content object location name.
+     */
+    @Command(description = "Download selected content object")
+    private void downloadObject(
+            @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
+            String configLocation,
+            @Option(names = {"--provider"}, description = "A name of selected provider", required = true) String provider,
+            @Option(names = {"--output"}, description = "A path for the file to be downloaded", required = true) String outputLocation,
             @Option(names = {"--location"}, description = "A name of remote content location", required = true)
             String location) {
         if (Objects.equals(configLocation, "null")) {
@@ -369,7 +434,64 @@ public class BaseCommandService {
         }
 
         try {
-            downloadExternalCommandService.process(DownloadExternalCommandDto.of(configService.getConfig(), outputLocation, location));
+            downloadObjectExternalCommandService.process(DownloadObjectExternalCommandDto.of(
+                    configService.getConfig(),
+                    provider,
+                    outputLocation,
+                    location));
+        } catch (ApiServerOperationFailureException e) {
+            logger.fatal(e.getMessage());
+
+            return;
+        }
+
+        visualizationService.await();
+    }
+
+    /**
+     * Provides access to download backup command service.
+     *
+     * @param configLocation given custom configuration file location.
+     * @param outputLocation given output file location.
+     * @param location given remote content backup location name.
+     */
+    @Command(description = "Download selected content backup")
+    private void downloadBackup(
+            @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
+            String configLocation,
+            @Option(names = {"--output"}, description = "A path for the file to be downloaded", required = true) String outputLocation,
+            @Option(names = {"--location"}, description = "A name of remote content location", required = true)
+            String location) {
+        if (Objects.equals(configLocation, "null")) {
+            configLocation = properties.getConfigDefaultLocation();
+        }
+
+        visualizationState.setLabel(downloadCommandVisualizationLabel);
+
+        visualizationService.process();
+
+        try {
+            configService.configure(configLocation);
+        } catch (ConfigFileNotFoundException | ConfigFileReadingFailureException | ConfigValidationException |
+                 ConfigFileClosureFailureException e) {
+            logger.fatal(new ApiServerOperationFailureException(e.getMessage()).getMessage());
+
+            return;
+        }
+
+        try {
+            healthCheckInternalCommandService.process(configService.getConfig());
+        } catch (ApiServerOperationFailureException e) {
+            logger.fatal(e.getMessage());
+
+            return;
+        }
+
+        try {
+            downloadBackupExternalCommandService.process(DownloadBackupExternalCommandDto.of(
+                    configService.getConfig(),
+                    outputLocation,
+                    location));
         } catch (ApiServerOperationFailureException e) {
             logger.fatal(e.getMessage());
 
@@ -384,7 +506,7 @@ public class BaseCommandService {
      *
      * @param configLocation given custom configuration file location.
      */
-    @Command(description = "Retrieve versions of infrastructure)")
+    @Command(description = "Retrieve versions of the infrastructure)")
     private void version(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation) {

@@ -1,27 +1,22 @@
-package com.objectstorage.service.client.content.clean;
+package com.objectstorage.service.client.content.clean.object;
 
 import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.dto.ContentCleanupRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.model.ContentCleanup;
 import com.objectstorage.service.client.common.IClient;
-import com.objectstorage.service.config.ConfigService;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
 /** Represents implementation for v1ContentObjectCleanDelete endpoint of ContentResourceApi. */
-public class CleanContentClientService implements IClient<Void, ContentCleanupRequestDto> {
+public class CleanContentObjectClientService implements IClient<Void, ContentCleanupRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
-    public CleanContentClientService(String host) {
+    public CleanContentObjectClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().followRedirect(true)))

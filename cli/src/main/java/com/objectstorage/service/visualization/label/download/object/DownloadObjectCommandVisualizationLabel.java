@@ -1,4 +1,4 @@
-package com.objectstorage.service.visualization.label.topology;
+package com.objectstorage.service.visualization.label.download.object;
 
 import com.objectstorage.dto.VisualizationLabelDto;
 import com.objectstorage.entity.PropertiesEntity;
@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Represents label set used for topology command service.
+ * Represents label set used for download object command service.
  */
 @Service
-public class TopologyCommandVisualizationLabel implements IVisualizationLabel {
+public class DownloadObjectCommandVisualizationLabel implements IVisualizationLabel {
     private final ArrayDeque<VisualizationLabelDto> stepsQueue = new ArrayDeque<>();
 
     private final ArrayDeque<String> batchQueue = new ArrayDeque<>();
 
     private final ReentrantLock mutex = new ReentrantLock();
 
-    public TopologyCommandVisualizationLabel(@Autowired PropertiesEntity properties) {
+    public DownloadObjectCommandVisualizationLabel(@Autowired PropertiesEntity properties) {
         stepsQueue.addAll(
                 List.of(
                         VisualizationLabelDto.of(
@@ -32,10 +32,9 @@ public class TopologyCommandVisualizationLabel implements IVisualizationLabel {
                                 properties.getProgressVisualizationVersionRequestLabel(), 40),
                         VisualizationLabelDto.of(
                                 properties.getProgressVisualizationVersionResponseLabel(), 60),
+                        VisualizationLabelDto.of(properties.getProgressVisualizationDownloadObjectRequestLabel(), 70),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationTopologyRequestLabel(), 70),
-                        VisualizationLabelDto.of(
-                                properties.getProgressVisualizationTopologyResponseLabel(), 100)));
+                                properties.getProgressVisualizationDownloadObjectResponseLabel(), 100)));
     }
 
     /**

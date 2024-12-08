@@ -1,10 +1,11 @@
-package com.objectstorage.service.command.external.content;
+package com.objectstorage.service.command.external.download.object;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.objectstorage.converter.ConfigCredentialsToContentCredentialsConverter;
 import com.objectstorage.converter.ConfigProviderToContentProviderConverter;
 import com.objectstorage.converter.CredentialsConverter;
-import com.objectstorage.converter.OutputToVisualizationConverter;
+import com.objectstorage.converter.SelectedProviderToContentProviderConverter;
+import com.objectstorage.dto.ContentDownloadObjectRequestDto;
+import com.objectstorage.dto.DownloadObjectExternalCommandDto;
 import com.objectstorage.dto.ProcessedCredentialsDto;
 import com.objectstorage.entity.ConfigEntity;
 import com.objectstorage.entity.PropertiesEntity;
@@ -13,14 +14,16 @@ import com.objectstorage.exception.CloudCredentialsFileNotFoundException;
 import com.objectstorage.exception.CloudCredentialsValidationException;
 import com.objectstorage.exception.VersionMismatchException;
 import com.objectstorage.model.*;
-import com.objectstorage.service.client.content.ContentClientService;
+import com.objectstorage.service.client.content.download.object.DownloadContentObjectClientService;
 import com.objectstorage.service.client.info.version.VersionInfoClientService;
 import com.objectstorage.service.client.validation.AcquireSecretsClientService;
 import com.objectstorage.service.command.common.ICommand;
 import com.objectstorage.service.visualization.state.VisualizationState;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,23 +32,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/** Represents content external command service. */
+/**
+ * Represents download object external command service.
+ */
 @Service
-public class ContentExternalCommandService implements ICommand<ConfigEntity> {
+public class DownloadObjectExternalCommandService implements ICommand<DownloadObjectExternalCommandDto> {
     @Autowired
     private PropertiesEntity properties;
 
-    @Autowired private VisualizationState visualizationState;
+    @Autowired
+    private VisualizationState visualizationState;
 
     /**
      * @see ICommand
      */
     @Override
-    public void process(ConfigEntity config) throws ApiServerOperationFailureException {
+    public void process(DownloadObjectExternalCommandDto downloadObjectExternalCommand)
+            throws ApiServerOperationFailureException {
         visualizationState.getLabel().pushNext();
 
         VersionInfoClientService versionInfoClientService =
-                new VersionInfoClientService(config.getApiServer().getHost());
+                new VersionInfoClientService(downloadObjectExternalCommand.getConfig().getApiServer().getHost());
 
         VersionInfoResult versionInfoResult = versionInfoClientService.process(null);
 
@@ -59,11 +66,11 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
 
         AcquireSecretsClientService acquireSecretsClientService =
                 new AcquireSecretsClientService(
-                        config.getApiServer().getHost());
+                        downloadObjectExternalCommand.getConfig().getApiServer().getHost());
 
         List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
 
-        for (ConfigEntity.Service service : config.getService()) {
+        for (ConfigEntity.Service service : downloadObjectExternalCommand.getConfig().getService()) {
             ConfigEntity.Service.Credentials credentials =
                     CredentialsConverter.convert(
                             service.getCredentials(),
@@ -104,14 +111,24 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
-        ContentClientService contentClientService = new ContentClientService(config.getApiServer().getHost());
+        DownloadContentObjectClientService downloadContentObjectClientService =
+                new DownloadContentObjectClientService(downloadObjectExternalCommand.getConfig().getApiServer().getHost());
 
-        ContentRetrievalResult contentRetrievalResult = contentClientService.process(
-                validationSecretsApplicationResult.getToken());
+        ContentDownloadObjectRequestDto request = ContentDownloadObjectRequestDto.of(
+                validationSecretsApplicationResult.getToken(),
+                ContentObjectDownload.of(
+                        downloadObjectExternalCommand.getLocation(),
+                        SelectedProviderToContentProviderConverter.convert(
+                                downloadObjectExternalCommand.getProvider())));
+
+        File contentObjectDownloadResult = downloadContentObjectClientService.process(request);
 
         try {
-            visualizationState.addResult(OutputToVisualizationConverter.convert(contentRetrievalResult));
-        } catch (JsonProcessingException e) {
+            FileUtils.writeByteArrayToFile(
+                    new File(
+                            downloadObjectExternalCommand.getOutputLocation()),
+                    Files.readAllBytes(contentObjectDownloadResult.toPath()));
+        } catch (IOException e) {
             throw new ApiServerOperationFailureException(e.getMessage());
         }
 

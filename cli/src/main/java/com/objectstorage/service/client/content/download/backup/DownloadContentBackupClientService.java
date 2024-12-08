@@ -13,10 +13,12 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
+import java.io.File;
+
 /**
  * Represents implementation for v1ContentBackupDownloadPost endpoint of ContentResourceApi.
  */
-public class DownloadContentBackupClientService implements IClient<byte[], ContentDownloadBackupRequestDto> {
+public class DownloadContentBackupClientService implements IClient<File, ContentDownloadBackupRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
     public DownloadContentBackupClientService(String host) {
@@ -37,7 +39,7 @@ public class DownloadContentBackupClientService implements IClient<byte[], Conte
      * @see IClient
      */
     @Override
-    public byte[] process(ContentDownloadBackupRequestDto input) throws ApiServerOperationFailureException {
+    public File process(ContentDownloadBackupRequestDto input) throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
                     .v1ContentBackupDownloadPost(

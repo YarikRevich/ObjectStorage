@@ -1,10 +1,10 @@
-package com.objectstorage.service.command.external.content;
+package com.objectstorage.service.command.external.clean.object;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.objectstorage.converter.ConfigCredentialsToContentCredentialsConverter;
 import com.objectstorage.converter.ConfigProviderToContentProviderConverter;
 import com.objectstorage.converter.CredentialsConverter;
-import com.objectstorage.converter.OutputToVisualizationConverter;
+import com.objectstorage.dto.CleanExternalCommandDto;
+import com.objectstorage.dto.ContentCleanupRequestDto;
 import com.objectstorage.dto.ProcessedCredentialsDto;
 import com.objectstorage.entity.ConfigEntity;
 import com.objectstorage.entity.PropertiesEntity;
@@ -13,7 +13,7 @@ import com.objectstorage.exception.CloudCredentialsFileNotFoundException;
 import com.objectstorage.exception.CloudCredentialsValidationException;
 import com.objectstorage.exception.VersionMismatchException;
 import com.objectstorage.model.*;
-import com.objectstorage.service.client.content.ContentClientService;
+import com.objectstorage.service.client.content.clean.object.CleanContentObjectClientService;
 import com.objectstorage.service.client.info.version.VersionInfoClientService;
 import com.objectstorage.service.client.validation.AcquireSecretsClientService;
 import com.objectstorage.service.command.common.ICommand;
@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/** Represents content external command service. */
+/** Represents clean external command service. */
 @Service
-public class ContentExternalCommandService implements ICommand<ConfigEntity> {
+public class CleanObjectExternalCommandService implements ICommand<CleanExternalCommandDto> {
     @Autowired
     private PropertiesEntity properties;
 
@@ -41,11 +41,11 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
      * @see ICommand
      */
     @Override
-    public void process(ConfigEntity config) throws ApiServerOperationFailureException {
+    public void process(CleanExternalCommandDto cleanExternalCommand) throws ApiServerOperationFailureException {
         visualizationState.getLabel().pushNext();
 
         VersionInfoClientService versionInfoClientService =
-                new VersionInfoClientService(config.getApiServer().getHost());
+                new VersionInfoClientService(cleanExternalCommand.getConfig().getApiServer().getHost());
 
         VersionInfoResult versionInfoResult = versionInfoClientService.process(null);
 
@@ -59,11 +59,11 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
 
         AcquireSecretsClientService acquireSecretsClientService =
                 new AcquireSecretsClientService(
-                        config.getApiServer().getHost());
+                        cleanExternalCommand.getConfig().getApiServer().getHost());
 
         List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
 
-        for (ConfigEntity.Service service : config.getService()) {
+        for (ConfigEntity.Service service : cleanExternalCommand.getConfig().getService()) {
             ConfigEntity.Service.Credentials credentials =
                     CredentialsConverter.convert(
                             service.getCredentials(),
@@ -104,16 +104,15 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
-        ContentClientService contentClientService = new ContentClientService(config.getApiServer().getHost());
+        CleanContentObjectClientService cleanContentClientService =
+                new CleanContentObjectClientService(cleanExternalCommand.getConfig().getApiServer().getHost());
 
-        ContentRetrievalResult contentRetrievalResult = contentClientService.process(
-                validationSecretsApplicationResult.getToken());
+        ContentCleanupRequestDto request = ContentCleanupRequestDto.of(
+                validationSecretsApplicationResult.getToken(),
+                ContentCleanup.of(
+                        cleanExternalCommand.getLocation()));
 
-        try {
-            visualizationState.addResult(OutputToVisualizationConverter.convert(contentRetrievalResult));
-        } catch (JsonProcessingException e) {
-            throw new ApiServerOperationFailureException(e.getMessage());
-        }
+        cleanContentClientService.process(request);
 
         visualizationState.getLabel().pushNext();
     }

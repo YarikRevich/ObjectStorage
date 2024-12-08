@@ -1,19 +1,18 @@
-package com.objectstorage.service.command.external.content;
+package com.objectstorage.service.command.external.upload.object;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.objectstorage.converter.ConfigCredentialsToContentCredentialsConverter;
 import com.objectstorage.converter.ConfigProviderToContentProviderConverter;
 import com.objectstorage.converter.CredentialsConverter;
-import com.objectstorage.converter.OutputToVisualizationConverter;
+import com.objectstorage.converter.SelectedProviderToContentProviderConverter;
+import com.objectstorage.dto.ContentDownloadObjectRequestDto;
+import com.objectstorage.dto.ContentUploadObjectRequestDto;
 import com.objectstorage.dto.ProcessedCredentialsDto;
+import com.objectstorage.dto.UploadObjectExternalCommandDto;
 import com.objectstorage.entity.ConfigEntity;
 import com.objectstorage.entity.PropertiesEntity;
-import com.objectstorage.exception.ApiServerOperationFailureException;
-import com.objectstorage.exception.CloudCredentialsFileNotFoundException;
-import com.objectstorage.exception.CloudCredentialsValidationException;
-import com.objectstorage.exception.VersionMismatchException;
+import com.objectstorage.exception.*;
 import com.objectstorage.model.*;
-import com.objectstorage.service.client.content.ContentClientService;
+import com.objectstorage.service.client.content.upload.object.UploadContentObjectClientService;
 import com.objectstorage.service.client.info.version.VersionInfoClientService;
 import com.objectstorage.service.client.validation.AcquireSecretsClientService;
 import com.objectstorage.service.command.common.ICommand;
@@ -21,6 +20,7 @@ import com.objectstorage.service.visualization.state.VisualizationState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,23 +29,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/** Represents content external command service. */
+/**
+ * Represents upload external command service.
+ */
 @Service
-public class ContentExternalCommandService implements ICommand<ConfigEntity> {
+public class UploadObjectExternalCommandService implements ICommand<UploadObjectExternalCommandDto> {
     @Autowired
     private PropertiesEntity properties;
 
-    @Autowired private VisualizationState visualizationState;
+    @Autowired
+    private VisualizationState visualizationState;
 
     /**
      * @see ICommand
      */
     @Override
-    public void process(ConfigEntity config) throws ApiServerOperationFailureException {
+    public void process(UploadObjectExternalCommandDto uploadObjectExternalCommand)
+            throws ApiServerOperationFailureException {
         visualizationState.getLabel().pushNext();
 
         VersionInfoClientService versionInfoClientService =
-                new VersionInfoClientService(config.getApiServer().getHost());
+                new VersionInfoClientService(uploadObjectExternalCommand.getConfig().getApiServer().getHost());
 
         VersionInfoResult versionInfoResult = versionInfoClientService.process(null);
 
@@ -59,11 +63,11 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
 
         AcquireSecretsClientService acquireSecretsClientService =
                 new AcquireSecretsClientService(
-                        config.getApiServer().getHost());
+                        uploadObjectExternalCommand.getConfig().getApiServer().getHost());
 
         List<ValidationSecretsUnit> validationSecretsUnits = new ArrayList<>();
 
-        for (ConfigEntity.Service service : config.getService()) {
+        for (ConfigEntity.Service service : uploadObjectExternalCommand.getConfig().getService()) {
             ConfigEntity.Service.Credentials credentials =
                     CredentialsConverter.convert(
                             service.getCredentials(),
@@ -104,16 +108,23 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
-        ContentClientService contentClientService = new ContentClientService(config.getApiServer().getHost());
+        UploadContentObjectClientService uploadContentObjectClientService =
+                new UploadContentObjectClientService(
+                        uploadObjectExternalCommand.getConfig().getApiServer().getHost());
 
-        ContentRetrievalResult contentRetrievalResult = contentClientService.process(
-                validationSecretsApplicationResult.getToken());
+        Path filePath = Paths.get(uploadObjectExternalCommand.getFile());
 
-        try {
-            visualizationState.addResult(OutputToVisualizationConverter.convert(contentRetrievalResult));
-        } catch (JsonProcessingException e) {
-            throw new ApiServerOperationFailureException(e.getMessage());
+        if (Files.notExists(filePath)) {
+            throw new ApiServerOperationFailureException(
+                    new UploadFileNotFoundException().getMessage());
         }
+
+        ContentUploadObjectRequestDto request = ContentUploadObjectRequestDto.of(
+                validationSecretsApplicationResult.getToken(),
+                uploadObjectExternalCommand.getLocation(),
+                new File(uploadObjectExternalCommand.getFile()));
+
+        uploadContentObjectClientService.process(request);
 
         visualizationState.getLabel().pushNext();
     }

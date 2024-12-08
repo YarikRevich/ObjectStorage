@@ -1,8 +1,8 @@
-package com.objectstorage.service.client.content.download.object;
+package com.objectstorage.service.client.content.upload.object;
 
 import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
-import com.objectstorage.dto.ContentDownloadObjectRequestDto;
+import com.objectstorage.dto.ContentUploadObjectRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
 import com.objectstorage.service.client.common.IClient;
@@ -13,15 +13,13 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClient;
 
-import java.io.File;
-
 /**
- * Represents implementation for v1ContentObjectDownloadPost endpoint of ContentResourceApi.
+ * Represents implementation for v1ContentObjectUploadPost endpoint of ContentResourceApi.
  */
-public class DownloadContentObjectClientService implements IClient<File, ContentDownloadObjectRequestDto> {
+public class UploadContentObjectClientService implements IClient<Void, ContentUploadObjectRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
-    public DownloadContentObjectClientService(String host) {
+    public UploadContentObjectClientService(String host) {
         ApiClient apiClient = new ApiClient(WebClient.builder()
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(codecs -> codecs.defaultCodecs()
@@ -39,12 +37,13 @@ public class DownloadContentObjectClientService implements IClient<File, Content
      * @see IClient
      */
     @Override
-    public File process(ContentDownloadObjectRequestDto input) throws ApiServerOperationFailureException {
+    public Void process(ContentUploadObjectRequestDto input) throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
-                    .v1ContentObjectDownloadPost(
+                    .v1ContentObjectUploadPost(
                             input.getAuthorization(),
-                            input.getContentObjectDownload())
+                            input.getLocation(),
+                            input.getFile())
                     .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());

@@ -62,11 +62,17 @@ public class PropertiesEntity {
   @Value(value = "${progress.visualization.upload-response}")
   private String progressVisualizationUploadResponseLabel;
 
-  @Value(value = "${progress.visualization.download-request}")
-  private String progressVisualizationDownloadRequestLabel;
+  @Value(value = "${progress.visualization.download-object-request}")
+  private String progressVisualizationDownloadObjectRequestLabel;
 
-  @Value(value = "${progress.visualization.download-response}")
-  private String progressVisualizationDownloadResponseLabel;
+  @Value(value = "${progress.visualization.download-object-response}")
+  private String progressVisualizationDownloadObjectResponseLabel;
+
+  @Value(value = "${progress.visualization.download-backup-request}")
+  private String progressVisualizationDownloadBackupRequestLabel;
+
+  @Value(value = "${progress.visualization.download-backup-response}")
+  private String progressVisualizationDownloadBackupResponseLabel;
 
   @Value(value = "${progress.visualization.version-request}")
   private String progressVisualizationVersionRequestLabel;

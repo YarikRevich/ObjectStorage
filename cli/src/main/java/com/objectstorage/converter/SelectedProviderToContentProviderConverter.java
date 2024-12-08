@@ -7,23 +7,23 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Represents config provider to ObjectStorage API Server content provider converter.
+ * Represents selected provider to ObjectStorage API Server content provider converter.
  */
-public class ConfigProviderToContentProviderConverter {
+public class SelectedProviderToContentProviderConverter {
 
     /**
      * Converts given config provider to content provider.
      *
-     * @param configProvider given config provider to be converted.
+     * @param selectedProvider given selected provider to be converted.
      * @return converted content provider.
      */
-    public static Provider convert(ConfigEntity.Service.Provider configProvider) {
+    public static Provider convert(String selectedProvider) {
         return Provider.valueOf(
                 Arrays.stream(
                                 ConfigEntity.Service.Provider.values())
                         .toList()
                         .stream()
-                        .filter(element -> Objects.equals(element.toString(), configProvider.toString()))
+                        .filter(element -> Objects.equals(element.toString(), selectedProvider))
                         .map(Enum::name)
                         .toList()
                         .getFirst());

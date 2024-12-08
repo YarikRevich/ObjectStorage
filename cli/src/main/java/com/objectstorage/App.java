@@ -2,10 +2,10 @@ package com.objectstorage;
 
 import com.objectstorage.entity.PropertiesEntity;
 import com.objectstorage.service.command.BaseCommandService;
-import com.objectstorage.service.command.external.clean.CleanExternalCommandService;
+import com.objectstorage.service.command.external.clean.object.CleanObjectExternalCommandService;
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
 import com.objectstorage.service.command.external.content.ContentExternalCommandService;
-import com.objectstorage.service.command.external.download.DownloadExternalCommandService;
+import com.objectstorage.service.command.external.download.object.DownloadObjectExternalCommandService;
 import com.objectstorage.service.command.external.apply.ApplyExternalCommandService;
 import com.objectstorage.service.command.external.withdraw.WithdrawExternalCommandService;
 import com.objectstorage.service.command.external.version.VersionExternalCommandService;
@@ -16,8 +16,8 @@ import com.objectstorage.service.visualization.label.apply.ApplyCommandVisualiza
 import com.objectstorage.service.visualization.label.clean.CleanCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.cleanall.CleanAllCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.content.ContentCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.download.DownloadCommandVisualizationLabel;
-import com.objectstorage.service.visualization.label.topology.TopologyCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.download.backup.DownloadBackupCommandVisualizationLabel;
+import com.objectstorage.service.visualization.label.download.object.DownloadObjectCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.withdraw.WithdrawCommandVisualizationLabel;
 import com.objectstorage.service.visualization.label.version.VersionCommandVisualizationLabel;
 import com.objectstorage.service.visualization.state.VisualizationState;
@@ -38,10 +38,10 @@ import picocli.CommandLine;
         BaseCommandService.class,
         ApplyExternalCommandService.class,
         WithdrawExternalCommandService.class,
-        CleanExternalCommandService.class,
+        CleanObjectExternalCommandService.class,
         CleanAllExternalCommandService.class,
         ContentExternalCommandService.class,
-        DownloadExternalCommandService.class,
+        DownloadObjectExternalCommandService.class,
         VersionExternalCommandService.class,
         VersionExternalCommandService.class,
         HealthCheckInternalCommandService.class,
@@ -55,8 +55,8 @@ import picocli.CommandLine;
         CleanCommandVisualizationLabel.class,
         CleanAllCommandVisualizationLabel.class,
         ContentCommandVisualizationLabel.class,
-        DownloadCommandVisualizationLabel.class,
-        TopologyCommandVisualizationLabel.class,
+        DownloadObjectCommandVisualizationLabel.class,
+        DownloadBackupCommandVisualizationLabel.class,
         VersionCommandVisualizationLabel.class,
         VisualizationService.class,
         VisualizationState.class
