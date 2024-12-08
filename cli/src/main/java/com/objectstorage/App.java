@@ -5,8 +5,10 @@ import com.objectstorage.service.command.BaseCommandService;
 import com.objectstorage.service.command.external.clean.object.CleanObjectExternalCommandService;
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
 import com.objectstorage.service.command.external.content.ContentExternalCommandService;
+import com.objectstorage.service.command.external.download.backup.DownloadBackupExternalCommandService;
 import com.objectstorage.service.command.external.download.object.DownloadObjectExternalCommandService;
 import com.objectstorage.service.command.external.apply.ApplyExternalCommandService;
+import com.objectstorage.service.command.external.upload.object.UploadObjectExternalCommandService;
 import com.objectstorage.service.command.external.withdraw.WithdrawExternalCommandService;
 import com.objectstorage.service.command.external.version.VersionExternalCommandService;
 import com.objectstorage.service.command.internal.health.HealthCheckInternalCommandService;
@@ -43,6 +45,8 @@ import picocli.CommandLine;
         CleanAllExternalCommandService.class,
         ContentExternalCommandService.class,
         DownloadObjectExternalCommandService.class,
+        DownloadBackupExternalCommandService.class,
+        UploadObjectExternalCommandService.class,
         VersionExternalCommandService.class,
         VersionExternalCommandService.class,
         HealthCheckInternalCommandService.class,

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration status="ERROR" strict="true" packages="com.objectstorage.logging">
     <Appenders>
-        <fatalappender name="fatalappender" />
+        <FatalAppender name="FatalAppender" />
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
@@ -54,7 +54,7 @@
             <AppenderRef ref="warn_logs_file" />
             <AppenderRef ref="info_logs_file" />
             <AppenderRef ref="debug_logs_file" />
-            <AppenderRef ref="fatalappender" />
+            <AppenderRef ref="FatalAppender" />
         </Root>
     </Loggers>
 </Configuration>
