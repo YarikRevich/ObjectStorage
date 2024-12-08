@@ -121,12 +121,11 @@ public class DownloadBackupExternalCommandService implements ICommand<DownloadBa
                 validationSecretsApplicationResult.getToken(),
                 ContentBackupDownload.of(downloadBackupExternalCommand.getLocation()));
 
-        File contentBackupDownloadResult = downloadContentBackupClientService.process(request);
+        byte[] contentBackupDownloadResult = downloadContentBackupClientService.process(request);
 
         try {
             FileUtils.writeByteArrayToFile(
-                    new File(downloadBackupExternalCommand.getOutputLocation()),
-                    Files.readAllBytes(contentBackupDownloadResult.toPath()));
+                    new File(downloadBackupExternalCommand.getOutputLocation()), contentBackupDownloadResult);
         } catch (IOException e) {
             throw new ApiServerOperationFailureException(e.getMessage());
         }
