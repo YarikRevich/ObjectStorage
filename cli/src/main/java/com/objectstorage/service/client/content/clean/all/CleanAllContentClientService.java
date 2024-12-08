@@ -4,6 +4,7 @@ import com.objectstorage.ApiClient;
 import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -32,7 +33,7 @@ public class CleanAllContentClientService implements IClient<Void, String> {
     public Void process(String authorization) throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
-                    .v1ContentCleanAllDelete(authorization)
+                    .v1ContentCleanAllDelete(ClientConfigurationHelper.getWrappedToken(authorization))
                     .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());

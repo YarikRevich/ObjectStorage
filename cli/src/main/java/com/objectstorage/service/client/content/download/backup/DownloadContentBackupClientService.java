@@ -5,6 +5,7 @@ import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.dto.ContentDownloadBackupRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -43,7 +44,7 @@ public class DownloadContentBackupClientService implements IClient<File, Content
         try {
             return contentResourceApi
                     .v1ContentBackupDownloadPost(
-                            input.getAuthorization(),
+                            ClientConfigurationHelper.getWrappedToken(input.getAuthorization()),
                             input.getContentBackupDownload())
                     .block();
         } catch (WebClientResponseException e) {

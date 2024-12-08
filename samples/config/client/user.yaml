@@ -14,8 +14,8 @@ service:
       id: "1"
 
       # Represents a path to the credentials CSV file, which contains both access
-      # and secret keys.
-      file: "~/.aws/credentials"
+      # and secret keys. Make sure you don't use "~" symbol.
+      file: "/Users/yaroslavsvitlytskyi/.aws/credentials/rootkey.csv"
 
       # Represents a select region where the deployment of infrastructure will be performed.
       # Remember that it may influence the availability of the ObjectStorage deployed infrastructure.
@@ -26,4 +26,4 @@ service:
 # Represents section used for ObjectStorage API Server configuration.
 api-server:
   # Represents address for the host of ObjectStorage API Server.
-  host: "http://localhost:8085"
+  host: "http://localhost:8086"

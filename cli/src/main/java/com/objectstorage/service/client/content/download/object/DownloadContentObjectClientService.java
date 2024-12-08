@@ -5,6 +5,7 @@ import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.dto.ContentDownloadObjectRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -18,7 +19,7 @@ import java.io.File;
 /**
  * Represents implementation for v1ContentObjectDownloadPost endpoint of ContentResourceApi.
  */
-public class DownloadContentObjectClientService implements IClient<File, ContentDownloadObjectRequestDto> {
+public class DownloadContentObjectClientService implements IClient<byte[], ContentDownloadObjectRequestDto> {
     private final ContentResourceApi contentResourceApi;
 
     public DownloadContentObjectClientService(String host) {
@@ -39,11 +40,11 @@ public class DownloadContentObjectClientService implements IClient<File, Content
      * @see IClient
      */
     @Override
-    public File process(ContentDownloadObjectRequestDto input) throws ApiServerOperationFailureException {
+    public byte[] process(ContentDownloadObjectRequestDto input) throws ApiServerOperationFailureException {
         try {
             return contentResourceApi
                     .v1ContentObjectDownloadPost(
-                            input.getAuthorization(),
+                            ClientConfigurationHelper.getWrappedToken(input.getAuthorization()),
                             input.getContentObjectDownload())
                     .block();
         } catch (WebClientResponseException e) {

@@ -27,11 +27,15 @@ public class DownloadObjectCommandVisualizationLabel implements IVisualizationLa
                         VisualizationLabelDto.of(
                                 properties.getProgressVisualizationHealthCheckRequestLabel(), 10),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationHealthCheckResponseLabel(), 30),
+                                properties.getProgressVisualizationHealthCheckResponseLabel(), 20),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationVersionRequestLabel(), 40),
+                                properties.getProgressVisualizationVersionRequestLabel(), 30),
                         VisualizationLabelDto.of(
-                                properties.getProgressVisualizationVersionResponseLabel(), 60),
+                                properties.getProgressVisualizationVersionResponseLabel(), 40),
+                        VisualizationLabelDto.of(
+                                properties.getProgressVisualizationSecretsAcquireRequestLabel(), 50),
+                        VisualizationLabelDto.of(
+                                properties.getProgressVisualizationSecretsAcquireResponseLabel(), 60),
                         VisualizationLabelDto.of(properties.getProgressVisualizationDownloadObjectRequestLabel(), 70),
                         VisualizationLabelDto.of(
                                 properties.getProgressVisualizationDownloadObjectResponseLabel(), 100)));

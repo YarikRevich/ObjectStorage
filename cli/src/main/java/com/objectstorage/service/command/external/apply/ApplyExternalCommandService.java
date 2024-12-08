@@ -99,6 +99,10 @@ public class ApplyExternalCommandService implements ICommand<ConfigEntity> {
     ValidationSecretsApplicationResult validationSecretsApplicationResult =
             acquireSecretsClientService.process(validationSecretsApplication);
 
+    visualizationState.getLabel().pushNext();
+
+    visualizationState.getLabel().pushNext();
+
     ApplyContentClientService applyContentClientService =
             new ApplyContentClientService(config.getApiServer().getHost());
 

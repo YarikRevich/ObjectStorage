@@ -105,6 +105,10 @@ public class CleanAllExternalCommandService implements ICommand<ConfigEntity> {
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         CleanAllContentClientService cleanAllContentClientService =
                 new CleanAllContentClientService(config.getApiServer().getHost());
 

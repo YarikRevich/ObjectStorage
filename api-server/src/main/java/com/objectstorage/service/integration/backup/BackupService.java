@@ -140,17 +140,19 @@ public class BackupService {
                                 contentRetrievalProviderUnit.getLocation(), content));
                     }
 
-                    try {
-                        workspaceFacade.addBackupFile(
-                                workspaceUnitKey,
-                                workspaceFacade.createFileUnitKey(properties.getWorkspaceContentBackupUnit()),
-                                folderContentUnits);
-                    } catch (FileCreationFailureException e) {
-                        StateService.getBackupProcessorGuard().unlock();
+                    if (!folderContentUnits.isEmpty()) {
+                        try {
+                            workspaceFacade.addBackupFile(
+                                    workspaceUnitKey,
+                                    workspaceFacade.createFileUnitKey(properties.getWorkspaceContentBackupUnit()),
+                                    folderContentUnits);
+                        } catch (FileCreationFailureException e) {
+                            StateService.getBackupProcessorGuard().unlock();
 
-                        logger.error(e.getMessage());
+                            logger.error(e.getMessage());
 
-                        return;
+                            return;
+                        }
                     }
 
                     telemetryService.increaseCurrentBackupsAmount();

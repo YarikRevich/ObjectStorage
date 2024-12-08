@@ -108,6 +108,10 @@ public class UploadObjectExternalCommandService implements ICommand<UploadObject
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         UploadContentObjectClientService uploadContentObjectClientService =
                 new UploadContentObjectClientService(
                         uploadObjectExternalCommand.getConfig().getApiServer().getHost());

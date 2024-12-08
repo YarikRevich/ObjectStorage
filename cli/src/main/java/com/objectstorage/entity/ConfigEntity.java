@@ -72,7 +72,8 @@ public class ConfigEntity {
             @NotNull
             public Integer id;
 
-            @Pattern(regexp = "^(((./)?)|((~/.)?)|((/?))?)([a-zA-Z/]*)((\\.([a-z]+))?)$")
+            @NotNull
+            @Pattern(regexp = "^(~|\\.|\\/)?([a-zA-Z0-9_\\-/\\.]+)?$")
             public String file;
 
             @Nullable

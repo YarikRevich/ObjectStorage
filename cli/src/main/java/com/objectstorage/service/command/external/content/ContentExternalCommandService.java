@@ -104,6 +104,10 @@ public class ContentExternalCommandService implements ICommand<ConfigEntity> {
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         ContentClientService contentClientService = new ContentClientService(config.getApiServer().getHost());
 
         ContentRetrievalResult contentRetrievalResult = contentClientService.process(

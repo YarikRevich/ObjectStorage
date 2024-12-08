@@ -101,6 +101,10 @@ public class WithdrawExternalCommandService implements ICommand<ConfigEntity> {
     ValidationSecretsApplicationResult validationSecretsApplicationResult =
             acquireSecretsClientService.process(validationSecretsApplication);
 
+    visualizationState.getLabel().pushNext();
+
+    visualizationState.getLabel().pushNext();
+
     WithdrawContentClientService withdrawContentClientService =
             new WithdrawContentClientService(config.getApiServer().getHost());
 

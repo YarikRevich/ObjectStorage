@@ -19,8 +19,7 @@ public class SelectedProviderToContentProviderConverter {
      */
     public static Provider convert(String selectedProvider) {
         return Provider.valueOf(
-                Arrays.stream(
-                                ConfigEntity.Service.Provider.values())
+                Arrays.stream(ConfigEntity.Service.Provider.values())
                         .toList()
                         .stream()
                         .filter(element -> Objects.equals(element.toString(), selectedProvider))

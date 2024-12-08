@@ -5,9 +5,9 @@ import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.exception.ApiServerOperationFailureException;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.model.ContentRetrievalResult;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -35,7 +35,10 @@ public class ContentClientService implements IClient<ContentRetrievalResult, Str
     @Override
     public ContentRetrievalResult process(String authorization) throws ApiServerOperationFailureException {
         try {
-            return contentResourceApi.v1ContentGet(authorization).block();
+            return contentResourceApi
+                    .v1ContentGet(
+                            ClientConfigurationHelper.getWrappedToken(authorization))
+                    .block();
         } catch (WebClientResponseException e) {
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {

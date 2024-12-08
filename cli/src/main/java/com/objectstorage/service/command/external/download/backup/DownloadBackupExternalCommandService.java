@@ -110,6 +110,10 @@ public class DownloadBackupExternalCommandService implements ICommand<DownloadBa
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         DownloadContentBackupClientService downloadContentBackupClientService =
                 new DownloadContentBackupClientService(downloadBackupExternalCommand.getConfig().getApiServer().getHost());
 

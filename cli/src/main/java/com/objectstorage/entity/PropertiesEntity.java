@@ -86,6 +86,12 @@ public class PropertiesEntity {
   @Value(value = "${progress.visualization.health-check-response}")
   private String progressVisualizationHealthCheckResponseLabel;
 
+  @Value(value = "${progress.visualization.secrets-acquire-request}")
+  private String progressVisualizationSecretsAcquireRequestLabel;
+
+  @Value(value = "${progress.visualization.secrets-acquire-response}")
+  private String progressVisualizationSecretsAcquireResponseLabel;
+
   @Value(value = "${logging.state.frequency}")
   private Integer loggingStateFrequency;
 

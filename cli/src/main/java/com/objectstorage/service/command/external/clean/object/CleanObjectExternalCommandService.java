@@ -104,6 +104,10 @@ public class CleanObjectExternalCommandService implements ICommand<CleanExternal
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         CleanContentObjectClientService cleanContentClientService =
                 new CleanContentObjectClientService(cleanExternalCommand.getConfig().getApiServer().getHost());
 

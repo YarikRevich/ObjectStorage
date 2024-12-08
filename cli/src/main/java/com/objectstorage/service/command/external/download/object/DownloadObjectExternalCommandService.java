@@ -111,6 +111,10 @@ public class DownloadObjectExternalCommandService implements ICommand<DownloadOb
         ValidationSecretsApplicationResult validationSecretsApplicationResult =
                 acquireSecretsClientService.process(validationSecretsApplication);
 
+        visualizationState.getLabel().pushNext();
+
+        visualizationState.getLabel().pushNext();
+
         DownloadContentObjectClientService downloadContentObjectClientService =
                 new DownloadContentObjectClientService(downloadObjectExternalCommand.getConfig().getApiServer().getHost());
 
@@ -121,13 +125,12 @@ public class DownloadObjectExternalCommandService implements ICommand<DownloadOb
                         SelectedProviderToContentProviderConverter.convert(
                                 downloadObjectExternalCommand.getProvider())));
 
-        File contentObjectDownloadResult = downloadContentObjectClientService.process(request);
+        byte[] contentObjectDownloadResult = downloadContentObjectClientService.process(request);
 
         try {
             FileUtils.writeByteArrayToFile(
                     new File(
-                            downloadObjectExternalCommand.getOutputLocation()),
-                    Files.readAllBytes(contentObjectDownloadResult.toPath()));
+                            downloadObjectExternalCommand.getOutputLocation()), contentObjectDownloadResult);
         } catch (IOException e) {
             throw new ApiServerOperationFailureException(e.getMessage());
         }

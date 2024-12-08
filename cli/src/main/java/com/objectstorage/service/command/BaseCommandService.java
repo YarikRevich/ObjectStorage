@@ -6,6 +6,7 @@ import com.objectstorage.dto.DownloadObjectExternalCommandDto;
 import com.objectstorage.dto.UploadObjectExternalCommandDto;
 import com.objectstorage.entity.PropertiesEntity;
 import com.objectstorage.exception.*;
+import com.objectstorage.service.command.common.helper.CommandConfigurationHelper;
 import com.objectstorage.service.command.external.apply.ApplyExternalCommandService;
 import com.objectstorage.service.command.external.clean.object.CleanObjectExternalCommandService;
 import com.objectstorage.service.command.external.cleanall.CleanAllExternalCommandService;
@@ -414,6 +415,12 @@ public class BaseCommandService {
             String location) {
         if (Objects.equals(configLocation, "null")) {
             configLocation = properties.getConfigDefaultLocation();
+        }
+
+        if (!CommandConfigurationHelper.isProviderValid(provider)) {
+            logger.fatal(new ProviderIsNotValidException().getMessage());
+
+            return;
         }
 
         visualizationState.setLabel(downloadCommandVisualizationLabel);

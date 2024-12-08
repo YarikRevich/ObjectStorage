@@ -5,6 +5,7 @@ import com.objectstorage.api.ContentResourceApi;
 import com.objectstorage.dto.ContentUploadObjectRequestDto;
 import com.objectstorage.exception.ApiServerNotAvailableException;
 import com.objectstorage.exception.ApiServerOperationFailureException;
+import com.objectstorage.service.client.common.helper.ClientConfigurationHelper;
 import com.objectstorage.service.client.common.IClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -41,7 +42,7 @@ public class UploadContentObjectClientService implements IClient<Void, ContentUp
         try {
             return contentResourceApi
                     .v1ContentObjectUploadPost(
-                            input.getAuthorization(),
+                            ClientConfigurationHelper.getWrappedToken(input.getAuthorization()),
                             input.getLocation(),
                             input.getFile())
                     .block();
