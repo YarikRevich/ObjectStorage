@@ -67,21 +67,33 @@ service:
     # Represents credentials used for the selected provider.
     credentials:
       # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
-      id: "1"
+      id: "3"
 
       # Represents a path to the credentials CSV file, which contains both access
-      # and secret keys.
-      file: "~/.aws/credentials"
+      # and secret keys. Make sure you don't use "~" symbol.
+      file: "/Users/objectstorage/.aws/credentials/rootkey.csv"
 
       # Represents a select region where the deployment of infrastructure will be performed.
       # Remember that it may influence the availability of the ObjectStorage deployed infrastructure.
+      #
       # This option can be applied to "s3" provider only.
       region: "us-west-2"
+
+  - provider: "gcs"
+
+    # Represents credentials used for the selected provider.
+    credentials:
+      # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
+      id: "1"
+
+      # Represents a path to the credentials CSV file, which contains both access
+      # and secret keys. Make sure you don't use "~" symbol.
+      file: "/Users/objectstorage/.config/gcloud/application_default_credentials.json"
 
 # Represents section used for ObjectStorage API Server configuration.
 api-server:
   # Represents address for the host of ObjectStorage API Server.
-  host: "http://localhost:8085"
+  host: "http://localhost:8086"
 ```
 
 For **ObjectStorage API Server** there was used the following configuration file located at **~/.objectstorage/config** directory as **api-server.yaml**:
@@ -162,10 +174,42 @@ diagnostics:
 In the **~/.objectstorage/internal/database** directory there will be located internal database data, if **sqlite3** 
 option is selected as target database.
 
+> If **GCS** is selected, please make sure **Cloud Resource Manager API** service is enabled.
+
+> Currently max object size is **1GB**. This limitation will be changed in the future.
+
+### CLI
+
+![cli](./docs/examples/cli.gif)
+
 ### Diagnostics dashboard
 
 For **ObjectStorage API Server** configuration the following section should be modified:
+```yaml
+# Represents section used for ObjectStorage API Server diagnostics configuration.
+diagnostics:
+  # Enables diagnostics functionality.
+  enabled: true
 
-If GCS is selected, please make sure Cloud Resource Manager API is enabled.
+  # Represents section used for ObjectStorage diagnostics metrics configuration.
+  metrics:
+    # Represents port used for metrics endpoint.
+    port: 8090
 
-Currently max object size is 1GB, will be changed in the future.
+  # Represents section used for ObjectStorage diagnostics Grafana instance.
+  grafana:
+    # Represents port used for Grafana instance deployment.
+    port: 8091
+
+  # Represents section used for ObjectStorage diagnostics Prometheus instance.
+  prometheus:
+    # Represents port used for Prometheus instance deployment.
+    port: 8120
+
+  # Represents section used for ObjectStorage diagnostics Prometheus Node Exporter instance.
+  node-exporter:
+    # Represents port used for Prometheus Node Exporter instance deployment.
+    port: 8121
+```
+
+![diagnostics](./docs/examples/diagnostics.gif)
