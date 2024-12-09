@@ -3,6 +3,7 @@ package com.objectstorage.service.vendor.gcs;
 import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.UserCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.resourcemanager.ResourceManager;
 import com.google.cloud.resourcemanager.ResourceManagerOptions;
@@ -38,6 +39,8 @@ public class GCSVendorService {
             return ServiceAccountCredentials.fromStream(new ByteArrayInputStream(secrets.getBytes()));
         } catch (IOException e) {
             throw new GCPCredentialsInitializationFailureException(e.getMessage());
+        } catch (ClassCastException e) {
+            throw new GCPCredentialsInitializationFailureException();
         }
     }
 
@@ -56,9 +59,9 @@ public class GCSVendorService {
             .build()
             .getService();
 
-        return storage
-                .get(name)
-                .exists();
+        Bucket bucket = storage.get(name);
+
+        return Objects.nonNull(bucket) && bucket.exists();
     }
 
     /**
