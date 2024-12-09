@@ -6,12 +6,14 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.resourcemanager.ResourceManager;
+import com.google.cloud.resourcemanager.ResourceManagerException;
 import com.google.cloud.resourcemanager.ResourceManagerOptions;
 import com.google.cloud.resourcemanager.Project;
 import com.google.cloud.storage.*;
 import com.objectstorage.dto.VendorObjectListingDto;
 import com.objectstorage.exception.GCPCredentialsInitializationFailureException;
 import com.objectstorage.exception.GCSBucketObjectUploadFailureException;
+import com.objectstorage.exception.VendorOperationFailureException;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.ByteArrayInputStream;
@@ -50,18 +52,29 @@ public class GCSVendorService {
      * @param name given name of the GCS bucket.
      * @param credentials given credentials to be used for client configuration.
      * @return result of the check.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isGCSBucketPresent(
             Credentials credentials,
-            String name) {
+            String name) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
             .setCredentials(credentials)
             .build()
             .getService();
 
-        Bucket bucket = storage.get(name);
+        Bucket bucket;
 
-        return Objects.nonNull(bucket) && bucket.exists();
+        try {
+            bucket = storage.get(name);
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
+
+        try {
+            return Objects.nonNull(bucket) && bucket.exists();
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -69,16 +82,21 @@ public class GCSVendorService {
      *
      * @param credentials given credentials to be used for client configuration.
      * @param name given name of the GCS bucket.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void createGCSBucket(
             Credentials credentials,
-            String name) {
+            String name) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        storage.create(BucketInfo.newBuilder(name).build());
+        try {
+            storage.create(BucketInfo.newBuilder(name).build());
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -86,16 +104,21 @@ public class GCSVendorService {
      *
      * @param credentials given credentials to be used for client configuration.
      * @param name given name of the GCS bucket.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeGCSBucket(
             Credentials credentials,
-            String name) {
+            String name) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        storage.delete(name);
+        try {
+            storage.delete(name);
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -133,19 +156,30 @@ public class GCSVendorService {
      * @param bucketName given name of the GCS bucket.
      * @param fileName given name of the file to be retrieved.
      * @return result of the check.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public Boolean isObjectPresentInBucket(
             Credentials credentials,
             String bucketName,
-            String fileName) {
+            String fileName) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        Blob blob = storage.get(BlobId.of(bucketName, fileName));
+        Blob blob;
 
-        return Objects.nonNull(blob) && blob.exists();
+        try {
+            blob = storage.get(BlobId.of(bucketName, fileName));
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
+
+        try {
+            return Objects.nonNull(blob) && blob.exists();
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -155,19 +189,30 @@ public class GCSVendorService {
      * @param bucketName given name of the GCS bucket.
      * @param fileName given name of the file to be retrieved.
      * @return retrieved object content.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public byte[] retrieveObjectFromGCSBucket(
             Credentials credentials,
             String bucketName,
-            String fileName) {
+            String fileName) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        Blob blob = storage.get(BlobId.of(bucketName, fileName));
+        Blob blob;
 
-        return blob.getContent();
+        try {
+            blob = storage.get(BlobId.of(bucketName, fileName));
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
+
+        try {
+            return blob.getContent();
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -176,22 +221,27 @@ public class GCSVendorService {
      * @param credentials given credentials to be used for client configuration.
      * @param bucketName given name of the GCS bucket.
      * @return listed objects.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public List<VendorObjectListingDto> listObjectsFromGCSBucket(
             Credentials credentials,
-            String bucketName) {
+            String bucketName) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        Page<Blob> blobs = storage.list(bucketName);
+        try {
+            Page<Blob> blobs = storage.list(bucketName);
 
-        return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
-                .map(element -> VendorObjectListingDto.of(
-                        element.getBlobId().getName(),
-                        element.getUpdateTimeOffsetDateTime().toEpochSecond()))
-                .toList();
+            return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
+                    .map(element -> VendorObjectListingDto.of(
+                            element.getBlobId().getName(),
+                            element.getUpdateTimeOffsetDateTime().toEpochSecond()))
+                    .toList();
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -200,17 +250,22 @@ public class GCSVendorService {
      * @param credentials given credentials to be used for client configuration.
      * @param bucketName given name of the GCS bucket.
      * @param fileName given name of the file to be removed.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeObjectFromGCSBucket(
             Credentials credentials,
             String bucketName,
-            String fileName) {
+            String fileName) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        storage.delete(BlobId.of(bucketName, fileName));
+        try {
+            storage.delete(BlobId.of(bucketName, fileName));
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
+        }
     }
 
     /**
@@ -218,19 +273,24 @@ public class GCSVendorService {
      *
      * @param credentials given credentials to be used for client configuration.
      * @param bucketName given name of the GCS bucket.
+     * @throws VendorOperationFailureException if vendor operation fails.
      */
     public void removeAllObjectsFromGCSBucket(
             Credentials credentials,
-            String bucketName) {
+            String bucketName) throws VendorOperationFailureException {
         Storage storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .getService();
 
-        Page<Blob> blobs = storage.list(bucketName);
+        try {
+            Page<Blob> blobs = storage.list(bucketName);
 
-        for (Blob blob : blobs.iterateAll()) {
-            blob.delete(Blob.BlobSourceOption.generationMatch());
+            for (Blob blob : blobs.iterateAll()) {
+                blob.delete(Blob.BlobSourceOption.generationMatch());
+            }
+        } catch (StorageException e) {
+            throw new VendorOperationFailureException(e.getMessage());
         }
     }
 
@@ -246,8 +306,12 @@ public class GCSVendorService {
                 .build()
                 .getService();
 
-        for (Project project : resourceManager.list().iterateAll()) {
-            return true;
+        try {
+            for (Project project : resourceManager.list().iterateAll()) {
+                return true;
+            }
+        } catch (ResourceManagerException e) {
+            return false;
         }
 
         return false;

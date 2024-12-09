@@ -107,7 +107,6 @@ databaseChangeLog:
                   type: TEXT
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: created_at
                   type: BIGINT

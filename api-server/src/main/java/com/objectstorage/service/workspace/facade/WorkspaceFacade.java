@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,9 @@ public class WorkspaceFacade {
      * @return created workspace unit key.
      */
     public String createWorkspaceUnitKey(ValidationSecretsApplication validationSecretsApplication) {
-        return validationSecretsApplication.getSecrets().stream().map(element ->
+        return validationSecretsApplication.getSecrets().stream()
+                .sorted(Comparator.comparing(element -> element.getProvider().toString()))
+                .map(element ->
             switch (element.getProvider()) {
                 case S3 -> workspaceService.createUnitKey(
                         element.getProvider().toString(),
@@ -63,7 +66,7 @@ public class WorkspaceFacade {
         String fileUnit =
                 workspaceService.createUnitKey(name, Instant.now().toString());
 
-        return String.format("%s-%s-%d", name, fileUnit, timestamp.toEpochMilli());
+        return String.format("%s-%d", fileUnit, timestamp.toEpochMilli());
     }
 
     /**
