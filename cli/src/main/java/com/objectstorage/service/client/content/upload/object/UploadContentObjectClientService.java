@@ -47,6 +47,7 @@ public class UploadContentObjectClientService implements IClient<Void, ContentUp
                             input.getFile())
                     .block();
         } catch (WebClientResponseException e) {
+            System.out.println(e.getMessage());
             throw new ApiServerOperationFailureException(e.getResponseBodyAsString());
         } catch (WebClientRequestException e) {
             throw new ApiServerOperationFailureException(new ApiServerNotAvailableException(e.getMessage()).getMessage());

@@ -165,3 +165,7 @@ option is selected as target database.
 ### Diagnostics dashboard
 
 For **ObjectStorage API Server** configuration the following section should be modified:
+
+If GCS is selected, please make sure Cloud Resource Manager API is enabled.
+
+Currently max object size is 1GB, will be changed in the future.

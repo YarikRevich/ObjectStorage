@@ -12,6 +12,8 @@ import lombok.Getter;
 public class DownloadBackupExternalCommandDto {
     private ConfigEntity config;
 
+    private String provider;
+
     private String outputLocation;
 
     private String location;

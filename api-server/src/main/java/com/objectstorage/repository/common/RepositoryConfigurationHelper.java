@@ -7,9 +7,7 @@ import com.objectstorage.model.Provider;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -24,7 +22,7 @@ public class RepositoryConfigurationHelper {
      * @return packed external credentials signature.
      */
     private String packExternalCredentials(String ...values) {
-        StringJoiner result = new StringJoiner(":");
+        StringJoiner result = new StringJoiner("|");
 
         for (String value : values) {
             result.add(value);
@@ -40,7 +38,7 @@ public class RepositoryConfigurationHelper {
      * @return unpacked external credentials signature.
      */
     private List<String> unpackExternalCredentials(String credentials) {
-        return List.of(credentials.split(":"));
+        return List.of(credentials.split("\\|"));
     }
 
     /**

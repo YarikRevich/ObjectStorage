@@ -1,5 +1,6 @@
 package com.objectstorage.service.vendor.s3;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -389,7 +390,7 @@ public class S3VendorService {
                             .build()
                             .getCallerIdentity(new GetCallerIdentityRequest())
                             .getArn());
-        } catch (AWSSecurityTokenServiceException e) {
+        } catch (SdkClientException e) {
             return false;
         }
     }
