@@ -162,10 +162,42 @@ diagnostics:
 In the **~/.objectstorage/internal/database** directory there will be located internal database data, if **sqlite3** 
 option is selected as target database.
 
+> If **GCS** is selected, please make sure **Cloud Resource Manager API** service is enabled.
+
+> Currently max object size is **1GB**. This limitation will be changed in the future.
+
+### CLI
+
+![cli](./docs/examples/cli.gif)
+
 ### Diagnostics dashboard
 
 For **ObjectStorage API Server** configuration the following section should be modified:
+```yaml
+# Represents section used for ObjectStorage API Server diagnostics configuration.
+diagnostics:
+  # Enables diagnostics functionality.
+  enabled: true
 
-If GCS is selected, please make sure Cloud Resource Manager API is enabled.
+  # Represents section used for ObjectStorage diagnostics metrics configuration.
+  metrics:
+    # Represents port used for metrics endpoint.
+    port: 8090
 
-Currently max object size is 1GB, will be changed in the future.
+  # Represents section used for ObjectStorage diagnostics Grafana instance.
+  grafana:
+    # Represents port used for Grafana instance deployment.
+    port: 8091
+
+  # Represents section used for ObjectStorage diagnostics Prometheus instance.
+  prometheus:
+    # Represents port used for Prometheus instance deployment.
+    port: 8120
+
+  # Represents section used for ObjectStorage diagnostics Prometheus Node Exporter instance.
+  node-exporter:
+    # Represents port used for Prometheus Node Exporter instance deployment.
+    port: 8121
+```
+
+![diagnostics](./docs/examples/diagnostics.gif)
