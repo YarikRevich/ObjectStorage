@@ -67,21 +67,33 @@ service:
     # Represents credentials used for the selected provider.
     credentials:
       # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
-      id: "1"
+      id: "3"
 
       # Represents a path to the credentials CSV file, which contains both access
-      # and secret keys.
-      file: "~/.aws/credentials"
+      # and secret keys. Make sure you don't use "~" symbol.
+      file: "/Users/objectstorage/.aws/credentials/rootkey.csv"
 
       # Represents a select region where the deployment of infrastructure will be performed.
       # Remember that it may influence the availability of the ObjectStorage deployed infrastructure.
+      #
       # This option can be applied to "s3" provider only.
       region: "us-west-2"
+
+  - provider: "gcs"
+
+    # Represents credentials used for the selected provider.
+    credentials:
+      # Represents session identificator, used to distinguish different workspaces and thus separate content inside.
+      id: "1"
+
+      # Represents a path to the credentials CSV file, which contains both access
+      # and secret keys. Make sure you don't use "~" symbol.
+      file: "/Users/objectstorage/.config/gcloud/application_default_credentials.json"
 
 # Represents section used for ObjectStorage API Server configuration.
 api-server:
   # Represents address for the host of ObjectStorage API Server.
-  host: "http://localhost:8085"
+  host: "http://localhost:8086"
 ```
 
 For **ObjectStorage API Server** there was used the following configuration file located at **~/.objectstorage/config** directory as **api-server.yaml**:
