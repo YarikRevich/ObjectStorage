@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -60,13 +61,29 @@ public class WorkspaceFacade {
      * @param name given file name.
      * @return created file unit key.
      */
-    public String createFileUnitKey(String name) {
+    public String createObjectFileUnitKey(String name) {
         Instant timestamp = Instant.now();
 
         String fileUnit =
                 workspaceService.createUnitKey(name, Instant.now().toString());
 
         return String.format("%s-%d", fileUnit, timestamp.toEpochMilli());
+    }
+
+    /**
+     * Creates backup file unit key with the help of the given file name, selected provider and current datetime.
+     *
+     * @param provider given provider name.
+     * @param name given file name.
+     * @return created file unit key.
+     */
+    public String createBackupFileUnitKey(String provider, String name) {
+        Instant timestamp = Instant.now();
+
+        String fileUnit =
+                workspaceService.createUnitKey(name, provider, Instant.now().toString());
+
+        return String.format("%s/%s-%d", provider, fileUnit, timestamp.toEpochMilli());
     }
 
     /**
@@ -157,25 +174,31 @@ public class WorkspaceFacade {
      * Checks if backup file with the given name exists in the workspace with the given workspace unit key.
      *
      * @param workspaceUnitKey given user workspace unit key.
+     * @param provider given provider name.
      * @param name given file name.
      * @return result of the check.
      * @throws FileExistenceCheckFailureException if file existence check failed.
      */
-    public Boolean isBackupFilePresent(String workspaceUnitKey, String name) throws FileExistenceCheckFailureException {
+    public Boolean isBackupFilePresent(String workspaceUnitKey, String provider, String name)
+            throws FileExistenceCheckFailureException {
         return workspaceService.isContentFilePresent(
-                workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
+                workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), Path.of(provider, name).toString());
     }
 
     /**
      * Retrieves backup units from the workspace with the given workspace unit key.
      *
      * @param workspaceUnitKey given user workspace unit key.
+     * @param provider given provider name.
      * @return retrieved backup units.
      * @throws FileUnitsRetrievalFailureException if file units retrieval fails.
      */
-    public List<ContentRetrievalBackupUnit> getBackupUnits(String workspaceUnitKey) throws FileUnitsRetrievalFailureException {
+    public List<ContentRetrievalBackupUnit> getBackupUnits(String workspaceUnitKey, String provider)
+            throws FileUnitsRetrievalFailureException {
         return workspaceService
-                .getContentUnits(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory())
+                .getContentUnits(
+                        workspaceUnitKey,
+                        Path.of(properties.getWorkspaceContentBackupDirectory(), provider).toString())
                 .stream()
                 .map(ContentRetrievalBackupUnit::of)
                 .toList();
@@ -199,12 +222,15 @@ public class WorkspaceFacade {
      * byte array.
      *
      * @param workspaceUnitKey given user workspace unit key.
+     * @param provider given provider name.
      * @param name given file name.
      * @return retrieved file as compressed byte array.
      * @throws FileUnitRetrievalFailureException if file unit retrieval fails.
      */
-    public byte[] getBackupFile(String workspaceUnitKey, String name) throws FileUnitRetrievalFailureException {
-        return workspaceService.getContentFile(workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), name);
+    public byte[] getBackupFile(String workspaceUnitKey, String provider, String name)
+            throws FileUnitRetrievalFailureException {
+        return workspaceService.getContentFile(
+                workspaceUnitKey, properties.getWorkspaceContentBackupDirectory(), Path.of(provider, name).toString());
     }
 
     /**

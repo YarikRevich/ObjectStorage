@@ -144,7 +144,9 @@ public class BackupService {
                         try {
                             workspaceFacade.addBackupFile(
                                     workspaceUnitKey,
-                                    workspaceFacade.createFileUnitKey(properties.getWorkspaceContentBackupUnit()),
+                                    workspaceFacade.createBackupFileUnitKey(
+                                            repositoryContentApplicationUnit.getProvider().toString(),
+                                            properties.getWorkspaceContentBackupUnit()),
                                     folderContentUnits);
                         } catch (FileCreationFailureException e) {
                             StateService.getBackupProcessorGuard().unlock();

@@ -118,7 +118,12 @@ public class ContentResource implements ContentResourceApi {
         ValidationSecretsApplication validationSecretsApplication =
                 resourceConfigurationHelper.getJwtDetails(authorization);
 
-        return processorService.downloadBackup(contentBackupDownload, validationSecretsApplication);
+        ValidationSecretsUnit validationSecretsUnit =
+                resourceConfigurationHelper.getConfiguredProvider(
+                        contentBackupDownload.getProvider(), validationSecretsApplication);
+
+        return processorService.downloadBackup(
+                contentBackupDownload.getLocation(), validationSecretsUnit, validationSecretsApplication);
     }
 
     /**

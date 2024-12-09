@@ -3,6 +3,7 @@ package com.objectstorage.service.command.external.download.backup;
 import com.objectstorage.converter.ConfigCredentialsToContentCredentialsConverter;
 import com.objectstorage.converter.ConfigProviderToContentProviderConverter;
 import com.objectstorage.converter.CredentialsConverter;
+import com.objectstorage.converter.SelectedProviderToContentProviderConverter;
 import com.objectstorage.dto.ContentDownloadBackupRequestDto;
 import com.objectstorage.dto.DownloadBackupExternalCommandDto;
 import com.objectstorage.dto.ProcessedCredentialsDto;
@@ -119,7 +120,9 @@ public class DownloadBackupExternalCommandService implements ICommand<DownloadBa
 
         ContentDownloadBackupRequestDto request = ContentDownloadBackupRequestDto.of(
                 validationSecretsApplicationResult.getToken(),
-                ContentBackupDownload.of(downloadBackupExternalCommand.getLocation()));
+                ContentBackupDownload.of(downloadBackupExternalCommand.getLocation(),
+                SelectedProviderToContentProviderConverter.convert(
+                        downloadBackupExternalCommand.getProvider())));
 
         byte[] contentBackupDownloadResult = downloadContentBackupClientService.process(request);
 

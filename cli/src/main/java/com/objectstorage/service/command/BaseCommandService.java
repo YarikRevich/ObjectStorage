@@ -463,6 +463,7 @@ public class BaseCommandService {
      * Provides access to download backup command service.
      *
      * @param configLocation given custom configuration file location.
+     * @param provider given selected provider name.
      * @param outputLocation given output file location.
      * @param location given backup content backup location name.
      */
@@ -470,11 +471,18 @@ public class BaseCommandService {
     private void downloadBackup(
             @Option(names = {"--config"}, description = "A location of configuration file", defaultValue = "null")
             String configLocation,
+            @Option(names = {"--provider"}, description = "A name of selected provider", required = true) String provider,
             @Option(names = {"--output"}, description = "A path for the file to be downloaded", required = true) String outputLocation,
             @Option(names = {"--location"}, description = "A name of backup content location", required = true)
             String location) {
         if (Objects.equals(configLocation, "null")) {
             configLocation = properties.getConfigDefaultLocation();
+        }
+
+        if (!CommandConfigurationHelper.isProviderValid(provider)) {
+            logger.fatal(new ProviderIsNotValidException().getMessage());
+
+            return;
         }
 
         visualizationState.setLabel(downloadCommandVisualizationLabel);
@@ -501,6 +509,7 @@ public class BaseCommandService {
         try {
             downloadBackupExternalCommandService.process(DownloadBackupExternalCommandDto.of(
                     configService.getConfig(),
+                    provider,
                     outputLocation,
                     location));
         } catch (ApiServerOperationFailureException e) {

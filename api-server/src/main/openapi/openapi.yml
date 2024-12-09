@@ -312,9 +312,12 @@ components:
     ContentBackupDownload:
       required:
         - location
+        - provider
       properties:
         location:
           type: string
+        provider:
+          $ref: "#/components/schemas/Provider"
     ContentCleanup:
       required:
         - location
