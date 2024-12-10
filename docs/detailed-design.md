@@ -82,11 +82,6 @@ group /v1/content/apply POST
 
 client -> apiserver: apply content configuration
 
-activate externalservice
-apiserver -> externalservice: request credentials validation
-externalservice --> apiserver : validation result
-deactivate externalservice
-
 activate localstorage
 apiserver -> localstorage: apply provided user configuration
 localstorage -> apiserver: user configuration update result
@@ -105,9 +100,9 @@ deactivate localstorage
 
 end group
 
-group /v1/content/upload POST
+group /v1/content/object/upload POST
 
-client -> apiserver: upload object
+client -> apiserver: upload content object
 
 activate temporatestorage
 apiserver ->> temporatestorage: schedule object upload
@@ -115,33 +110,41 @@ deactivate temporatestorage
 
 end group
 
-group /v1/content/download POST
+group /v1/content/object/download POST
 
-client -> apiserver: download selected object
+client -> apiserver: download selected content object
 
-alt if the object is still not processed
+alt if the content object is still not processed
 
 activate temporatestorage
-apiserver -> temporatestorage: request object
-temporatestorage --> apiserver : retrieved object
+apiserver -> temporatestorage: request content object
+temporatestorage --> apiserver : retrieved content object
 deactivate temporatestorage
 
 else
 
 activate externalservice
-apiserver -> externalservice: request object
-externalservice --> apiserver : retrieved object
+apiserver -> externalservice: request content object
+externalservice --> apiserver : retrieved content object
 deactivate externalservice
 
 end
 
-apiserver --> client: downloaded object
+apiserver --> client: downloaded content object
 
 end group
 
-group /v1/content/clean DELETE
+group /v1/content/backup/download POST
 
-client -> apiserver: clean selected content
+client -> apiserver: download selected content backup
+
+apiserver --> client: downloaded content backup
+
+end group
+
+group /v1/content/object/clean DELETE
+
+client -> apiserver: clean selected content object
 
 opt if any object is still not processed
 
@@ -180,6 +183,19 @@ deactivate externalservice
 end group
 
 end box
+
+group /v1/secrets/acquire POST
+
+client -> apiserver: create jwt token
+
+activate externalservice
+apiserver -> externalservice: verify given secrets
+externalservice -> apiserver: result of verification
+deactivate externalservice
+
+apiserver --> client: created jwt token
+
+end group
 
 group /v1/health GET
 client -> apiserver: retrieve health info

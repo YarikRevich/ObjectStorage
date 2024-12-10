@@ -33,7 +33,9 @@ entity "temporate" {
     *provider : number <<FK>> # provider(id)
     *secret : number <<FK>> # secret(id)
     --
+    location : varchar
     hash : varchar
+    created_at : number
 }
 
 content ||...|| secret #magenta : attached to
